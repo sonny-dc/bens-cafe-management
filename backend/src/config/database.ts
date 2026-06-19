@@ -9,6 +9,9 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD as string,
   database: process.env.DB_NAME as string,
   port: Number(process.env.DB_PORT),
+  ssl: {
+    rejectUnauthorized: false // Required for Aiven cloud database SSL
+  },
   waitForConnections: true,
   connectionLimit: 20,
   queueLimit: 0,
