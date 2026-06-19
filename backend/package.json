@@ -5,9 +5,9 @@
   "main": "src/server.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node src/server.ts",
+    "start": "npm run build && node dist/server.js",
     "build": "tsc",
-    "dev": "nodemon"
+    "dev": "node --watch -r ts-node/register src/server.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +24,6 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.3",
-    "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }

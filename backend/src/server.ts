@@ -3,6 +3,7 @@ import express, {type Request, type Response, type NextFunction} from 'express';
 import cors from 'cors';
 import path from 'path';
 import {fileURLToPath} from 'url';
+import {testConnection} from './database.js';
 
 const app = express();
 
@@ -11,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 // Load environment variables from backend root directory
 const envPath = path.resolve(__dirname, '../.env');
-dotenv.config({ path: envPath });
+dotenv.config({ path: envPath }); 
 
 // Validate required environment variables
 if (!process.env.PORT) {
@@ -51,6 +52,7 @@ app.use((_req: Request, res: Response) => {
 
 app.listen(PORT, async () => {
   console.log(`Server ready at http://localhost:${PORT}`);
+  testConnection();
 });
 
 

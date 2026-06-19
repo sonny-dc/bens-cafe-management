@@ -1,12 +1,12 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
     "rootDir": "./src",
     "outDir": "./dist",
 
+    "forceConsistentCasingInFileNames": true, // Ensure consistent casing in imports. We use kebab-case for files and folders, so this will help catch any mistakes.
+
     // Environment Settings
-    // See also https://aka.ms/tsconfig/module
     "module": "NodeNext",
     "target": "esnext",
     "lib": ["esnext"],
@@ -39,5 +39,7 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
