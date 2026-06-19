@@ -3,7 +3,12 @@ export const USER_ROLES = {
     EMPLOYEE: 'employee'
 } as const;
 
-export const ACCOUNT_STATUS = { // used for both user and employee status
+export const ACCOUNT_STATUS = { 
+    ACTIVE: 'active',
+    INACTIVE: 'inactive'
+} as const;
+
+export const EMPLOYMENT_STATUS = { 
     ACTIVE: 'active',
     INACTIVE: 'inactive'
 } as const;
@@ -46,6 +51,7 @@ export const MESSAGE_TYPES = {
 // Type Exports
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 export type AccountStatus = typeof ACCOUNT_STATUS[keyof typeof ACCOUNT_STATUS];
+export type EmploymentStatus = typeof EMPLOYMENT_STATUS[keyof typeof EMPLOYMENT_STATUS];
 export type ShiftStatus = typeof SHIFT_STATUS[keyof typeof SHIFT_STATUS];
 export type InventoryStatus = typeof INVENTORY_STATUS[keyof typeof INVENTORY_STATUS];
 export type RequestStatus = typeof REQUEST_STATUS[keyof typeof REQUEST_STATUS];
