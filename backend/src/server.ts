@@ -6,6 +6,9 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import {testConnection} from './config/database.js';
 
+// Route imports
+import employeeRoutes from "./routes/employee-routes.js";
+
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,6 +42,7 @@ app.use(cors({
 app.get('/', (_req: Request, res: Response) => {
   res.json({ message: 'Bens Cafe Management API is running' });
 });
+app.use("/api/employees", employeeRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

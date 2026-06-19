@@ -1,2 +1,2 @@
-export type { User, CreateUserInput } from "./user.model.js";
-export type { Employee, CreateEmployeeInput, UpdateEmployeeInput} from './employee.model.js';
+export type { User, CreateUserInput, CreateUserRepositoryInput } from "./user.model.js";
+export type { Employee, CreateEmployeeInput, RegisterEmployeeInput, UpdateEmployeeInput} from './employee.model.js';
