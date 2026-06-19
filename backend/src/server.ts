@@ -1,9 +1,10 @@
+import type { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import dotenv from 'dotenv';
-import express, {type Request, type Response, type NextFunction} from 'express';
 import cors from 'cors';
 import path from 'path';
 import {fileURLToPath} from 'url';
-import {testConnection} from './database.js';
+import {testConnection} from './config/database.js';
 
 const app = express();
 
