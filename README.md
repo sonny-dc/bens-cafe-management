@@ -271,6 +271,7 @@ bens-cafe-management/
 │   ├── package-lock.json                      # Locked dependency versions
 │   ├── tsconfig.json                          # TypeScript configuration
 │   ├── .env                                   # Environment variables - DO NOT COMMIT
+|   ├── .env.example                           # Example environment configuration for the backend.
 │   └── .gitignore                             # Git ignore rules
 │
 ├── database/                                  # Database-related files
