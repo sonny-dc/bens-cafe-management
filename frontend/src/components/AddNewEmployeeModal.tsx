@@ -12,18 +12,46 @@ export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onCl
   const dailyPay = defaultShift * hourlyRate;
   const estMonthly = dailyPay * 26; // Assuming 26 working days in a month
 
-  const handleAddEmployee = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleAddEmployee = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    // The backend expects specific fields according to RegisterEmployeeInput
     const payload = {
       username,
       password,
       fullName,
-      role,
-      defaultShift,
-      hourlyRate,
-      status,
+      employeeCode: 'EMP-' + Date.now().toString().slice(-6), // Auto-generate
+      jobRole: role,
+      defaultShiftHours: String(defaultShift),
+      hourlyRate: String(hourlyRate),
     };
-    console.log('New Employee Payload:', JSON.stringify(payload, null, 2));
-    onClose();
+
+    try {
+      const response = await fetch('http://localhost:3000/api/employees', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to add employee');
+      }
+
+      console.log('Employee successfully added!');
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -147,13 +175,29 @@ export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onCl
           </div>
         </div>
 
-        <div className="mt-8 flex gap-3">
-          <button className="btn flex-1 bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-400 font-medium h-12 rounded-xl" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn flex-1 border-none text-white hover:brightness-95 font-medium h-12 rounded-xl shadow-sm" style={{ backgroundColor: '#b2beaf' }} onClick={handleAddEmployee}>
-            Add Employee
-          </button>
+        <div className="mt-8 flex gap-3 flex-col">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm mb-2">
+              {error}
+            </div>
+          )}
+          <div className="flex gap-3 w-full">
+            <button 
+              className="btn flex-1 bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-400 font-medium h-12 rounded-xl" 
+              onClick={onClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button 
+              className="btn flex-1 border-none text-white hover:brightness-95 font-medium h-12 rounded-xl shadow-sm" 
+              style={{ backgroundColor: '#b2beaf' }} 
+              onClick={handleAddEmployee}
+              disabled={isLoading}
+            >
+              {isLoading ? <span className="loading loading-spinner loading-sm"></span> : 'Add Employee'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
