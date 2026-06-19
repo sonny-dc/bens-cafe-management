@@ -8,6 +8,8 @@ import {testConnection} from './config/database.js';
 
 // Route imports
 import employeeRoutes from "./routes/employee-routes.js";
+import shiftRoutes from "./routes/shift-routes.js";
+import noteRoutes from "./routes/note-routes.js";
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.get('/', (_req: Request, res: Response) => {
   res.json({ message: 'Bens Cafe Management API is running' });
 });
 app.use("/api/employees", employeeRoutes);
+app.use("/api/shifts", shiftRoutes);
+app.use("/api/notes", noteRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
