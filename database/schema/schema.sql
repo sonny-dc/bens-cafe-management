@@ -209,6 +209,7 @@ CREATE TABLE staff_messages (
   subject VARCHAR(255) NULL,
   message_text TEXT NOT NULL,
   message_status ENUM('new', 'read', 'acknowledged') NOT NULL DEFAULT 'new',
+  posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   read_at DATETIME NULL DEFAULT NULL,
   user_id INT NULL,

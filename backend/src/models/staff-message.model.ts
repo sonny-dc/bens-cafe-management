@@ -8,6 +8,7 @@ export interface StaffMessage {
     subject: string | null;
     messageText: string;
     messageStatus: MessageStatus;
+    postedAt: Date;
     createdAt: Date;
     readAt: Date | null;
     userId: number | null;
@@ -16,6 +17,11 @@ export interface StaffMessage {
 export interface CreateStaffMessageInput {
     employeeId: number;
     messageType: MessageType;
+    /**
+     * The postedAt is set by the service layer to ensure it 
+     * uses the current date and time when creating a message.
+     */
+    postedAt: string;
     subject: string | null;
     messageText: string;
 }
