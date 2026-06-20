@@ -11,6 +11,7 @@ export interface Note {
   subject: string | null;
   messageText: string;
   messageStatus: MessageStatus;
+  postedAt: string;
   createdAt: string;
   readAt: string | null;
   userId: number | null;
@@ -18,7 +19,7 @@ export interface Note {
 
 export const notesApi = {
   async getNotesByEmployee(employeeId: number): Promise<Note[]> {
-    const res = await fetch(`${API_BASE_URL}/notes/employee/${employeeId}`);
+    const res = await fetch(`${API_BASE_URL}/staff-messages/employee/${employeeId}`);
     if (!res.ok) throw new Error('Could not load your notes. Check your connection.');
     const json = await res.json();
     return json.data;
@@ -30,7 +31,7 @@ export const notesApi = {
     subject: string | null;
     messageText: string;
   }): Promise<Note> {
-    const res = await fetch(`${API_BASE_URL}/notes`, {
+    const res = await fetch(`${API_BASE_URL}/staff-messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
