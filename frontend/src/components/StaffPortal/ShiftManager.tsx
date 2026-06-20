@@ -238,7 +238,7 @@ export function ShiftManager() {
                       required
                       className={`w-full pl-9 pr-4 py-3 text-base font-semibold border rounded-xl bg-gray-50 focus:bg-white outline-none transition-all placeholder:font-normal placeholder:text-gray-400
                         ${ isShort ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-400/20'
-                          : isOver  ? 'border-amber-300 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20'
+                          : isOver  ? 'border-emerald-300 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20'
                           : 'border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20'}`}
                     />
                   </div>
@@ -253,9 +253,9 @@ export function ShiftManager() {
                         className={`mt-3 flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium
                           ${ isShort
                             ? 'bg-red-50 border-red-200 text-red-700'
-                            : 'bg-amber-50 border-amber-200 text-amber-700'}`}
+                            : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}
                       >
-                        <span>{isShort ? 'Short' : 'Over'} by</span>
+                        <span>{isShort ? 'Short by' : 'Profit'}</span>
                         <span className="font-bold">₱{Math.abs(variance).toFixed(2)}</span>
                       </motion.div>
                     )}
@@ -272,15 +272,15 @@ export function ShiftManager() {
                       className={`rounded-xl border p-4 text-sm
                         ${ isShort
                           ? 'bg-red-50 border-red-200'
-                          : 'bg-amber-50 border-amber-200'}`}
+                          : 'bg-emerald-50 border-emerald-200'}`}
                     >
-                      <p className={`font-semibold mb-1 ${ isShort ? 'text-red-800' : 'text-amber-800'}`}>
+                      <p className={`font-semibold mb-1 ${ isShort ? 'text-red-800' : 'text-emerald-800'}`}>
                         {isShort
                           ? `Cash is short by ₱${Math.abs(variance).toFixed(2)}.`
-                          : `Cash is over by ₱${Math.abs(variance).toFixed(2)}.`
+                          : `Awesome! Extra profit of ₱${Math.abs(variance).toFixed(2)}.`
                         }
                       </p>
-                      <p className={`mb-4 ${ isShort ? 'text-red-600' : 'text-amber-700'}`}>
+                      <p className={`mb-4 ${ isShort ? 'text-red-600' : 'text-emerald-700'}`}>
                         Are you sure you want to submit this?
                       </p>
                       <div className="flex gap-2">
