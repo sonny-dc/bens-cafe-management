@@ -1,3 +1,6 @@
+// Use ctrl + f to find specific constants or types in this file
+
+// Model constants and types for the application
 export const USER_ROLES = {
     ADMIN: 'admin',
     EMPLOYEE: 'employee'
@@ -55,6 +58,18 @@ export const MESSAGE_STATUS = {
     READ: 'read',
     ACKNOWLEDGED: 'acknowledged'
 } as const;
+
+// Utils constants
+
+// password-hash.ts
+export const SALT_ROUNDS = 12;
+
+// datetime.utils.ts
+export const APP_TIME_ZONE = "Asia/Manila";
+export const MYSQL_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+export const MYSQL_DATE_FORMAT = "yyyy-MM-dd";
+export const MYSQL_TIME_FORMAT = "HH:mm:ss";
+
 
 // Type Exports
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
