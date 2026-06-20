@@ -11,6 +11,7 @@ import type {
 } from '../models/index.js';
 
 import type { EmploymentStatus } from '../config/constants.js';
+import { EMPLOYMENT_STATUS } from '../config/constants.js';
 import { withConnection, withTransaction } from '../config/database.js';
 
 type EmployeeRow = RowDataPacket & {
@@ -235,7 +236,7 @@ export async function updateEmployee(
 export async function activateEmployee(
     employeeId: number
 ): Promise<Employee | null> {
-    return updateEmployeeStatus(employeeId, "active");
+    return updateEmployeeStatus(employeeId, EMPLOYMENT_STATUS.ACTIVE);
 }
 
 /**
@@ -246,7 +247,7 @@ export async function activateEmployee(
 export async function deactivateEmployee(
     employeeId: number
 ): Promise<Employee | null> {
-    return updateEmployeeStatus(employeeId, "inactive");
+    return updateEmployeeStatus(employeeId, EMPLOYMENT_STATUS.INACTIVE);
 }
 
 

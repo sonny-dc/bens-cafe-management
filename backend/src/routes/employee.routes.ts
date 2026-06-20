@@ -1,15 +1,11 @@
 import { Router } from "express";
 
-import {
-    getEmployees,
-    getEmployeeById,
-    registerEmployee
-} from "../controllers/employee.controller.js";
+import { employeeController } from "../controllers/index.js";
 
 const router = Router();
 
-router.get("/", getEmployees);
-router.get("/:employeeId", getEmployeeById);
-router.post("/", registerEmployee);
+router.get("/", employeeController.getEmployees);
+router.get("/:employeeId", employeeController.getEmployeeById);
+router.post("/", employeeController.registerEmployee);
 
 export default router;

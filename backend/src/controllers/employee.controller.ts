@@ -1,12 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 
-import type { RegisterEmployeeInput } from "../models/index.js";
+import type { RegisterEmployeeInput, UpdateEmployeeInput } from "../models/index.js";
 
-import {
-    registerEmployee as registerEmployeeService,
-    getEmployees as getEmployeesService,
-    getEmployeeById as getEmployeeByIdService
-} from "../services/employee.service.js";
+import { employeeService } from "../services/index.js";
 
 /**
  * GET /api/employees
@@ -17,7 +13,7 @@ export async function getEmployees(
     next: NextFunction
 ): Promise<void> {
     try {
-        const employees = await getEmployeesService();
+        const employees = await employeeService.getEmployees();
 
         res.status(200).json({
             success: true,
@@ -40,7 +36,7 @@ export async function getEmployeeById(
     try {
         const employeeId = Number(req.params.employeeId);
 
-        const employee = await getEmployeeByIdService(employeeId);
+        const employee = await employeeService.getEmployeeById(employeeId);
 
         if (employee === null) {
             res.status(404).json({
@@ -69,9 +65,19 @@ export async function registerEmployee(
     next: NextFunction
 ): Promise<void> {
     try {
-        const input = req.body as RegisterEmployeeInput;
+        const {username, password, fullName, employeeCode, jobRole, defaultShiftHours, hourlyRate} = req.body;
+        if (!username || !password || !fullName || !employeeCode || !jobRole || !defaultShiftHours || !hourlyRate) {
+            res.status(400).json({
+                success: false,
+                message: "All fields are required: username, password, fullName, employeeCode, jobRole, defaultShiftHours, hourlyRate."
+            });
+            return;
+        }
 
-        const employee = await registerEmployeeService(input);
+        const employee = await employeeService.registerEmployee({
+            username, password, fullName, employeeCode, 
+            jobRole, defaultShiftHours, hourlyRate
+        });
 
         res.status(201).json({
             success: true,
@@ -82,3 +88,40 @@ export async function registerEmployee(
         next(error);
     }
 }
+
+/**
+ * PATCH /api/employees/:employeeId
+ */
+export async function updateEmployee(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const employeeId: number = Number(req.params.employeeId);
+        const {jobRole, defaultShiftHours, hourlyRate, employmentStatus} = req.body;
+        if (!jobRole && !defaultShiftHours && !hourlyRate && !employmentStatus) {
+            res.status(400).json({
+                success: false,
+                message: "At least one field must be provided to update: jobRole, defaultShiftHours, hourlyRate, employmentStatus."
+            });
+            return;
+        }
+
+        const updatedEmployee = await employeeService.updateEmployee(employeeId, {
+            jobRole,
+            defaultShiftHours,
+            hourlyRate,
+            employmentStatus
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Employee updated successfully.",
+            data: updatedEmployee
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
