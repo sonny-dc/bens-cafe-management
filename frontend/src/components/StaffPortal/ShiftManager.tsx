@@ -38,6 +38,7 @@ export function ShiftManager() {
       setOpeningCash('');
     } catch (err: any) {
       setError(err.message || 'Failed to start shift');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -66,6 +67,7 @@ export function ShiftManager() {
       setClosingCash('');
     } catch (err: any) {
       setError(err.message || 'Failed to end shift');
+    } finally {
       setIsLoading(false);
     }
   };

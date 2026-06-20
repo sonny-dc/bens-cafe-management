@@ -8,8 +8,8 @@ type Tab = 'shift' | 'notes' | 'inventory';
 
 const tabs: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
   { id: 'shift',     label: 'My Shift',           icon: Clock },
-  { id: 'notes',     label: 'Notes & Messages',    icon: MessageSquare, badge: 3 },
-  { id: 'inventory', label: 'Inventory Requests',  icon: ShoppingCart,  badge: 2 },
+  { id: 'notes',     label: 'Notes & Messages',   icon: MessageSquare },
+  { id: 'inventory', label: 'Inventory Requests', icon: ShoppingCart },
 ];
 
 export function StaffPortal() {
