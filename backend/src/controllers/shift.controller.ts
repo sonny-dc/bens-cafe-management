@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import * as shiftService from '../services/shift.service.js';
+import { shiftService } from '../services/index.js';
 
 export async function startShift(req: Request, res: Response): Promise<void> {
     try {

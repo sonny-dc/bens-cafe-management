@@ -205,7 +205,8 @@ CREATE TABLE restock_calculation_items (
 CREATE TABLE staff_messages (
   message_id INT AUTO_INCREMENT PRIMARY KEY,
   employee_id INT NOT NULL,
-  message_type ENUM('urgent', 'suggestion', 'maintenance', 'customer_feedback', 'other') NOT NULL DEFAULT 'other',
+  message_type ENUM('general', 'concern', 'urgent', 'suggestion', 'maintenance', 'customer_feedback', 'other') NOT NULL DEFAULT 'general',
+  subject VARCHAR(255) NULL,
   message_text TEXT NOT NULL,
   message_status ENUM('new', 'read', 'acknowledged') NOT NULL DEFAULT 'new',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

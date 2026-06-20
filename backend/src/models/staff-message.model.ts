@@ -1,8 +1,7 @@
-export type MessageType = 'general' | 'concern' | 'urgent';
-export type MessageStatus = 'new' | 'read' | 'acknowledged';
+import type { MessageStatus, MessageType } from '../config/constants.js';
 
-export interface Note {
-    noteId: number;
+export interface StaffMessage {
+    messageId: number;
     employeeId: number;
     employeeName?: string | undefined;
     messageType: MessageType;
@@ -14,7 +13,7 @@ export interface Note {
     userId: number | null;
 }
 
-export interface CreateNoteInput {
+export interface CreateStaffMessageInput {
     employeeId: number;
     messageType: MessageType;
     subject: string | null;

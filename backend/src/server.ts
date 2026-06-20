@@ -7,9 +7,11 @@ import {fileURLToPath} from 'url';
 import {testConnection} from './config/database.js';
 
 // Route imports
-import employeeRoutes from "./routes/employee-routes.js";
-import shiftRoutes from "./routes/shift-routes.js";
-import noteRoutes from "./routes/note-routes.js";
+import {
+  employeeRoutes, 
+  shiftRoutes, 
+  staffMessageRoutes 
+} from './routes/index.js';
 
 const app = express();
 
@@ -46,7 +48,7 @@ app.get('/', (_req: Request, res: Response) => {
 });
 app.use("/api/employees", employeeRoutes);
 app.use("/api/shifts", shiftRoutes);
-app.use("/api/notes", noteRoutes);
+app.use("/api/staff-messages", staffMessageRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

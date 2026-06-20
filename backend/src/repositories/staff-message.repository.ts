@@ -1,6 +1,8 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import type { StaffMessage, CreateStaffMessageInput } from '../models/index.js';
+import type { MessageStatus, MessageType } from '../config/constants.js';
+
 import { withConnection, withTransaction } from '../config/database.js';
-import type { Note, CreateNoteInput, MessageType, MessageStatus } from '../models/index.js';
 
 type MessageRow = RowDataPacket & {
     message_id: number;
@@ -15,9 +17,9 @@ type MessageRow = RowDataPacket & {
     user_id: number | null;
 };
 
-function mapRow(row: MessageRow): Note {
+function mapRow(row: MessageRow): StaffMessage {
     return {
-        noteId: row.message_id,
+        messageId: row.message_id,
         employeeId: row.employee_id,
         employeeName: row.employee_name ?? undefined,
         messageType: row.message_type,
@@ -30,7 +32,7 @@ function mapRow(row: MessageRow): Note {
     };
 }
 
-export async function createNote(input: CreateNoteInput): Promise<Note> {
+export async function createStaffMessage(input: CreateStaffMessageInput): Promise<StaffMessage> {
     return withTransaction(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
             `INSERT INTO staff_messages (employee_id, message_type, subject, message_text, message_status)
@@ -53,7 +55,7 @@ export async function createNote(input: CreateNoteInput): Promise<Note> {
     });
 }
 
-export async function getAllNotes(): Promise<Note[]> {
+export async function getAllStaffMessages(): Promise<StaffMessage[]> {
     return withConnection(async (connection) => {
         const [rows] = await connection.query<MessageRow[]>(
             `SELECT sm.*, u.full_name AS employee_name
@@ -66,7 +68,7 @@ export async function getAllNotes(): Promise<Note[]> {
     });
 }
 
-export async function getNotesByEmployee(employeeId: number): Promise<Note[]> {
+export async function getStaffMessagesByEmployee(employeeId: number): Promise<StaffMessage[]> {
     return withConnection(async (connection) => {
         const [rows] = await connection.query<MessageRow[]>(
             `SELECT sm.*, u.full_name AS employee_name
@@ -81,11 +83,11 @@ export async function getNotesByEmployee(employeeId: number): Promise<Note[]> {
     });
 }
 
-export async function markNoteAsRead(noteId: number): Promise<boolean> {
+export async function markStaffMessageAsRead(messageId: number): Promise<boolean> {
     return withConnection(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
             `UPDATE staff_messages SET message_status = 'read', read_at = CURRENT_TIMESTAMP WHERE message_id = ?`,
-            [noteId]
+            [messageId]
         );
         return result.affectedRows > 0;
     });
