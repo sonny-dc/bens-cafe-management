@@ -11,6 +11,7 @@ export interface Note {
   subject: string | null;
   messageText: string;
   messageStatus: MessageStatus;
+  postedAt: string;
   createdAt: string;
   readAt: string | null;
   userId: number | null;
