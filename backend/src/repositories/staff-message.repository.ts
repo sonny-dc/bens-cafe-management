@@ -1,6 +1,7 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import type { StaffMessage, CreateStaffMessageInput } from '../models/index.js';
 import type { MessageStatus, MessageType } from '../config/constants.js';
+import { MESSAGE_STATUS } from '../config/constants.js';
 
 import { withConnection, withTransaction } from '../config/database.js';
 
@@ -36,8 +37,8 @@ export async function createStaffMessage(input: CreateStaffMessageInput): Promis
     return withTransaction(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
             `INSERT INTO staff_messages (employee_id, message_type, subject, message_text, message_status)
-             VALUES (?, ?, ?, ?, 'new')`,
-            [input.employeeId, input.messageType, input.subject, input.messageText]
+             VALUES (?, ?, ?, ?, ?)`,
+            [input.employeeId, input.messageType, input.subject, input.messageText, MESSAGE_STATUS.NEW]
         );
 
         const [rows] = await connection.query<MessageRow[]>(
@@ -86,8 +87,8 @@ export async function getStaffMessagesByEmployee(employeeId: number): Promise<St
 export async function markStaffMessageAsRead(messageId: number): Promise<boolean> {
     return withConnection(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
-            `UPDATE staff_messages SET message_status = 'read', read_at = CURRENT_TIMESTAMP WHERE message_id = ?`,
-            [messageId]
+            `UPDATE staff_messages SET message_status = ?, read_at = CURRENT_TIMESTAMP WHERE message_id = ?`,
+            [MESSAGE_STATUS.READ, messageId]
         );
         return result.affectedRows > 0;
     });
