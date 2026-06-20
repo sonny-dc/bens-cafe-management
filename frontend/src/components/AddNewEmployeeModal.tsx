@@ -7,7 +7,7 @@ export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onCl
   const [role, setRole] = useState('Head Barista');
   const [defaultShift, setDefaultShift] = useState<number>(8);
   const [hourlyRate, setHourlyRate] = useState<number>(70);
-  const [status] = useState('Active');
+  // Removed unused status state
 
   const dailyPay = defaultShift * hourlyRate;
   const estMonthly = dailyPay * 26; // Assuming 26 working days in a month

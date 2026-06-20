@@ -4,7 +4,7 @@ import {
     getEmployees,
     getEmployeeById,
     registerEmployee
-} from "../controllers/employee-controller.js";
+} from "../controllers/employee.controller.js";
 
 const router = Router();
 

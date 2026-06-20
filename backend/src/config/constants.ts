@@ -41,11 +41,19 @@ export const EXPENSE_CATEGORIES = {
 } as const;
 
 export const MESSAGE_TYPES = {
+    GENERAL: 'general',
+    CONCERN: 'concern',
     URGENT: 'urgent',
     SUGGESTION: 'suggestion',
     MAINTENANCE: 'maintenance',
     FEEDBACK: 'customer_feedback',
     OTHER: 'other'
+} as const;
+
+export const MESSAGE_STATUS = {
+    NEW: 'new',
+    READ: 'read',
+    ACKNOWLEDGED: 'acknowledged'
 } as const;
 
 // Type Exports
@@ -57,3 +65,4 @@ export type InventoryStatus = typeof INVENTORY_STATUS[keyof typeof INVENTORY_STA
 export type RequestStatus = typeof REQUEST_STATUS[keyof typeof REQUEST_STATUS];
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[keyof typeof EXPENSE_CATEGORIES];
 export type MessageType = typeof MESSAGE_TYPES[keyof typeof MESSAGE_TYPES];
+export type MessageStatus = typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];

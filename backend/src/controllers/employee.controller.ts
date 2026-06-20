@@ -6,7 +6,7 @@ import {
     registerEmployee as registerEmployeeService,
     getEmployees as getEmployeesService,
     getEmployeeById as getEmployeeByIdService
-} from "../services/employee-service.js";
+} from "../services/employee.service.js";
 
 /**
  * GET /api/employees

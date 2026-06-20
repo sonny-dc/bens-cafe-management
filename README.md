@@ -49,7 +49,7 @@ HTTP Request → Route → Controller → Service → Repository → Database
 
 ### 📐 Code Standards
 
-- **Files:** kebab-case (`user-service.ts`, `inventory-repository.ts`)
+- **Files:** `filename.dirname.ts` format (`user.service.ts`, `inventory.repository.ts`)
 - **Code:** camelCase (`getUserById`, `totalRevenue`)
 - **Classes/Types:** PascalCase (`UserService`, `InventoryItem`)
 - **Constants:** UPPER_SNAKE_CASE (`MAX_RETRIES`, `DB_TIMEOUT`)
@@ -187,78 +187,82 @@ bens-cafe-management/
 │   │   │   └── index.ts                       # Barrel export - export all models for easy importing
 │   │   │
 │   │   ├── repositories/                      # Database access layer - handles all SQL queries
-│   │   │   ├── user-repository.ts             # Queries for user table
-│   │   │   ├── employee-repository.ts         # Queries for employee_profiles table
-│   │   │   ├── inventory-repository.ts        # Queries for inventory and category tables
-│   │   │   ├── sales-repository.ts            # Queries for sales_entries table
-│   │   │   ├── shift-repository.ts            # Queries for shift_sessions table
-│   │   │   ├── expense-repository.ts          # Queries for expenses table
-│   │   │   ├── payroll-repository.ts          # Queries for payroll_entries table
+│   │   │   ├── user.repository.ts             # Queries for user table
+│   │   │   ├── employee.repository.ts         # Queries for employee_profiles table
+│   │   │   ├── inventory.repository.ts        # Queries for inventory and category tables
+│   │   │   ├── sales.repository.ts            # Queries for sales_entries table
+│   │   │   ├── shift.repository.ts            # Queries for shift_sessions table
+│   │   │   ├── expense.repository.ts          # Queries for expenses table
+│   │   │   ├── payroll.repository.ts          # Queries for payroll_entries table
+│   │   │   ├── staff-message.repository.ts    # Queries for staff_messages table
 │   │   │   └── index.ts                       # Barrel export
 │   │   │
 │   │   ├── services/                          # Business logic layer
-│   │   │   ├── user-service.ts                # User management, password hashing, authentication
-│   │   │   ├── employee-service.ts            # Employee profile management
-│   │   │   ├── inventory-service.ts           # Stock updates, thresholds, restock logic
-│   │   │   ├── sales-service.ts               # Sales entry creation, revenue calculations
-│   │   │   ├── shift-service.ts               # Shift tracking and cash variance
-│   │   │   ├── expense-service.ts             # Expense categorization and deduction logic
-│   │   │   ├── payroll-service.ts             # Payroll calculations
+│   │   │   ├── user.service.ts                # User management, password hashing, authentication
+│   │   │   ├── employee.service.ts            # Employee profile management
+│   │   │   ├── inventory.service.ts           # Stock updates, thresholds, restock logic
+│   │   │   ├── sales.service.ts               # Sales entry creation, revenue calculations
+│   │   │   ├── shift.service.ts               # Shift tracking and cash variance
+│   │   │   ├── expense.service.ts             # Expense categorization and deduction logic
+│   │   │   ├── payroll.service.ts             # Payroll calculations
+│   │   │   ├── staff-message.service.ts       # Staff message management and status updates
 │   │   │   └── index.ts                       # Barrel export
 │   │   │
 │   │   ├── controllers/                       # Request handlers
-│   │   │   ├── user-controller.ts             # User registration, login, profile endpoints
-│   │   │   ├── employee-controller.ts         # Employee CRUD endpoints
-│   │   │   ├── inventory-controller.ts        # Inventory requests and adjustments
-│   │   │   ├── sales-controller.ts            # Sales entry endpoints
-│   │   │   ├── shift-controller.ts            # Shift start/end endpoints
-│   │   │   ├── expense-controller.ts          # Expense endpoints
-│   │   │   ├── payroll-controller.ts          # Payroll endpoints
+│   │   │   ├── user.controller.ts             # User registration, login, profile endpoints
+│   │   │   ├── employee.controller.ts         # Employee CRUD endpoints
+│   │   │   ├── inventory.controller.ts        # Inventory requests and adjustments
+│   │   │   ├── sales.controller.ts            # Sales entry endpoints
+│   │   │   ├── shift.controller.ts            # Shift start/end endpoints
+│   │   │   ├── expense.controller.ts          # Expense endpoints
+│   │   │   ├── payroll.controller.ts          # Payroll endpoints
+│   │   │   ├── staff-message.controller.ts    # Staff message endpoints
 │   │   │   └── index.ts                       # Barrel export
 │   │   │
 │   │   ├── routes/                            # Express route definitions
-│   │   │   ├── user-routes.ts                 # User and auth routes
-│   │   │   ├── employee-routes.ts             # Employee routes
-│   │   │   ├── inventory-routes.ts            # Inventory routes
-│   │   │   ├── sales-routes.ts                # Sales routes
-│   │   │   ├── shift-routes.ts                # Shift routes
-│   │   │   ├── expense-routes.ts              # Expense routes
-│   │   │   ├── payroll-routes.ts              # Payroll routes
+│   │   │   ├── user.routes.ts                 # User and auth routes
+│   │   │   ├── employee.routes.ts             # Employee routes
+│   │   │   ├── inventory.routes.ts            # Inventory routes
+│   │   │   ├── sales.routes.ts                # Sales routes
+│   │   │   ├── shift.routes.ts                # Shift routes
+│   │   │   ├── expense.routes.ts              # Expense routes
+│   │   │   ├── payroll.routes.ts              # Payroll routes
+│   │   │   ├── staff-message.routes.ts        # Staff message routes
 │   │   │   └── index.ts                       # Mount all routes
 │   │   │
 │   │   ├── middleware/                        # Request processing middleware
-│   │   │   ├── auth-middleware.ts             # JWT verification and role-based access
-│   │   │   ├── error-handler.ts               # Global error handling
-│   │   │   ├── request-logger.ts              # Request logging
-│   │   │   └── validation-middleware.ts       # Request payload validation
+│   │   │   ├── auth.middleware.ts             # JWT verification and role-based access
+│   │   │   ├── error.handler.ts               # Global error handling
+│   │   │   ├── request.logger.ts              # Request logging
+│   │   │   └── validation.middleware.ts       # Request payload validation
 │   │   │
 │   │   ├── validators/                        # Input validation schemas
-│   │   │   ├── user-validator.ts              # User validation
-│   │   │   ├── inventory-validator.ts         # Inventory validation
-│   │   │   ├── sales-validator.ts             # Sales validation
-│   │   │   ├── shift-validator.ts             # Shift validation
-│   │   │   └── expense-validator.ts           # Expense validation
+│   │   │   ├── user.validator.ts              # User validation
+│   │   │   ├── inventory.validator.ts         # Inventory validation
+│   │   │   ├── sales.validator.ts             # Sales validation
+│   │   │   ├── shift.validator.ts             # Shift validation
+│   │   │   └── expense.validator.ts           # Expense validation
 │   │   │
 │   │   ├── xml/                               # XML handling
 │   │   │   ├── parsers/                       # Convert XML to JavaScript objects
-│   │   │   │   ├── inventory-parser.ts
-│   │   │   │   ├── sales-parser.ts
-│   │   │   │   └── payroll-parser.ts
+│   │   │   │   ├── inventory.parser.ts
+│   │   │   │   ├── sales.parser.ts
+│   │   │   │   └── payroll.parser.ts
 │   │   │   ├── builders/                      # Convert JavaScript objects to XML
-│   │   │   │   ├── report-builder.ts
-│   │   │   │   ├── inventory-builder.ts
-│   │   │   │   └── payroll-builder.ts
+│   │   │   │   ├── report.builder.ts
+│   │   │   │   ├── inventory.builder.ts
+│   │   │   │   └── payroll.builder.ts
 │   │   │   └── templates/                     # XML templates
-│   │   │       ├── inventory-template.xml
-│   │   │       ├── sales-template.xml
-│   │   │       └── payroll-template.xml
+│   │   │       ├── inventory.template.xml
+│   │   │       ├── sales.template.xml
+│   │   │       └── payroll.template.xml
 │   │   │
 │   │   ├── utils/                             # Shared utility functions
-│   │   │   ├── password-hash.ts               # bcrypt password hashing/verification
-│   │   │   ├── date-utils.ts                  # Date formatting and calculations
-│   │   │   ├── money-utils.ts                 # Money formatting and decimal calculations
-│   │   │   ├── cash-variance.ts               # Cash variance calculation
-│   │   │   └── jwt-utils.ts                   # Generate and verify JWT tokens
+│   │   │   ├── password.hash.ts               # bcrypt password hashing/verification
+│   │   │   ├── date.utils.ts                  # Date formatting and calculations
+│   │   │   ├── money.utils.ts                 # Money formatting and decimal calculations
+│   │   │   ├── cash.variance.ts               # Cash variance calculation
+│   │   │   └── jwt.utils.ts                   # Generate and verify JWT tokens
 │   │   │
 │   │   ├── config/                            # Configuration files
 │   │   │   ├── database.ts                    # MySQL connection pool setup
@@ -409,9 +413,9 @@ const [rows] = await pool.query(
 
 ## 🔐 Authentication & Security
 
-- Always hash passwords using `bcrypt` in `password-hash.ts`
+- Always hash passwords using `bcrypt` in `password.hash.ts`
 - Protect admin routes with auth middleware
-- Use JWT tokens for authentication through `jwt-utils.ts`
+- Use JWT tokens for authentication through `jwt.utils.ts`
 - Never expose sensitive data such as passwords, tokens, or API keys
 - Always release database connections after use
 
@@ -423,7 +427,7 @@ connection.release();
 
 ## ❌ Error Handling
 
-- Use centralized error handler: `error-handler.ts`
+- Use centralized error handler: `error.handler.ts`
 - Services should throw errors with descriptive messages
 - Controllers should catch errors and send responses
 
