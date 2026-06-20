@@ -257,7 +257,9 @@ export function NotesManager() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {note.messageStatus === 'new' && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
-                        <span className="text-[11px] opacity-70">{timeAgo(note.createdAt)}</span>
+                        <span className="text-[11px] opacity-70">
+                          {new Date(note.postedAt || note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
                     </div>
                     {/* Subject (if present) */}
