@@ -131,6 +131,41 @@ export async function createUser(
     });
 }
 
+export async function createUserWithConnection(
+    input: CreateUserRepositoryInput,
+    connection: PoolConnection
+): Promise<User> {
+    const [result] = await connection.execute<ResultSetHeader>(
+        `
+        INSERT INTO users (
+            username,
+            password_hash,
+            full_name,
+            role,
+            account_status
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+            input.username,
+            input.passwordHash,
+            input.fullName,
+            input.role ?? USER_ROLES.EMPLOYEE,
+            ACCOUNT_STATUS.ACTIVE
+        ]
+    );
+
+    const user = await getUserByIdWithConnection(
+        connection,
+        result.insertId
+    );
+
+    if (user === null) {
+        throw new Error("Created user account could not be found.");
+    }
+
+    return user;
+}
 
 /**
  * ROUTE / USE CASE: GET /api/users/:userId

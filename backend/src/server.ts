@@ -10,7 +10,8 @@ import {testConnection} from './config/database.js';
 import {
   employeeRoutes, 
   shiftRoutes, 
-  staffMessageRoutes 
+  staffMessageRoutes,
+  salesEntryRoutes
 } from './routes/index.js';
 
 const app = express();
@@ -49,6 +50,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.use("/api/employees", employeeRoutes);
 app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
+app.use("/api/sales-entries", salesEntryRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

@@ -261,9 +261,8 @@ CREATE TABLE sales_entries (
   physical_cash_count DECIMAL(12,2) NULL DEFAULT NULL,
   total_revenue DECIMAL(12,2) GENERATED ALWAYS AS (cash_sales + online_card_sales) STORED,
   user_id INT NULL,
-  status ENUM('draft', 'saved') NOT NULL DEFAULT 'draft',
+  posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_sales_entries_user
     FOREIGN KEY (user_id) REFERENCES users(user_id)
