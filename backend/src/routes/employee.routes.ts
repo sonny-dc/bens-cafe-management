@@ -3,43 +3,44 @@ import { Router } from "express";
 import { validate } from "../middleware/validation.middleware.js";
 import { employeeIdParamSchema, registerEmployeeSchema, updateEmployeeSchema } from "../validators/employee.validator.js";
 import { employeeController } from "../controllers/index.js";
+import { REQUEST_TYPES } from "../config/constants.js";
 
 const router = Router();
 
 router.get("/", employeeController.getEmployees);
 router.get(
     "/:employeeId", 
-    validate(employeeIdParamSchema), 
+    validate(employeeIdParamSchema, REQUEST_TYPES.PARAMS), 
     employeeController.getEmployeeById
 );
 router.post(
     "/", 
-    validate(registerEmployeeSchema), 
+    validate(registerEmployeeSchema, REQUEST_TYPES.BODY), 
     employeeController.registerEmployee
 );
 
 router.patch(
     "/:employeeId",
-    validate(employeeIdParamSchema),
-    validate(updateEmployeeSchema), 
+    validate(employeeIdParamSchema, REQUEST_TYPES.PARAMS),
+    validate(updateEmployeeSchema, REQUEST_TYPES.BODY),
     employeeController.updateEmployee
 );
 
-router.post(
+router.patch(
     "/:employeeId/activate",
-    validate(employeeIdParamSchema),
+    validate(employeeIdParamSchema, REQUEST_TYPES.PARAMS),
     employeeController.activateEmployee
 );
 
-router.post(
+router.patch(
     "/:employeeId/deactivate",
-    validate(employeeIdParamSchema),
+    validate(employeeIdParamSchema, REQUEST_TYPES.PARAMS),
     employeeController.deactivateEmployee
 );
 
 router.delete(
     "/:employeeId",
-    validate(employeeIdParamSchema),
+    validate(employeeIdParamSchema, REQUEST_TYPES.PARAMS),
     employeeController.deleteEmployee
 );
 
