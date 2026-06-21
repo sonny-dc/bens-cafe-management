@@ -9,7 +9,7 @@ import type {
     CreateSalesEntryInput
 } from '../models/index.js';
 
-import { withConnection, withTransaction } from '../config/database.js';
+import { withConnection } from '../config/database.js';
 
 type SalesEntryRow = RowDataPacket & {
     sales_entry_id: number;
@@ -41,8 +41,8 @@ function mapSalesEntryRow(row: SalesEntryRow): SalesEntry {
  * an existing database connection.
  */
 async function getSalesEntryByIdWithConnection(
-    connection: PoolConnection,
-    salesEntryId: number
+    salesEntryId: number,
+    connection: PoolConnection
 ): Promise<SalesEntry | null> {
     const [rows] = await connection.query<SalesEntryRow[]>(
         `
@@ -71,7 +71,7 @@ export async function getAllSalesEntries(): Promise<SalesEntry[]> {
         const [rows] = await connection.query<SalesEntryRow[]>(
             `
             SELECT * FROM sales_entries
-            ORDER BY posted_at DESC
+            ORDER BY posted_at ASC
             `
         );
         return rows.map(mapSalesEntryRow);
@@ -85,45 +85,47 @@ export async function getSalesEntryById(
     salesEntryId: number
 ): Promise<SalesEntry | null> {
     return withConnection(async (connection) => {
-        return getSalesEntryByIdWithConnection(connection, salesEntryId);
+        return getSalesEntryByIdWithConnection(salesEntryId, connection);
     });
 }
 
 /**
  * ROUTE: POST /api/sales-entries/
  */
-export async function createSalesEntry(
-    input: CreateSalesEntryInput
+export async function createSalesEntryWithConnection(
+    input: CreateSalesEntryInput,
+    connection: PoolConnection
 ): Promise<SalesEntry> {
-    return withTransaction(async (connection) => {
-        const [result] = await connection.execute<ResultSetHeader>(
-            `
-            INSERT INTO sales_entries (
-                cash_sales, 
-                online_card_sales, 
-                physical_cash_count, 
-                posted_at
-            )
-            VALUES (?, ?, ?, ?)
-            `
-            ,
-            [
-                input.cashSales, 
-                input.onlineCardSales, 
-                input.physicalCashCount, 
-                input.postedAt
-            ]
-        );
-        const salesEntry = await getSalesEntryByIdWithConnection(
-            connection, 
-            result.insertId
-        );
+    const [result] = await connection.execute<ResultSetHeader>(
+        `
+        INSERT INTO sales_entries (
+            cash_sales, 
+            online_card_sales, 
+            physical_cash_count, 
+            user_id,
+            posted_at
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `
+        ,
+        [
+            input.cashSales, 
+            input.onlineCardSales, 
+            input.physicalCashCount,
+            input.userId,
+            input.postedAt
+        ]
+    );
+    const salesEntry = await getSalesEntryByIdWithConnection(
+        result.insertId,
+        connection
+    );
 
-        if (salesEntry === null) {
-            throw new Error("Failed to retrieve the newly created sales entry.");
-        }
+    if (salesEntry === null) {
+        throw new Error("Failed to retrieve the newly created sales entry.");
+    }
 
-        return salesEntry;
-    });
+    return salesEntry;
+    
 }
 

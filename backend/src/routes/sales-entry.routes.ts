@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { validate } from '../middleware/validation.middleware.js';
-import { salesEntryIdParamSchema, createSalesEntrySchema } from '../validators/sales-entry.validator.js';
+import { salesEntryIdParamSchema, createSalesEntryTransactionSchema } from '../validators/index.js';
 import { salesEntryController } from '../controllers/index.js';
 import { REQUEST_TYPES } from '../config/constants.js';
 
@@ -15,7 +15,7 @@ router.get(
 );
 router.post(
     '/',
-    validate(createSalesEntrySchema, REQUEST_TYPES.BODY),
+    validate(createSalesEntryTransactionSchema, REQUEST_TYPES.BODY),
     salesEntryController.createSalesEntry
 );
 

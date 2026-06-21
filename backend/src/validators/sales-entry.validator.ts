@@ -1,11 +1,7 @@
 import { z } from 'zod';
-
-const decimalString = z
-    .string()
-    .regex(
-        /^\d+(\.\d{2})?$/,
-        "Must be a valid number or decimal with exactly 2 decimal places"
-    );
+import { decimalString, nullablePositiveInt, nullableDecimalString } from './common.validator.js';
+import { createExpenseSchema } from './expense.validator.js';
+import { createPayrollEntrySchema } from './payroll-entry.validator.js';
 
 export const salesEntryIdParamSchema = z.object({
     salesEntryId: z.coerce
@@ -17,5 +13,17 @@ export const salesEntryIdParamSchema = z.object({
 export const createSalesEntrySchema = z.object({
     cashSales: decimalString,
     onlineCardSales: decimalString,
-    physicalCashCount: decimalString.optional()
+    physicalCashCount: nullableDecimalString,
+    userId: nullablePositiveInt
 });
+
+export const createSalesEntryTransactionSchema = z.object({
+    cashSales: decimalString,
+    onlineCardSales: decimalString,
+    physicalCashCount: nullableDecimalString,
+    userId: nullablePositiveInt,
+
+    payrollEntries: z.array(createPayrollEntrySchema).min(1, 'At least one payroll entry is required'),
+    expenses: z.array(createExpenseSchema).optional().default([])
+});
+

@@ -1,6 +1,9 @@
 // Use ctrl + f to find specific constants or types in this file
 
-// Model constants and types for the application
+/**
+ * Application Constants
+ */
+
 export const USER_ROLES = {
     ADMIN: 'admin',
     EMPLOYEE: 'employee'
@@ -59,14 +62,21 @@ export const MESSAGE_STATUS = {
     ACKNOWLEDGED: 'acknowledged'
 } as const;
 
-// Request Type Definitions
+
+
+/**
+ * Request Type Definitions
+ */ 
+
 export const REQUEST_TYPES = {
     BODY: 'body',
     QUERY: 'query',
     PARAMS: 'params'
 } as const;
 
-// Utils constants
+/**
+ * Utility Constants
+ */
 
 // password-hash.ts
 export const SALT_ROUNDS = 12;

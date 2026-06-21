@@ -1,13 +1,7 @@
 import { z } from 'zod';
+import { decimalString } from './common.validator.js';
+
 import { EMPLOYMENT_STATUS } from '../config/constants.js';
-
-
-const decimalString = z
-    .string()
-    .regex(
-        /^\d+(\.\d{2})?$/,
-        "Must be a valid number or decimal with exactly 2 decimal places"
-    );
 
 export const employeeIdParamSchema = z.object({
     employeeId: z.coerce

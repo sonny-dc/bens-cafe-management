@@ -65,23 +65,23 @@ export async function createSalesEntry(
     res: Response
 ): Promise<void> {
     try {
-        const newSalesEntry = await salesEntryService.createSalesEntry(req.body);
+        const newSalesEntry = await salesEntryService.createSalesEntryTransaction(req.body);
         if (!newSalesEntry) {
             res.status(400).json({
             success: false,
-                message: 'Failed to create sales entry.'
+                message: 'Failed to create sales entry transaction. Please check the input data.'
             });
             return;
         }
         res.status(201).json({
             success: true,
-            message: 'Sales entry created successfully.',
+            message: 'Sales entry transaction created successfully.',
             data: newSalesEntry
         });
     } catch (error: any) {
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to create sales entry'
+            message: error.message || 'Failed to process sales entry transaction'
         });
     }
 }
