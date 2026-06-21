@@ -3,8 +3,16 @@ import pool from '../config/database.js';
 async function inspectTable() {
     try {
         const connection = await pool.getConnection();
-        const [rows] = await connection.query(`DESCRIBE shift_sessions`);
-        console.log(JSON.stringify(rows, null, 2));
+        const [tables]: any = await connection.query(`SHOW TABLES`);
+        console.log("--- TABLES ---");
+        console.log(tables);
+        
+        for (const row of tables) {
+            const tableName = Object.values(row)[0];
+            const [schema] = await connection.query(`DESCRIBE ${tableName}`);
+            console.log(`\n--- SCHEMA FOR ${tableName} ---`);
+            console.log(JSON.stringify(schema, null, 2));
+        }
         connection.release();
     } catch (error) {
         console.error("Error:", error);
