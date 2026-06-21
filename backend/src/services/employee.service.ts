@@ -5,19 +5,6 @@ import { userRepository, employeeRepository } from "../repositories/index.js";
 import { hashPassword } from "../utils/password-hash.js";
 
 
-// Helper functions
-function validateEmployeeId(employeeId: number): void {
-    if (isNaN(employeeId)) {
-        throw new Error("Invalid employeeId parameter.");
-    }
-}
-
-function throwIfEmployeeNotFound(employee: Employee | null): void {
-    if (employee === null) {
-        throw new Error("Employee not found.");
-    }
-}
-
 /**
  * Registers an employee by creating a user account first,
  * then creating an employee profile using the generated userId.
@@ -65,11 +52,7 @@ export async function getEmployees(): Promise<Employee[]> {
 export async function getEmployeeById(
     employeeId: number
 ): Promise<Employee | null> {
-    validateEmployeeId(employeeId);
-    const employee: Employee | null = await employeeRepository.getEmployeeById(employeeId);
-    throwIfEmployeeNotFound(employee);
-
-    return employee;
+    return await employeeRepository.getEmployeeById(employeeId);
 }
 
 /**
@@ -79,11 +62,7 @@ export async function updateEmployee(
     employeeId: number,
     input: UpdateEmployeeInput
 ): Promise<Employee | null> {
-    validateEmployeeId(employeeId);
-    const updatedEmployee: Employee | null = await employeeRepository.updateEmployee(employeeId, input);
-    throwIfEmployeeNotFound(updatedEmployee);
-
-    return updatedEmployee;
+    return await employeeRepository.updateEmployee(employeeId, input);
 }
 
 /**
@@ -91,11 +70,7 @@ export async function updateEmployee(
  * best for buttons that toggle activation of an employee.
  */
 export async function activateEmployee(employeeId: number): Promise<Employee | null> {
-    validateEmployeeId(employeeId);
-    const activatedEmployee: Employee | null = await employeeRepository.activateEmployee(employeeId);
-    throwIfEmployeeNotFound(activatedEmployee);
-
-    return activatedEmployee;
+    return await employeeRepository.activateEmployee(employeeId);
 }
 
 /**
@@ -103,9 +78,13 @@ export async function activateEmployee(employeeId: number): Promise<Employee | n
  * best for buttons that toggle deactivation of an employee.
  */
 export async function deactivateEmployee(employeeId: number): Promise<Employee | null> {
-    validateEmployeeId(employeeId);
-    const deactivatedEmployee: Employee | null = await employeeRepository.deactivateEmployee(employeeId);
-    throwIfEmployeeNotFound(deactivatedEmployee);
+    return await employeeRepository.deactivateEmployee(employeeId);
+}
 
-    return deactivatedEmployee;
+/**
+ * Deletes an employee profile permanently from the database. Use with caution.
+ * Also deletes the associated user account.
+ */
+export async function deleteEmployee(employeeId: number): Promise<boolean> {
+    return await employeeRepository.deleteEmployee(employeeId);
 }
