@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Clock, MessageSquare, ShoppingCart } from 'lucide-react';
 import { ShiftManager } from './ShiftManager';
 import { NotesManager } from './NotesManager';
+import { InventoryManager } from './InventoryManager';
 
 type Tab = 'shift' | 'notes' | 'inventory';
 
@@ -122,9 +123,7 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
 
             {activeTab === 'notes' && <NotesManager />}
 
-            {activeTab === 'inventory' && (
-              <EmptyState icon={ShoppingCart} title="Inventory Requests" description="Submit requests for supplies that are running low." />
-            )}
+            {activeTab === 'inventory' && <InventoryManager />}
           </motion.div>
         </AnimatePresence>
       </main>

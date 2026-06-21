@@ -7,5 +7,6 @@ router.post('/', staffMessageController.createStaffMessage);
 router.get('/', staffMessageController.getAllStaffMessages);
 router.get('/employee/:employeeId', staffMessageController.getStaffMessagesByEmployee);
 router.patch('/:staffMessageId/read', staffMessageController.markStaffMessageAsRead);
+router.patch('/:id/status', staffMessageController.updateStaffMessageStatus);
 
 export default router;

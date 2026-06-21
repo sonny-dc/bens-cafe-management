@@ -18,3 +18,7 @@ export async function getStaffMessagesByEmployee(employeeId: number): Promise<St
 export async function markStaffMessageAsRead(messageId: number): Promise<boolean> {
     return staffMessageRepository.markStaffMessageAsRead(messageId, getCurrentAppDateTime());
 }
+
+export async function updateStaffMessageStatus(messageId: number, status: string): Promise<boolean> {
+    return staffMessageRepository.updateStaffMessageStatus(messageId, status);
+}

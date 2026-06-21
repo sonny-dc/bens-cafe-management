@@ -95,3 +95,13 @@ export async function markStaffMessageAsRead(messageId: number, readAt: string):
         return result.affectedRows > 0;
     });
 }
+
+export async function updateStaffMessageStatus(messageId: number, status: string): Promise<boolean> {
+    return withConnection(async (connection) => {
+        const [result] = await connection.execute<ResultSetHeader>(
+            `UPDATE staff_messages SET message_status = ? WHERE message_id = ?`,
+            [status, messageId]
+        );
+        return result.affectedRows > 0;
+    });
+}

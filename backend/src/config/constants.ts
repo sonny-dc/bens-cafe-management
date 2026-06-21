@@ -18,7 +18,8 @@ export const EMPLOYMENT_STATUS = {
 
 export const SHIFT_STATUS = {
     IN_PROGRESS: 'in_progress',
-    COMPLETED: 'completed'
+    COMPLETED: 'completed',
+    ARCHIVED: 'archived'
 } as const;
 
 export const INVENTORY_STATUS = {

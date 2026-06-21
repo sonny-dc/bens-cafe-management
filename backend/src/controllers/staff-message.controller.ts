@@ -64,3 +64,25 @@ export async function markStaffMessageAsRead(req: Request, res: Response): Promi
         res.status(500).json({ error: 'Internal Server Error' });
     }
 }
+
+export async function updateStaffMessageStatus(req: Request, res: Response): Promise<void> {
+    try {
+        const staffMessageId = Number(req.params.id);
+        const { status } = req.body;
+        
+        if (!status) {
+            res.status(400).json({ error: 'status is required.' });
+            return;
+        }
+
+        const success = await staffMessageService.updateStaffMessageStatus(staffMessageId, status);
+        if (!success) {
+            res.status(404).json({ error: 'Staff message not found.' });
+            return;
+        }
+        res.status(200).json({ data: { success: true } });
+    } catch (error: any) {
+        console.error('Error updating staff message status:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+}
