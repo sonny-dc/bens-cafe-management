@@ -59,6 +59,13 @@ export const MESSAGE_STATUS = {
     ACKNOWLEDGED: 'acknowledged'
 } as const;
 
+// Request Type Definitions
+export const REQUEST_TYPES = {
+    BODY: 'body',
+    QUERY: 'query',
+    PARAMS: 'params'
+} as const;
+
 // Utils constants
 
 // password-hash.ts
@@ -81,3 +88,4 @@ export type RequestStatus = typeof REQUEST_STATUS[keyof typeof REQUEST_STATUS];
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[keyof typeof EXPENSE_CATEGORIES];
 export type MessageType = typeof MESSAGE_TYPES[keyof typeof MESSAGE_TYPES];
 export type MessageStatus = typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];
+export type RequestType = typeof REQUEST_TYPES[keyof typeof REQUEST_TYPES];

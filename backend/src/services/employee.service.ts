@@ -1,14 +1,8 @@
-import bcrypt from "bcrypt";
-
-import type { Employee, RegisterEmployeeInput } from "../models/index.js";
+import type { Employee, RegisterEmployeeInput, UpdateEmployeeInput } from "../models/index.js";
 import { USER_ROLES } from "../config/constants.js";
+import { userRepository, employeeRepository } from "../repositories/index.js";
 
-import { createUser } from "../repositories/user.repository.js";
-import {
-    createEmployee,
-    getEmployees as getEmployeesFromRepository,
-    getEmployeeById as getEmployeeByIdFromRepository
-} from "../repositories/employee.repository.js";
+import { hashPassword } from "../utils/password-hash.js";
 
 
 /**
@@ -25,16 +19,16 @@ import {
 export async function registerEmployee(
     input: RegisterEmployeeInput
 ): Promise<Employee> {
-    const passwordHash = await bcrypt.hash(input.password, 10);
+    const passwordHash = await hashPassword(input.password);
 
-    const user = await createUser({
+    const user = await userRepository.createUser({
         username: input.username,
         passwordHash,
         fullName: input.fullName,
         role: USER_ROLES.EMPLOYEE
     });
 
-    const employee = await createEmployee({
+    const employee = await employeeRepository.createEmployee({
         userId: user.userId,
         employeeCode: input.employeeCode,
         jobRole: input.jobRole,
@@ -49,14 +43,48 @@ export async function registerEmployee(
  * Gets all employee profiles.
  */
 export async function getEmployees(): Promise<Employee[]> {
-    return getEmployeesFromRepository();
+    return employeeRepository.getEmployees();
 }
-
+ 
 /**
  * Gets one employee profile by employeeId.
  */
 export async function getEmployeeById(
     employeeId: number
 ): Promise<Employee | null> {
-    return getEmployeeByIdFromRepository(employeeId);
+    return await employeeRepository.getEmployeeById(employeeId);
+}
+
+/**
+ * Best for updating multiple fields at once, but can also be used for updating just one field.
+ */
+export async function updateEmployee(
+    employeeId: number,
+    input: UpdateEmployeeInput
+): Promise<Employee | null> {
+    return await employeeRepository.updateEmployee(employeeId, input);
+}
+
+/**
+ * Sets employee's employment_status to 'active'.
+ * best for buttons that toggle activation of an employee.
+ */
+export async function activateEmployee(employeeId: number): Promise<Employee | null> {
+    return await employeeRepository.activateEmployee(employeeId);
+}
+
+/**
+ * Sets employee's employment_status to 'inactive'.
+ * best for buttons that toggle deactivation of an employee.
+ */
+export async function deactivateEmployee(employeeId: number): Promise<Employee | null> {
+    return await employeeRepository.deactivateEmployee(employeeId);
+}
+
+/**
+ * Deletes an employee profile permanently from the database. Use with caution.
+ * Also deletes the associated user account.
+ */
+export async function deleteEmployee(employeeId: number): Promise<boolean> {
+    return await employeeRepository.deleteEmployee(employeeId);
 }
