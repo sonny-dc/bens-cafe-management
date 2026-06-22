@@ -40,15 +40,7 @@ function getCategoryMeta(type: MessageType) {
 }
 
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
+
 
 export function NotesManager() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -244,7 +236,7 @@ export function NotesManager() {
                 const Icon = meta.icon;
                 return (
                   <motion.div
-                    key={note.noteId}
+                    key={note.messageId}
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`rounded-xl border p-4 ${meta.activeClasses.split(' ').filter(c => !c.includes('text-')).join(' ')}`}
