@@ -1,21 +1,10 @@
 const API_BASE_URL = 'http://localhost:3000/api';
 
-export type MessageType = 'general' | 'concern' | 'urgent';
-export type MessageStatus = 'new' | 'read' | 'acknowledged';
+import type { MessageType, MessageStatus } from 'shared/constants';
+import type { StaffMessage } from 'shared/models';
 
-export interface Note {
-  noteId: number;
-  employeeId: number;
-  employeeName?: string;
-  messageType: MessageType;
-  subject: string | null;
-  messageText: string;
-  messageStatus: MessageStatus;
-  postedAt: string;
-  createdAt: string;
-  readAt: string | null;
-  userId: number | null;
-}
+export type { MessageType, MessageStatus };
+export type Note = StaffMessage;
 
 export const notesApi = {
   async getNotesByEmployee(employeeId: number): Promise<Note[]> {
