@@ -164,7 +164,7 @@ export function InventoryManager() {
                 onChange={e => setQuantity(e.target.value)}
                 placeholder="e.g. 2"
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black"
               />
             </div>
             <div>
@@ -175,7 +175,7 @@ export function InventoryManager() {
                 onChange={e => setUnit(e.target.value)}
                 placeholder="e.g. Cartons"
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black"
               />
             </div>
           </div>
@@ -189,7 +189,7 @@ export function InventoryManager() {
               placeholder="e.g. We ran out during the morning rush..."
               required
               rows={3}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm resize-none"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black placeholder:text-gray-400 resize-none"
             />
           </div>
 

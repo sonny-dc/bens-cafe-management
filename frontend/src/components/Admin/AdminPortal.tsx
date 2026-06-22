@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, LayoutDashboard, Calculator, ClipboardList, Package, BarChart3, Users } from 'lucide-react';
 import { SalesEntry } from './SalesEntry';
 import { AdminStaffBoard } from './AdminStaffBoard';
+import { StaffRegistry } from './StaffRegistry';
 
 type Tab = 'dashboard' | 'sales' | 'staff_board' | 'inventory' | 'reports' | 'staff_registry';
 
@@ -115,8 +116,9 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
               >
                 {activeTab === 'sales' && <SalesEntry />}
                 {activeTab === 'staff_board' && <AdminStaffBoard />}
+                {activeTab === 'staff_registry' && <StaffRegistry />}
                 
-                {activeTab !== 'sales' && activeTab !== 'staff_board' && (
+                {activeTab !== 'sales' && activeTab !== 'staff_board' && activeTab !== 'staff_registry' && (
                   <div className="flex flex-col items-center justify-center text-center h-[50vh] text-gray-400">
                     <p className="text-lg font-medium">{tabs.find(t => t.id === activeTab)?.label}</p>
                     <p className="text-sm">Coming soon</p>
