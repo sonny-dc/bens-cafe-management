@@ -19,9 +19,9 @@ export async function createStaffMessage(req: Request, res: Response): Promise<v
 
         res.status(201).json({ data: staffMessage });
 
-    } catch (error: any) {
-        console.error('Error creating staff message:', error);
-        res.status(400).json({ error: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while creating the staff message.";
+        res.status(400).json({ error: errorMessage });
     }
 }
 
@@ -29,9 +29,9 @@ export async function getAllStaffMessages(_req: Request, res: Response): Promise
     try {
         const staffMessages = await staffMessageService.getAllStaffMessages();
         res.status(200).json({ data: staffMessages });
-    } catch (error: any) {
-        console.error('Error fetching staff messages:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while fetching staff messages.";
+        res.status(500).json({ error: errorMessage });
     }
 }
 
@@ -44,9 +44,9 @@ export async function getStaffMessagesByEmployee(req: Request, res: Response): P
         }
         const staffMessages = await staffMessageService.getStaffMessagesByEmployee(employeeId);
         res.status(200).json({ data: staffMessages });
-    } catch (error: any) {
-        console.error('Error fetching staff messages by employee:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while fetching staff messages by employee.";
+        res.status(500).json({ error: errorMessage });
     }
 }
 
@@ -59,8 +59,8 @@ export async function markStaffMessageAsRead(req: Request, res: Response): Promi
             return;
         }
         res.status(200).json({ data: { success: true } });
-    } catch (error: any) {
-        console.error('Error marking staff message as read:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while marking the staff message as read.";
+        res.status(500).json({ error: errorMessage });
     }
 }

@@ -22,10 +22,11 @@ export async function getAllSalesEntries(
             message: 'Sales entries retrieved successfully.',
             data: salesEntries
         });
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch sales entries';
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to fetch sales entries'
+            message: errorMessage
         });
     }
 }
@@ -52,10 +53,11 @@ export async function getSalesEntryById(
             message: 'Sales entry retrieved successfully.',
             data: salesEntry
         });
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch sales entry';
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to fetch sales entry'
+            message: errorMessage
         });
     }
 }
@@ -78,10 +80,11 @@ export async function createSalesEntry(
             message: 'Sales entry transaction created successfully.',
             data: newSalesEntry
         });
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to process sales entry transaction';
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to process sales entry transaction'
+            message: errorMessage
         });
     }
 }
