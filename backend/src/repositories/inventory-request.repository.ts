@@ -1,5 +1,5 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import { withConnection, withTransaction } from '../config/database.js';
+import { withConnection } from '../config/database.js';
 
 export async function getAllInventoryRequests(): Promise<any[]> {
     return withConnection(async (connection) => {

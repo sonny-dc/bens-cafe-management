@@ -64,6 +64,10 @@ export function SalesEntry() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
+    // Persist calculated budget for the Inventory Calculator
+    localStorage.setItem('restockingAllotment', restockingAllotment.toString());
+    
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);

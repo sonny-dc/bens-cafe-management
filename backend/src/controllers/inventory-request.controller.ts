@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { inventoryRequestService } from '../services/index.js';
 
-export async function getAllInventoryRequests(req: Request, res: Response): Promise<void> {
+export async function getAllInventoryRequests(_req: Request, res: Response): Promise<void> {
     try {
         const requests = await inventoryRequestService.getAllInventoryRequests();
         res.status(200).json({ data: requests });

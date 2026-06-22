@@ -71,7 +71,7 @@ export async function getActiveShift(req: Request, res: Response): Promise<void>
     }
 }
 
-export async function getAllActiveShifts(req: Request, res: Response): Promise<void> {
+export async function getAllActiveShifts(_req: Request, res: Response): Promise<void> {
     try {
         const shifts = await shiftService.getAllActiveShifts();
         res.status(200).json({ data: shifts });
