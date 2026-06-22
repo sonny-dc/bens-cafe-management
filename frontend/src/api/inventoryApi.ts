@@ -16,13 +16,30 @@ export interface InventoryRequest {
   requestedQuantity: string;
   requestedUnit: string;
   reason: string;
-  requestStatus: 'pending' | 'acknowledged' | 'fulfilled';
+  requestStatus: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+}
+
+export interface PurchasePlan {
+  planId: number;
+  createdAt: string;
+  totalCost: number;
+  status: 'pending' | 'received';
+  items: {
+    itemId: number;
+    itemName: string;
+    quantity: number;
+    subtotal: number;
+  }[];
 }
 
 // MOCK DATA since the backend endpoints for inventory are not built yet
 let mockRequests: InventoryRequest[] = [];
 let reqIdCounter = 1;
+
+// Mock Purchase Plans
+let mockPurchasePlans: PurchasePlan[] = [];
+let planIdCounter = 1;
 
 export const inventoryApi = {
   // Fetch available items to populate the dropdown and tables
@@ -62,12 +79,46 @@ export const inventoryApi = {
   },
 
   // Save a purchase plan from the admin dashboard
-  async savePurchasePlan(plan: { items: { itemId: number; quantity: number }[]; totalCost: number }): Promise<{ success: boolean; message: string }> {
-    // In a real app, this would POST to /api/inventory/purchase-plans
+  async savePurchasePlan(plan: { items: { itemId: number; itemName: string; quantity: number; subtotal: number }[]; totalCost: number }): Promise<{ success: boolean; message: string }> {
     return new Promise((resolve) => {
       setTimeout(() => {
+        const newPlan: PurchasePlan = {
+          planId: planIdCounter++,
+          createdAt: new Date().toISOString(),
+          totalCost: plan.totalCost,
+          status: 'pending',
+          items: plan.items
+        };
+        mockPurchasePlans.push(newPlan);
         resolve({ success: true, message: 'Purchase plan saved successfully.' });
-      }, 800); // Simulate network delay
+      }, 800);
+    });
+  },
+
+  // Get all purchase plans
+  async getPurchasePlans(): Promise<PurchasePlan[]> {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve([...mockPurchasePlans].sort((a, b) => b.planId - a.planId)), 400);
+    });
+  },
+
+  // Mark a purchase plan as received and update inventory
+  async receivePurchasePlan(planId: number): Promise<void> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const plan = mockPurchasePlans.find(p => p.planId === planId);
+        if (plan && plan.status === 'pending') {
+          plan.status = 'received';
+          // Update actual inventory stock
+          plan.items.forEach(planItem => {
+            const inventoryItem = mockInventoryItems.find(i => i.itemId === planItem.itemId);
+            if (inventoryItem) {
+              inventoryItem.stockQuantity += planItem.quantity;
+            }
+          });
+        }
+        resolve();
+      }, 500);
     });
   }
 };

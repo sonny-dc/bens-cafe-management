@@ -1,25 +1,31 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Calculator, X, AlertTriangle, Package, Loader2, CheckCircle2 } from 'lucide-react';
-import { inventoryApi, type InventoryItem } from '../../api/inventoryApi';
+import { Plus, Search, Edit2, Trash2, ChevronLeft, ChevronRight, Calculator, X, AlertTriangle, Package, Loader2, CheckCircle2, ShoppingBag, Check } from 'lucide-react';
+import { inventoryApi, type InventoryItem, type PurchasePlan } from '../../api/inventoryApi';
 
-type FilterTab = 'All' | 'Low Stock' | 'Out of Stock';
+type FilterTab = 'All' | 'Low Stock' | 'Out of Stock' | 'Pending Orders';
 
 const ITEMS_PER_PAGE = 5;
 
 export function AdminInventory() {
   const [items, setItems] = useState<InventoryItem[]>([]);
+  const [purchasePlans, setPurchasePlans] = useState<PurchasePlan[]>([]);
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showCalculator, setShowCalculator] = useState(false);
   const [restockQuantities, setRestockQuantities] = useState<Record<number, number>>({});
+  const [autoSuggestEnabled, setAutoSuggestEnabled] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  useEffect(() => {
-    // Fetch items on mount
+  const fetchInventory = () => {
     inventoryApi.getInventoryItems().then(setItems);
+    inventoryApi.getPurchasePlans().then(setPurchasePlans);
+  };
+
+  useEffect(() => {
+    fetchInventory();
   }, []);
 
   // Derived stats
@@ -68,17 +74,26 @@ export function AdminInventory() {
   }, [items]);
 
   useEffect(() => {
-    if (showCalculator && itemsNeedingRestock.length > 0 && Object.keys(restockQuantities).length === 0) {
-      // Auto-suggest to restock up to 2x the reorderAt threshold
-      const initialQuantities: Record<number, number> = {};
-      itemsNeedingRestock.forEach(item => {
-        const targetStock = item.reorderAt * 2;
-        const toBuy = targetStock - item.stockQuantity;
-        initialQuantities[item.itemId] = toBuy > 0 ? toBuy : 1;
-      });
-      setRestockQuantities(initialQuantities);
+    if (showCalculator && itemsNeedingRestock.length > 0) {
+      if (autoSuggestEnabled) {
+        // Auto-suggest to restock up to 2x the reorderAt threshold
+        const initialQuantities: Record<number, number> = {};
+        itemsNeedingRestock.forEach(item => {
+          const targetStock = item.reorderAt * 2;
+          const toBuy = targetStock - item.stockQuantity;
+          initialQuantities[item.itemId] = toBuy > 0 ? toBuy : 1;
+        });
+        setRestockQuantities(initialQuantities);
+      } else {
+        // Manual mode: start at 0
+        const zeroQuantities: Record<number, number> = {};
+        itemsNeedingRestock.forEach(item => {
+          zeroQuantities[item.itemId] = 0;
+        });
+        setRestockQuantities(zeroQuantities);
+      }
     }
-  }, [showCalculator, itemsNeedingRestock, restockQuantities]);
+  }, [showCalculator, itemsNeedingRestock, autoSuggestEnabled]);
 
   const defaultRestockCost = useMemo(() => {
     return itemsNeedingRestock.reduce((sum, item) => {
@@ -96,20 +111,29 @@ export function AdminInventory() {
 
   const handleSavePurchasePlan = async () => {
     setIsSaving(true);
-    const planItems = Object.entries(restockQuantities)
-      .filter(([_, qty]) => qty > 0)
-      .map(([id, qty]) => ({ itemId: Number(id), quantity: qty }));
+    const planItems = itemsNeedingRestock
+      .map(item => {
+        const qty = restockQuantities[item.itemId] || 0;
+        return { itemId: item.itemId, itemName: item.itemName, quantity: qty, subtotal: qty * item.unitPrice };
+      })
+      .filter(p => p.quantity > 0);
 
     await inventoryApi.savePurchasePlan({ items: planItems, totalCost: calculatorTotalCost });
     
     setIsSaving(false);
     setSaveSuccess(true);
+    fetchInventory();
 
     // Auto-close after showing success
     setTimeout(() => {
       setShowCalculator(false);
       setSaveSuccess(false);
     }, 2000);
+  };
+
+  const handleReceivePlan = async (planId: number) => {
+    await inventoryApi.receivePurchasePlan(planId);
+    fetchInventory();
   };
 
   return (
@@ -166,23 +190,27 @@ export function AdminInventory() {
       {/* ── Controls (Filters & Search) ── */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex bg-[#f2f4f6] p-1 rounded-xl">
-          {(['All', 'Low Stock', 'Out of Stock'] as FilterTab[]).map(tab => {
+          {(['All', 'Low Stock', 'Out of Stock', 'Pending Orders'] as FilterTab[]).map(tab => {
             const isActive = activeTab === tab;
             let count = totalItems;
             if (tab === 'Low Stock') count = lowStockCount;
             if (tab === 'Out of Stock') count = outOfStockCount;
+            if (tab === 'Pending Orders') count = purchasePlans.filter(p => p.status === 'pending').length;
 
             return (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
                   isActive 
                     ? 'bg-white text-gray-900 shadow-sm' 
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {tab} ({count})
+                {tab} 
+                <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${isActive ? 'bg-gray-100' : 'bg-gray-200/50'}`}>
+                  {count}
+                </span>
               </button>
             );
           })}
@@ -202,119 +230,182 @@ export function AdminInventory() {
         </div>
       </div>
 
-      {/* ── Data Table ── */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col">
-        <div className="overflow-x-auto flex-1">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#fcfcfb] border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                <th className="py-4 px-6 font-bold">Item</th>
-                <th className="py-4 px-6 font-bold">Category</th>
-                <th className="py-4 px-6 font-bold">Stock</th>
-                <th className="py-4 px-6 font-bold">Reorder At</th>
-                <th className="py-4 px-6 font-bold">Status</th>
-                <th className="py-4 px-6 font-bold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm font-medium text-gray-900">
-              {paginatedItems.map((item, index) => {
-                // Determine status badge
-                let status = 'OK';
-                let statusClasses = 'bg-[#eef2ed] text-[#3a5233] border-[#d6e3d2]';
-                
-                if (item.stockQuantity === 0) {
-                  status = 'Out';
-                  statusClasses = 'bg-[#fcf0f0] text-[#b74141] border-[#f5d9d9]';
-                } else if (item.stockQuantity <= item.reorderAt) {
-                  status = 'Low';
-                  statusClasses = 'bg-[#fdf3e7] text-[#c77a28] border-[#f5dfc6]';
-                }
-
+      {/* ── Main Content Area ── */}
+      {activeTab === 'Pending Orders' ? (
+        <div className="flex-1 overflow-y-auto">
+          {purchasePlans.length === 0 ? (
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-12 text-center flex flex-col items-center justify-center">
+              <ShoppingBag size={48} className="text-gray-300 mb-4" />
+              <h3 className="text-lg font-bold text-gray-900 mb-1">No Purchase Plans Yet</h3>
+              <p className="text-gray-500 text-sm">Use the Purchase Calculator to plan your next restock.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {purchasePlans.map(plan => {
+                const isReceived = plan.status === 'received';
                 return (
-                  <tr key={item.itemId} className={`border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors`}>
-                    <td className="py-4 px-6 font-bold">{item.itemName}</td>
-                    <td className="py-4 px-6 text-gray-500">{item.category}</td>
-                    <td className="py-4 px-6">
-                      <span className="font-bold text-base">{item.stockQuantity}</span> <span className="text-gray-400 font-normal">{item.unit}</span>
-                    </td>
-                    <td className="py-4 px-6 text-gray-500">
-                      {item.reorderAt} <span className="font-normal">{item.unit}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`px-2.5 py-1 text-xs font-bold rounded-md border ${statusClasses}`}>
-                        {status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#eef2ed] hover:bg-[#d6e3d2] text-[#4a6741] text-xs font-bold rounded-lg transition-colors">
-                          <Plus size={14} /> Restock
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-700 transition-colors">
-                          <Edit2 size={16} />
-                        </button>
-                        <button className="text-gray-400 hover:text-red-500 transition-colors">
-                          <Trash2 size={16} />
-                        </button>
+                  <div key={plan.planId} className={`border rounded-2xl p-5 shadow-sm transition-all ${isReceived ? 'bg-gray-50 border-gray-100 opacity-70' : 'bg-white border-gray-200'}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                          {new Date(plan.createdAt).toLocaleDateString()} at {new Date(plan.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <h4 className="font-bold text-gray-900 text-lg">Order #{plan.planId.toString().padStart(4, '0')}</h4>
                       </div>
-                    </td>
-                  </tr>
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isReceived ? 'bg-gray-200 text-gray-500' : 'bg-orange-100 text-orange-600'}`}>
+                        {isReceived ? <Check size={14} /> : <Loader2 size={14} className="animate-spin-slow" />}
+                        {plan.status}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100 h-32 overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <tbody>
+                          {plan.items.map((item, idx) => (
+                            <tr key={idx} className="border-b border-gray-100 last:border-0">
+                              <td className="py-2 font-medium text-gray-900">{item.itemName}</td>
+                              <td className="py-2 text-right text-gray-500">x{item.quantity}</td>
+                              <td className="py-2 text-right font-medium text-gray-900">₱{item.subtotal.toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-auto">
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Cost</p>
+                        <p className="font-black text-[#243b53] text-xl">₱{plan.totalCost.toLocaleString()}</p>
+                      </div>
+                      {!isReceived && (
+                        <button 
+                          onClick={() => handleReceivePlan(plan.planId)}
+                          className="px-4 py-2 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-md transition-colors"
+                        >
+                          Mark Received
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
-              
-              {filteredItems.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-gray-400 font-medium">
-                    No items found matching your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
-        
-        {/* Pagination */}
-        <div className="border-t border-gray-100 p-4 flex items-center justify-between bg-white text-sm font-medium text-gray-500">
-          <p>
-            Showing {filteredItems.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}–
-            {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of {filteredItems.length} items
-          </p>
-          <div className="flex gap-1.5">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1 || totalPages === 0}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            
-            {Array.from({ length: totalPages }).map((_, i) => {
-              const pageNum = i + 1;
-              return (
-                <button 
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
-                    currentPage === pageNum 
-                      ? 'bg-[#4a6741] text-white font-bold shadow-sm border border-[#4a6741]' 
-                      : 'border border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
+      ) : (
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col">
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#fcfcfb] border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  <th className="py-4 px-6 font-bold">Item</th>
+                  <th className="py-4 px-6 font-bold">Category</th>
+                  <th className="py-4 px-6 font-bold">Stock</th>
+                  <th className="py-4 px-6 font-bold">Reorder At</th>
+                  <th className="py-4 px-6 font-bold">Status</th>
+                  <th className="py-4 px-6 font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm font-medium text-gray-900">
+                {paginatedItems.map((item, index) => {
+                  // Determine status badge
+                  let status = 'OK';
+                  let statusClasses = 'bg-[#eef2ed] text-[#3a5233] border-[#d6e3d2]';
+                  
+                  if (item.stockQuantity === 0) {
+                    status = 'Out';
+                    statusClasses = 'bg-[#fcf0f0] text-[#b74141] border-[#f5d9d9]';
+                  } else if (item.stockQuantity <= item.reorderAt) {
+                    status = 'Low';
+                    statusClasses = 'bg-[#fdf3e7] text-[#c77a28] border-[#f5dfc6]';
+                  }
 
-            <button 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight size={16} />
-            </button>
+                  return (
+                    <tr key={item.itemId} className={`border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors`}>
+                      <td className="py-4 px-6 font-medium text-gray-900">{item.itemName}</td>
+                      <td className="py-4 px-6 text-gray-500">{item.category}</td>
+                      <td className="py-4 px-6">
+                        <span className="font-medium text-gray-900 text-base">{item.stockQuantity}</span> <span className="text-gray-400 font-normal">{item.unit}</span>
+                      </td>
+                      <td className="py-4 px-6 text-gray-500">
+                        {item.reorderAt} <span className="font-normal">{item.unit}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded-md border ${statusClasses}`}>
+                          {status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#eef2ed] hover:bg-[#d6e3d2] text-[#4a6741] text-xs font-semibold rounded-lg transition-colors">
+                            <Plus size={14} /> Restock
+                          </button>
+                          <button className="text-gray-400 hover:text-gray-700 transition-colors">
+                            <Edit2 size={16} />
+                          </button>
+                          <button className="text-gray-400 hover:text-red-500 transition-colors">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                
+                {filteredItems.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-gray-400 font-medium">
+                      No items found matching your criteria.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Pagination */}
+          <div className="border-t border-gray-100 p-4 flex items-center justify-between bg-white text-sm font-medium text-gray-500">
+            <p>
+              Showing {filteredItems.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}–
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of {filteredItems.length} items
+            </p>
+            <div className="flex gap-1.5">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || totalPages === 0}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              
+              {Array.from({ length: totalPages }).map((_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <button 
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                      currentPage === pageNum 
+                        ? 'bg-[#4a6741] text-white font-bold shadow-sm border border-[#4a6741]' 
+                        : 'border border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── Purchase Calculator Modal ── */}
       <AnimatePresence>
@@ -337,9 +428,19 @@ export function AdminInventory() {
                       <Calculator size={20} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 text-lg">Smart Purchase Calculator</h3>
-                      <p className="text-xs text-gray-500 font-medium">Auto-suggested restock based on low inventory</p>
+                      <h3 className="font-bold text-gray-900 text-lg">Purchase Calculator</h3>
+                      <p className="text-xs text-gray-500 font-medium">Plan your inventory restock</p>
                     </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Auto-Suggest</span>
+                    <button 
+                      onClick={() => setAutoSuggestEnabled(!autoSuggestEnabled)}
+                      className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors ${autoSuggestEnabled ? 'bg-[#4a6741]' : 'bg-gray-200'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoSuggestEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                    </button>
                   </div>
                 </div>
 
