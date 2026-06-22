@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, Plus, Edit2, Trash2, X, AlertTriangle, ShieldCheck, Clock, CircleDot } from 'lucide-react';
+import { Users, Search, Plus, Edit2, Trash2, X, ShieldCheck, CircleDot, User, AtSign, Lock, Briefcase, DollarSign, UserPlus } from 'lucide-react';
 import { employeeApi, type EmployeeProfile } from '../../api/employeeApi';
 
 export function StaffRegistry() {
@@ -248,7 +248,7 @@ export function StaffRegistry() {
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#4a6741]/10 text-[#4a6741] flex items-center justify-center">
-                    <ShieldCheck size={20} />
+                    <UserPlus size={20} />
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg">Add New Employee</h3>
@@ -263,39 +263,52 @@ export function StaffRegistry() {
                 </button>
               </div>
 
-              <form onSubmit={handleAddSubmit} className="p-6 space-y-5">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Name</label>
-                  <input required name="fullName" type="text" placeholder="e.g. Maria Santos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+              <form onSubmit={handleAddSubmit} className="p-7 space-y-6">
+                
+                {/* Personal Section */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b pb-2 mb-3">Personal Details</h4>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
+                    <input required name="fullName" type="text" placeholder="e.g. Maria Santos" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-4 focus:ring-[#4a6741]/10 outline-none transition-all placeholder:text-gray-400" />
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Username</label>
-                    <input required name="username" type="text" placeholder="e.g. msantos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Password (Default)</label>
-                    <input disabled type="text" value="password123" className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 font-mono outline-none cursor-not-allowed" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
-                    <input required name="jobRole" type="text" placeholder="e.g. Barista" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
-                    <input required name="hourlyRate" type="number" step="0.01" min="0" placeholder="0.00" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                {/* Account Section */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b pb-2 mb-3">Account Setup</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username</label>
+                      <input required name="username" type="text" placeholder="msantos" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-4 focus:ring-[#4a6741]/10 outline-none transition-all placeholder:text-gray-400" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Default Password</label>
+                      <input disabled type="text" value="password123" className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 font-mono outline-none cursor-not-allowed" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-4 flex gap-3">
-                  <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
+                {/* Employment Section */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b pb-2 mb-3">Employment Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job Role</label>
+                      <input required name="jobRole" type="text" placeholder="e.g. Barista" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-4 focus:ring-[#4a6741]/10 outline-none transition-all placeholder:text-gray-400" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Hourly Rate (₱)</label>
+                      <input required name="hourlyRate" type="number" step="0.01" min="0" placeholder="0.00" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-4 focus:ring-[#4a6741]/10 outline-none transition-all placeholder:text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 flex gap-3">
+                  <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
                     Cancel
                   </button>
-                  <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                  <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3.5 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-md shadow-[#4a6741]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                     {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Create Employee'}
                   </button>
                 </div>
@@ -336,31 +349,41 @@ export function StaffRegistry() {
                 </button>
               </div>
 
-              <form onSubmit={handleEditSubmit} className="p-6 space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
-                    <input required name="jobRole" type="text" defaultValue={editingEmployee.jobRole} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
-                    <input required name="hourlyRate" type="number" step="0.01" min="0" defaultValue={Number(editingEmployee.hourlyRate)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+              <form onSubmit={handleEditSubmit} className="p-7 space-y-6">
+                
+                {/* Employment Details */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b pb-2 mb-3">Update Role & Pay</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job Role</label>
+                      <input required name="jobRole" type="text" defaultValue={editingEmployee.jobRole} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Hourly Rate (₱)</label>
+                      <input required name="hourlyRate" type="number" step="0.01" min="0" defaultValue={Number(editingEmployee.hourlyRate)} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" />
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Employment Status</label>
-                  <select name="employmentStatus" defaultValue={editingEmployee.employmentStatus} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                {/* Account Status */}
+                <div className="space-y-4">
+                  <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b pb-2 mb-3">Account Status</h4>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Employment Status</label>
+                    <select name="employmentStatus" defaultValue={editingEmployee.employmentStatus} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all appearance-none cursor-pointer"
+                      style={{ backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e")', backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}>
+                      <option value="active">Active (Can log in)</option>
+                      <option value="inactive">Inactive (Account suspended)</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="pt-4 flex gap-3">
-                  <button type="button" onClick={() => setEditingEmployee(null)} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
+                <div className="pt-6 flex gap-3">
+                  <button type="button" onClick={() => setEditingEmployee(null)} className="flex-1 px-4 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
                     Cancel
                   </button>
-                  <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                  <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                     {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Save Changes'}
                   </button>
                 </div>
