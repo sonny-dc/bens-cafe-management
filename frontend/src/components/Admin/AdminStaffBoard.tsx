@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, Clock, Banknote, TrendingUp, TrendingDown, 
-  MessageSquare, AlertTriangle, Info, Package, CheckCircle2, XCircle, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
+  Users, Clock, Banknote, 
+  MessageSquare, AlertTriangle, Info, Package, CheckCircle2, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
 import { shiftSummaryApi, type ShiftSession } from '../../api/shiftSummaryApi';
 

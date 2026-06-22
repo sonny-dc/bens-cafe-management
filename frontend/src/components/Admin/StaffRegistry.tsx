@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, Plus, Edit2, Trash2, X, ShieldCheck, CircleDot, User, AtSign, Lock, Briefcase, DollarSign, UserPlus } from 'lucide-react';
+import { Users, Search, Plus, Edit2, Trash2, X, CircleDot, UserPlus } from 'lucide-react';
 import { employeeApi, type EmployeeProfile } from '../../api/employeeApi';
 
 export function StaffRegistry() {
