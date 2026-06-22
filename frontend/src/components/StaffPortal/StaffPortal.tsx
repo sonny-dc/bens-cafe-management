@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Clock, MessageSquare, ShoppingCart } from 'lucide-react';
 import { ShiftManager } from './ShiftManager';
 import { NotesManager } from './NotesManager';
+import { InventoryManager } from './InventoryManager';
 
 type Tab = 'shift' | 'notes' | 'inventory';
 
@@ -12,7 +13,11 @@ const tabs: { id: Tab; label: string; icon: React.ElementType; badge?: number }[
   { id: 'inventory', label: 'Inventory Requests', icon: ShoppingCart },
 ];
 
-export function StaffPortal() {
+interface StaffPortalProps {
+  onLogout: () => void;
+}
+
+export function StaffPortal({ onLogout }: StaffPortalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('shift');
 
   return (
@@ -47,7 +52,7 @@ export function StaffPortal() {
                 <p className="text-[11px] text-gray-400 mt-0.5">Head Barista</p>
               </div>
             </div>
-            <button className="ml-1 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors px-2 py-1.5 rounded-lg hover:bg-gray-100">
+            <button onClick={onLogout} className="ml-1 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors px-2 py-1.5 rounded-lg hover:bg-gray-100">
               <LogOut size={15} />
               <span className="hidden sm:inline">Log out</span>
             </button>
@@ -118,9 +123,7 @@ export function StaffPortal() {
 
             {activeTab === 'notes' && <NotesManager />}
 
-            {activeTab === 'inventory' && (
-              <EmptyState icon={ShoppingCart} title="Inventory Requests" description="Submit requests for supplies that are running low." />
-            )}
+            {activeTab === 'inventory' && <InventoryManager />}
           </motion.div>
         </AnimatePresence>
       </main>

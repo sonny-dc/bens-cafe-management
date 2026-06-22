@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:shared/src/constants/app.constants.ts
 // Use ctrl + f to find specific constants or types in this file
 
 // Model constants and types for the application
@@ -90,3 +91,9 @@ export type ExpenseCategory = typeof EXPENSE_CATEGORIES[keyof typeof EXPENSE_CAT
 export type MessageType = typeof MESSAGE_TYPES[keyof typeof MESSAGE_TYPES];
 export type MessageStatus = typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];
 export type RequestType = typeof REQUEST_TYPES[keyof typeof REQUEST_TYPES];
+========
+/**
+ * Re-export all constants from the shared package
+ */
+export * from 'shared/constants';
+>>>>>>>> origin/main:backend/src/config/constants.ts

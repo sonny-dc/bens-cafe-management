@@ -40,6 +40,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../shared/src/constants/app.constants.ts"],
   "exclude": ["node_modules", "dist"]
 }

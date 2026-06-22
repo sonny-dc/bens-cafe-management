@@ -1,5 +1,5 @@
-import type { Employee, RegisterEmployeeInput, UpdateEmployeeInput } from "../models/index.js";
-import { USER_ROLES } from "../config/constants.js";
+import type { Employee, RegisterEmployeeInput, UpdateEmployeeInput } from "shared/models";
+import { USER_ROLES } from "shared/constants";
 import { userRepository, employeeRepository } from "../repositories/index.js";
 
 import { hashPassword } from "../utils/password-hash.js";

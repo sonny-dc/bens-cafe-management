@@ -8,10 +8,13 @@ import type {
     Shift,
     StartShiftInput,
     EndShiftInput
-} from '../models/index.js';
+} from 'shared/models';
 
-import type { ShiftStatus } from '../config/constants.js';
-import { SHIFT_STATUS } from '../config/constants.js';
+import { 
+    SHIFT_STATUS,
+    type ShiftStatus
+} from 'shared/constants';
+
 import { withConnection, withTransaction } from '../config/database.js';
 
 type ShiftSessionRow = RowDataPacket & {
@@ -95,6 +98,28 @@ export async function getActiveShiftByEmployee(
     });
 }
 
+export async function getAllActiveShifts(): Promise<any[]> {
+    return withConnection(async (connection) => {
+        const [rows] = await connection.query<RowDataPacket[]>(
+            `
+            SELECT 
+                s.shift_id as id,
+                e.employee_id as employeeId,
+                u.full_name as name,
+                e.job_role as role,
+                s.start_time as clockInTime
+            FROM shift_sessions s
+            JOIN employee_profiles e ON s.employee_id = e.employee_id
+            JOIN users u ON e.user_id = u.user_id
+            WHERE s.shift_status = ?
+            ORDER BY s.start_time DESC
+            `,
+            [SHIFT_STATUS.IN_PROGRESS]
+        );
+        return rows as any[];
+    });
+}
+
 export async function getShiftById(
     shiftId: number
 ): Promise<Shift | null> {
@@ -166,5 +191,35 @@ export async function endShift(
         }
 
         return getShiftByIdWithConnection(connection, shiftId);
+    });
+}
+
+export async function getShiftSummary(startDate: string, endDate: string): Promise<Shift[]> {
+    return withConnection(async (connection) => {
+        const [rows] = await connection.query<ShiftSessionRow[]>(
+            `
+            SELECT * FROM shift_sessions
+            WHERE shift_date >= ? AND shift_date <= ?
+            AND shift_status != ?
+            ORDER BY shift_date DESC, start_time DESC
+            `,
+            [startDate, endDate, SHIFT_STATUS.ARCHIVED]
+        );
+        return rows.map(mapShiftRow);
+    });
+}
+
+export async function archiveShiftsByDateRange(startDate: string, endDate: string): Promise<number> {
+    return withTransaction(async (connection) => {
+        const [result] = await connection.execute<ResultSetHeader>(
+            `
+            UPDATE shift_sessions
+            SET shift_status = ?
+            WHERE shift_date >= ? AND shift_date <= ?
+            AND shift_status = ?
+            `,
+            [SHIFT_STATUS.ARCHIVED, startDate, endDate, SHIFT_STATUS.COMPLETED]
+        );
+        return result.affectedRows;
     });
 }

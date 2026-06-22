@@ -10,7 +10,8 @@ import {testConnection} from './config/database.js';
 import {
   employeeRoutes, 
   shiftRoutes, 
-  staffMessageRoutes 
+  staffMessageRoutes,
+  inventoryRequestRoutes
 } from './routes/index.js';
 
 const app = express();
@@ -38,7 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
 }));
 
@@ -49,6 +50,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.use("/api/employees", employeeRoutes);
 app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
+app.use("/api/inventory-requests", inventoryRequestRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

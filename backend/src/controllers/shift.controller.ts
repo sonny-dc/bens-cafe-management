@@ -70,3 +70,47 @@ export async function getActiveShift(req: Request, res: Response): Promise<void>
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
+
+export async function getAllActiveShifts(_req: Request, res: Response): Promise<void> {
+    try {
+        const shifts = await shiftService.getAllActiveShifts();
+        res.status(200).json({ data: shifts });
+    } catch (error: any) {
+        console.error("Error getting all active shifts:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+export async function getShiftSummary(req: Request, res: Response): Promise<void> {
+    try {
+        const { start, end } = req.query;
+
+        if (!start || !end) {
+            res.status(400).json({ error: "start and end query parameters are required (YYYY-MM-DD)." });
+            return;
+        }
+
+        const shifts = await shiftService.getShiftSummary(String(start), String(end));
+        res.status(200).json({ data: shifts });
+    } catch (error: any) {
+        console.error("Error getting shift summary:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+export async function archiveShifts(req: Request, res: Response): Promise<void> {
+    try {
+        const { start, end } = req.body;
+
+        if (!start || !end) {
+            res.status(400).json({ error: "start and end body parameters are required (YYYY-MM-DD)." });
+            return;
+        }
+
+        const archivedCount = await shiftService.archiveShifts(String(start), String(end));
+        res.status(200).json({ message: "Shifts archived successfully", count: archivedCount });
+    } catch (error: any) {
+        console.error("Error archiving shifts:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}

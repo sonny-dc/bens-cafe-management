@@ -168,7 +168,7 @@ export function NotesManager() {
               value={subject}
               onChange={e => setSubject(e.target.value)}
               placeholder="e.g. Running low on oat milk"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm placeholder:text-gray-400"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black placeholder:text-gray-400"
             />
           </div>
 
@@ -181,7 +181,7 @@ export function NotesManager() {
               placeholder="Describe what happened or what the owner needs to know..."
               required
               rows={5}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm resize-none placeholder:text-gray-400"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black resize-none placeholder:text-gray-400"
             />
           </div>
 

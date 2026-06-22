@@ -1,5 +1,5 @@
 import { shiftRepository } from '../repositories/index.js';
-import type { Shift, StartShiftInput, EndShiftInput } from '../models/index.js';
+import type { Shift, StartShiftInput, EndShiftInput } from 'shared/models';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 
 export async function startShift(input: Omit<StartShiftInput, 'startTime'>): Promise<Shift> {
@@ -47,4 +47,22 @@ export async function endShift(shiftId: number, input: Omit<EndShiftInput, 'endT
 
 export async function getActiveShift(employeeId: number): Promise<Shift | null> {
     return shiftRepository.getActiveShiftByEmployee(employeeId);
+}
+
+export async function getAllActiveShifts(): Promise<any[]> {
+    return shiftRepository.getAllActiveShifts();
+}
+
+export async function getShiftSummary(startDate: string, endDate: string): Promise<Shift[]> {
+    if (!startDate || !endDate) {
+        throw new Error("Start date and end date are required.");
+    }
+    return shiftRepository.getShiftSummary(startDate, endDate);
+}
+
+export async function archiveShifts(startDate: string, endDate: string): Promise<number> {
+    if (!startDate || !endDate) {
+        throw new Error("Start date and end date are required.");
+    }
+    return shiftRepository.archiveShiftsByDateRange(startDate, endDate);
 }
