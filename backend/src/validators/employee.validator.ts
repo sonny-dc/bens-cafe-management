@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EMPLOYMENT_STATUS } from '../config/constants.js';
+import { EMPLOYMENT_STATUS } from '../../../shared/src/constants/app.constants.js';
 
 const decimalString = z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid decimal number with up to 2 decimal places");
 

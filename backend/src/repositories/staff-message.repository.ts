@@ -1,7 +1,10 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import type { StaffMessage, CreateStaffMessageInput } from '../models/index.js';
-import type { MessageStatus, MessageType } from '../config/constants.js';
-import { MESSAGE_STATUS } from '../config/constants.js';
+import type { StaffMessage, CreateStaffMessageInput } from 'shared/models';
+import {
+    MESSAGE_STATUS,
+    type MessageStatus,
+    type MessageType 
+} from 'shared/constants';
 
 import { withConnection, withTransaction } from '../config/database.js';
 

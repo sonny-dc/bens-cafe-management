@@ -1,23 +1,18 @@
 {
+  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
     "rootDir": "./src",
     "outDir": "./dist",
 
     "forceConsistentCasingInFileNames": true, // Ensure consistent casing in imports. We use kebab-case for files and folders, so this will help catch any mistakes.
-
-    // Environment Settings
-    "module": "NodeNext",
-    "target": "esnext",
-    "lib": ["esnext"],
-    "types": ["node"],
-    // and npm install -D @types/node
+    "module": "esnext",
+    "target": "ES2020",
 
     // Other Outputs
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    "noEmitOnError": true,
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
@@ -40,6 +35,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
-  "include": ["src/**/*", "../shared/src/constants/app.constants.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

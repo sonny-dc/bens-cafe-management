@@ -1,4 +1,4 @@
-import type { UserRole, AccountStatus } from '../config/constants.js';
+import type { UserRole, AccountStatus } from '../constants/index.js';
 
 export interface User {
     userId: number;

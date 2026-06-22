@@ -1,4 +1,4 @@
-import type { MessageStatus, MessageType } from '../config/constants.js';
+import type { MessageStatus, MessageType } from '../constants/index.js';
 
 export interface StaffMessage {
     messageId: number;

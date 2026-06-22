@@ -8,10 +8,13 @@ import type {
     Employee,
     CreateEmployeeInput,
     UpdateEmployeeInput
-} from '../models/index.js';
+} from 'shared/models';
 
-import type { EmploymentStatus } from '../config/constants.js';
-import { EMPLOYMENT_STATUS } from '../config/constants.js';
+import { 
+    EMPLOYMENT_STATUS,
+    type EmploymentStatus
+} from 'shared/constants';
+
 import { withConnection, withTransaction } from '../config/database.js';
 
 type EmployeeRow = RowDataPacket & {

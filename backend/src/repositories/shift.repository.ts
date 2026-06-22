@@ -8,10 +8,13 @@ import type {
     Shift,
     StartShiftInput,
     EndShiftInput
-} from '../models/index.js';
+} from 'shared/models';
 
-import type { ShiftStatus } from '../config/constants.js';
-import { SHIFT_STATUS } from '../config/constants.js';
+import { 
+    SHIFT_STATUS,
+    type ShiftStatus
+} from 'shared/constants';
+
 import { withConnection, withTransaction } from '../config/database.js';
 
 type ShiftSessionRow = RowDataPacket & {

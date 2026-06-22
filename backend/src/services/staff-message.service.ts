@@ -1,5 +1,5 @@
 import { staffMessageRepository } from '../repositories/index.js';
-import type { StaffMessage, CreateStaffMessageInput } from '../models/index.js';
+import type { StaffMessage, CreateStaffMessageInput } from 'shared/models';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 
 export async function createStaffMessage(input: Omit<CreateStaffMessageInput, 'postedAt'>): Promise<StaffMessage> {
