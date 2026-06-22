@@ -1,17 +1,8 @@
 const API_BASE_URL = "http://localhost:3000/api"; // Replace with your actual backend port
 
-export interface Shift {
-  shiftId: number;
-  employeeId: number;
-  shiftDate: string;
-  startTime: string;
-  endTime: string | null;
-  openingCash: string;
-  closingCash: string | null;
-  recordedCashSales: string | null;
-  cashVariance: string | null;
-  status: 'in_progress' | 'completed';
-}
+import type { Shift } from 'shared/models';
+
+export type { Shift };
 
 export const shiftApi = {
   async getActiveShift(employeeId: number): Promise<Shift | null> {

@@ -1,4 +1,4 @@
-import type { ShiftStatus } from "../config/constants.js";
+import type { ShiftStatus } from '../constants/index.js';
 
 export interface Shift {
     shiftId: number;

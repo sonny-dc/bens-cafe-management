@@ -1,4 +1,4 @@
-import type { EmploymentStatus } from "../config/constants.js";
+import type { EmploymentStatus } from '../constants/index.js';
 
 export interface Employee {
     employeeId: number;
