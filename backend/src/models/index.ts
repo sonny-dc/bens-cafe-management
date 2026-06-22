@@ -1,8 +1,4 @@
 /**
- * Re-export all models from this directory
+ * Re-export all models from the shared package
  */
-
-export * from "./user.model.js";
-export * from './employee.model.js';
-export * from "./shift.model.js";
-export * from "./staff-message.model.js";
+export * from 'shared/models';
