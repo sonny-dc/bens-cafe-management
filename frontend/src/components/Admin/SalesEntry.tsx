@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, Plus } from 'lucide-react';
+import { salesApi } from '../../api/salesApi';
+import { employeeApi } from '../../api/employeeApi';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -21,7 +23,6 @@ interface Expense {
 export function SalesEntry() {
   const [step, setStep] = useState<Step>(1);
 
-  // -- Step 1: Revenue State --
   const [cashSales, setCashSales] = useState<number | ''>('');
   const [cardSales, setCardSales] = useState<number | ''>('');
   const [physicalCash, setPhysicalCash] = useState<number | ''>('');
@@ -30,18 +31,25 @@ export function SalesEntry() {
   const parsedCard = cardSales || 0;
   const totalRevenue = parsedCash + parsedCard;
 
-  // -- Step 2: Payroll State --
-  const [payroll, setPayroll] = useState<EmployeePayroll[]>([
-    { id: 1, name: 'Juan dela Cruz', role: 'Barista', dailyRate: 600, isChecked: true },
-    { id: 2, name: 'Maria Santos', role: 'Barista', dailyRate: 600, isChecked: false },
-  ]);
+  const [payroll, setPayroll] = useState<EmployeePayroll[]>([]);
+
+  useEffect(() => {
+    employeeApi.getEmployees().then(data => {
+      setPayroll(data.filter((e: any) => e.employmentStatus === 'active').map((e: any) => ({
+        id: e.employeeId,
+        name: `Staff ${e.employeeCode}`,
+        role: e.jobRole,
+        dailyRate: Number(e.dailyPay),
+        isChecked: false
+      })));
+    }).catch(console.error);
+  }, []);
 
   const togglePayroll = (id: number) => {
     setPayroll(prev => prev.map(emp => emp.id === id ? { ...emp, isChecked: !emp.isChecked } : emp));
   };
   const totalPayroll = payroll.filter(e => e.isChecked).reduce((sum, e) => sum + e.dailyRate, 0);
 
-  // -- Step 3: Expenses State --
   const [expenses, setExpenses] = useState<Expense[]>([
     { id: 1, name: 'Supplies / Packaging', amount: '' },
     { id: 2, name: 'Utilities (daily est.)', amount: '' },
@@ -54,34 +62,51 @@ export function SalesEntry() {
   };
   const totalExpenses = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
 
-  // -- Step 4: Summary Calculations --
   const netProfit = totalRevenue - totalPayroll - totalExpenses;
   const restockingAllotment = netProfit > 0 ? netProfit * 0.5 : 0;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await salesApi.createSalesEntryTransaction({
+        cashSales: String(parsedCash),
+        onlineCardSales: String(parsedCard),
+        physicalCashCount: physicalCash ? String(physicalCash) : null,
+        userId: null,
+        payrollEntries: payroll.filter(p => p.isChecked).map(p => ({
+          employeeId: p.id,
+          grossPay: String(p.dailyRate)
+        })),
+        expenses: expenses.filter(exp => exp.amount).map(exp => ({
+          description: exp.name,
+          amount: exp.amount,
+          userId: null,
+          expenseCategory: exp.name.includes('Supplies') ? 'supplies' : 'miscellaneous'
+        }))
+      });
       setIsSuccess(true);
       setTimeout(() => {
         setIsSuccess(false);
-        // Reset form
         setStep(1);
         setCashSales(''); setCardSales(''); setPhysicalCash('');
         setPayroll(prev => prev.map(p => ({ ...p, isChecked: false })));
         setExpenses(prev => prev.map(exp => ({ ...exp, amount: '' })));
       }, 2000);
-    }, 1000);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to submit sales entry');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="w-full max-w-3xl mx-auto pb-20">
       
-      {/* ── Stepper ── */}
       <div className="flex items-center justify-center mb-12">
         {(['Revenue', 'Payroll', 'Expenses', 'Summary'] as const).map((label, idx) => {
           const stepNum = (idx + 1) as Step;
@@ -109,7 +134,6 @@ export function SalesEntry() {
         })}
       </div>
 
-      {/* ── Form Card ── */}
       <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); setStep((s) => (s + 1) as Step); }} className="bg-white rounded-[24px] border border-[#e8dccb] p-8 sm:p-10 shadow-sm relative overflow-hidden">
         
         <AnimatePresence mode="wait">
@@ -121,7 +145,6 @@ export function SalesEntry() {
             transition={{ duration: 0.2 }}
             className="min-h-[300px]"
           >
-            {/* STEP 1: REVENUE */}
             {step === 1 && (
               <div className="space-y-8">
                 <div>
@@ -164,7 +187,6 @@ export function SalesEntry() {
               </div>
             )}
 
-            {/* STEP 2: PAYROLL */}
             {step === 2 && (
               <div className="space-y-6">
                 <div>
@@ -196,7 +218,6 @@ export function SalesEntry() {
               </div>
             )}
 
-            {/* STEP 3: EXPENSES */}
             {step === 3 && (
               <div className="space-y-6">
                 <div>
@@ -228,7 +249,6 @@ export function SalesEntry() {
               </div>
             )}
 
-            {/* STEP 4: SUMMARY */}
             {step === 4 && (
               <div className="space-y-8">
                 <div>
@@ -271,7 +291,6 @@ export function SalesEntry() {
           </motion.div>
         </AnimatePresence>
 
-        {/* ── Bottom Navigation ── */}
         <div className="mt-12 pt-6 flex items-center justify-between">
           {step > 1 ? (
             <button
