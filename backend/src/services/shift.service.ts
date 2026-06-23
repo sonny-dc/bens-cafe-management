@@ -1,5 +1,5 @@
 import { shiftRepository } from '../repositories/index.js';
-import type { Shift, StartShiftInput, EndShiftInput } from 'shared/models';
+import type { Shift, StartShiftInput, EndShiftInput } from '../models/index.js';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 
 export async function startShift(input: Omit<StartShiftInput, 'startTime'>): Promise<Shift> {

@@ -8,12 +8,12 @@ import type {
     Employee,
     CreateEmployeeInput,
     UpdateEmployeeInput
-} from 'shared/models';
+} from '../models/index.js';
 
 import { 
     EMPLOYMENT_STATUS,
     type EmploymentStatus
-} from 'shared/constants';
+} from '../config/constants.js';
 
 import { withConnection, withTransaction } from '../config/database.js';
 

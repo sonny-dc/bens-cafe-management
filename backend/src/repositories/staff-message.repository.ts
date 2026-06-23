@@ -4,7 +4,7 @@ import {
     MESSAGE_STATUS,
     type MessageStatus,
     type MessageType 
-} from 'shared/constants';
+} from '../config/constants.js';
 
 import { withConnection, withTransaction } from '../config/database.js';
 

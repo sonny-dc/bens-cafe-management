@@ -8,12 +8,12 @@ import type {
     Shift,
     StartShiftInput,
     EndShiftInput
-} from 'shared/models';
+} from '../models/index.js';
 
 import { 
     SHIFT_STATUS,
     type ShiftStatus
-} from 'shared/constants';
+} from '../config/constants.js';
 
 import { withConnection, withTransaction } from '../config/database.js';
 

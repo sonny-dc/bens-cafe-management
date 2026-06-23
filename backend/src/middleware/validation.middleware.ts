@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { type ZodType, z } from 'zod';
-import { type RequestType, REQUEST_TYPES } from '../../../shared/src/constants/app.constants.js';
+import { type RequestType, REQUEST_TYPES } from '../config/constants.js';
 
 export function validate(schema: ZodType, requestType: RequestType = REQUEST_TYPES.BODY) {
     return (req: Request, res: Response, next: NextFunction) => {
