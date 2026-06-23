@@ -4,6 +4,7 @@ import { Check, ChevronRight, ChevronLeft, Plus } from 'lucide-react';
 import { salesApi } from '../../api/salesApi';
 import { employeeApi } from '../../api/employeeApi';
 import type { Employee } from 'shared/models';
+import { EMPLOYMENT_STATUS } from 'shared/constants';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -36,7 +37,7 @@ export function SalesEntry() {
 
   useEffect(() => {
     employeeApi.getEmployees().then(data => {
-      setPayroll(data.filter((e: Employee) => e.employmentStatus === 'active').map((e: Employee) => ({
+      setPayroll(data.filter((e: Employee) => e.employmentStatus === EMPLOYMENT_STATUS.ACTIVE).map((e: Employee) => ({
         id: e.employeeId,
         name: `Staff ${e.employeeCode}`,
         role: e.jobRole,
