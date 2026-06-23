@@ -11,7 +11,8 @@ import {
   employeeRoutes, 
   shiftRoutes, 
   staffMessageRoutes,
-  inventoryRequestRoutes
+  salesEntryRoutes,
+  InventoryRoutes,
 } from './routes/index.js';
 
 const app = express();
@@ -50,7 +51,8 @@ app.get('/', (_req: Request, res: Response) => {
 app.use("/api/employees", employeeRoutes);
 app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
-app.use("/api/inventory-requests", inventoryRequestRoutes);
+app.use("/api/sales-entries", salesEntryRoutes);
+app.use("/api/inventory", InventoryRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

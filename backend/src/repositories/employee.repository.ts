@@ -135,41 +135,38 @@ export async function getEmployeeById(
 /**
  * ROUTE: POST /api/employees
  */
-export async function createEmployee(
-    input: CreateEmployeeInput
+export async function createEmployeeWithConnection(
+    input: CreateEmployeeInput,
+    connection: PoolConnection
 ): Promise<Employee> {
-    return withTransaction(async (connection) => {
-        const [result] = await connection.execute<ResultSetHeader>(
-            `
-            INSERT INTO employee_profiles (
-                user_id,
-                employee_code,
-                job_role,
-                default_shift_hours,
-                hourly_rate
-            )
-            VALUES (?, ?, ?, ?, ?)
-            `
-            ,
-            [
-                input.userId,
-                input.employeeCode,
-                input.jobRole,
-                input.defaultShiftHours,
-                input.hourlyRate
-            ]
-        );
-        const employee = await getEmployeeByIdWithConnection(
-            connection, 
-            result.insertId
-        );
-
-        if (employee === null) {
-            throw new Error("Created employee profile could not be found.");
-        }
-
-        return employee;
-    });
+    const [result] = await connection.execute<ResultSetHeader>(
+        `
+        INSERT INTO employee_profiles (
+            user_id,
+            employee_code,
+            job_role,
+            default_shift_hours,
+            hourly_rate
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `
+        ,
+        [
+            input.userId,
+            input.employeeCode,
+            input.jobRole,
+            input.defaultShiftHours,
+            input.hourlyRate
+        ]
+    );
+    const employee = await getEmployeeByIdWithConnection(
+        connection, 
+        result.insertId
+    );
+    if (employee === null) {
+        throw new Error("Created employee profile could not be found.");
+    }
+    return employee;
 }
 
 

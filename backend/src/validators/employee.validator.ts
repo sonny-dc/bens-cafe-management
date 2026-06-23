@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { EMPLOYMENT_STATUS } from '../config/constants.js';
-const decimalString = z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid decimal number with up to 2 decimal places");
+import { decimalString } from './common.validator.js';
 
+import { EMPLOYMENT_STATUS } from '../config/constants.js';
 
 export const employeeIdParamSchema = z.object({
     employeeId: z.coerce
@@ -16,8 +16,8 @@ export const registerEmployeeSchema = z.object({
     fullName: z.string().min(1),
     employeeCode: z.string().min(1),
     jobRole: z.string().min(1),
-    defaultShiftHours: decimalString,
-    hourlyRate: decimalString
+    defaultShiftHours: decimalString.optional(),
+    hourlyRate: decimalString.optional()
 });
 
 export const updateEmployeeSchema = z.object({

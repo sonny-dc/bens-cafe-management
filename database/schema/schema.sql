@@ -110,7 +110,7 @@ CREATE TABLE inventory_requests (
   request_id INT AUTO_INCREMENT PRIMARY KEY,
   employee_id INT NOT NULL,
   item_id INT NOT NULL,
-  requested_quantity DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  requested_quantity DECIMAL(10,2) NOT NULL,
   requested_unit VARCHAR(20) NOT NULL,
   reason VARCHAR(255) NOT NULL,
   request_status ENUM('pending', 'acknowledged', 'fulfilled') NOT NULL DEFAULT 'pending',
@@ -261,9 +261,8 @@ CREATE TABLE sales_entries (
   physical_cash_count DECIMAL(12,2) NULL DEFAULT NULL,
   total_revenue DECIMAL(12,2) GENERATED ALWAYS AS (cash_sales + online_card_sales) STORED,
   user_id INT NULL,
-  status ENUM('draft', 'saved') NOT NULL DEFAULT 'draft',
+  posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_sales_entries_user
     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -275,33 +274,20 @@ CREATE TABLE sales_entries (
   CONSTRAINT chk_sales_entries_physical_cash_count CHECK (physical_cash_count IS NULL OR physical_cash_count >= 0)
 ) ENGINE=InnoDB;
 
-CREATE TABLE expense_categories (
-  expense_category_id INT AUTO_INCREMENT PRIMARY KEY,
-  category_name ENUM('utilities', 'rent', 'supplies', 'marketing', 'repairs_maintenance', 'transportation', 'miscellaneous') NOT NULL UNIQUE,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
 CREATE TABLE expenses (
   expense_id INT AUTO_INCREMENT PRIMARY KEY,
   sales_entry_id INT NOT NULL,
-  expense_category_id INT NOT NULL,
-  expense_date DATE NOT NULL DEFAULT (CURRENT_DATE),
   description VARCHAR(255) NULL,
   amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   user_id INT NULL,
+  expense_category ENUM('utilities', 'rent', 'supplies', 'marketing', 'repairs_maintenance', 'transportation', 'miscellaneous') NOT NULL,
+  posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_expenses_sales_entry
     FOREIGN KEY (sales_entry_id) REFERENCES sales_entries(sales_entry_id)
     ON UPDATE CASCADE
     ON DELETE CASCADE,
-
-  CONSTRAINT fk_expenses_category
-    FOREIGN KEY (expense_category_id) REFERENCES expense_categories(expense_category_id)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT,
 
   CONSTRAINT fk_expenses_user
     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -315,13 +301,9 @@ CREATE TABLE payroll_entries (
   payroll_id INT AUTO_INCREMENT PRIMARY KEY,
   sales_entry_id INT NOT NULL,
   employee_id INT NOT NULL,
-  is_included BOOLEAN NOT NULL DEFAULT TRUE,
-  work_date DATE NOT NULL,
-  hours_worked DECIMAL(4,2) NOT NULL DEFAULT 0.00,
-  hourly_rate_snapshot DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-  gross_pay DECIMAL(10,2) GENERATED ALWAYS AS (hours_worked * hourly_rate_snapshot) STORED,
+  gross_pay DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_payroll_entries_sales_entry
     FOREIGN KEY (sales_entry_id) REFERENCES sales_entries(sales_entry_id)
@@ -333,8 +315,8 @@ CREATE TABLE payroll_entries (
     ON UPDATE CASCADE
     ON DELETE RESTRICT,
 
-  CONSTRAINT chk_payroll_entries_hours_worked CHECK (hours_worked >= 0),
-  CONSTRAINT chk_payroll_entries_hourly_rate CHECK (hourly_rate_snapshot >= 0)
+  CONSTRAINT chk_payroll_entries_gross_pay CHECK (gross_pay >= 0);
+
 ) ENGINE=InnoDB;
 
 -- ==========================================================

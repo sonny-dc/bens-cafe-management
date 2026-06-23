@@ -2,6 +2,7 @@ import type { Employee, RegisterEmployeeInput, UpdateEmployeeInput } from "../mo
 import { USER_ROLES } from "../config/constants.js";
 import { userRepository, employeeRepository } from "../repositories/index.js";
 
+import { withTransaction } from "../config/database.js";
 import { hashPassword } from "../utils/password-hash.js";
 
 
@@ -21,22 +22,26 @@ export async function registerEmployee(
 ): Promise<Employee> {
     const passwordHash = await hashPassword(input.password);
 
-    const user = await userRepository.createUser({
-        username: input.username,
-        passwordHash,
-        fullName: input.fullName,
-        role: USER_ROLES.EMPLOYEE
-    });
+    return withTransaction(async (connection) => {
 
-    const employee = await employeeRepository.createEmployee({
-        userId: user.userId,
-        employeeCode: input.employeeCode,
-        jobRole: input.jobRole,
-        defaultShiftHours: input.defaultShiftHours,
-        hourlyRate: input.hourlyRate
-    });
+        const user = await userRepository.createUserWithConnection({
+            passwordHash,
+            username: input.username,
+            fullName: input.fullName,
+            role: USER_ROLES.EMPLOYEE
+        }, connection);
 
-    return employee;
+        const employee = await employeeRepository.createEmployeeWithConnection({
+            userId: user.userId,
+            employeeCode: input.employeeCode,
+            jobRole: input.jobRole,
+            defaultShiftHours: input.defaultShiftHours,
+            hourlyRate: input.hourlyRate
+        }, connection);
+        
+        return employee;
+
+    });
 }
 
 /**

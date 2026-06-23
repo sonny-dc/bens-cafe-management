@@ -16,9 +16,9 @@ export async function startShift(req: Request, res: Response): Promise<void> {
         });
 
         res.status(201).json({ data: shift });
-    } catch (error: any) {
-        console.error("Error starting shift:", error);
-        res.status(400).json({ error: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while starting the shift.";
+        res.status(400).json({ error: errorMessage });
     }
 }
 
@@ -42,9 +42,9 @@ export async function endShift(req: Request, res: Response): Promise<void> {
         });
 
         res.status(200).json({ data: shift });
-    } catch (error: any) {
-        console.error("Error ending shift:", error);
-        res.status(400).json({ error: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while ending the shift.";
+        res.status(400).json({ error: errorMessage });
     }
 }
 
@@ -65,9 +65,9 @@ export async function getActiveShift(req: Request, res: Response): Promise<void>
         }
 
         res.status(200).json({ data: shift });
-    } catch (error: any) {
-        console.error("Error getting active shift:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting the active shift.";
+        res.status(500).json({ error: errorMessage });
     }
 }
 
