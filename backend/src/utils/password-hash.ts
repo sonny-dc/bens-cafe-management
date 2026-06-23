@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { SALT_ROUNDS } from '../../../shared/src/constants/app.constants.js';
+import { SALT_ROUNDS } from '../config/constants.js';
 
 export const hashPassword = async (
     password: string

@@ -1,9 +1,8 @@
 const API_BASE_URL = 'http://localhost:3000/api';
 
-import type { MessageType, MessageStatus } from 'shared/constants';
+import type { MessageType } from 'shared/constants';
 import type { StaffMessage } from 'shared/models';
 
-export type { MessageType, MessageStatus };
 export type Note = StaffMessage;
 
 export const notesApi = {

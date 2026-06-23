@@ -4,7 +4,8 @@ import {
   Users, Clock, Banknote, TrendingUp, TrendingDown, 
   MessageSquare, AlertTriangle, Info, Package, CheckCircle2, XCircle, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
-import { shiftSummaryApi, type ShiftSession } from '../../api/shiftSummaryApi';
+import { shiftSummaryApi } from '../../api/shiftSummaryApi';
+import { type ShiftSession } from 'shared/models';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 

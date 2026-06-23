@@ -1,16 +1,6 @@
 const API_BASE_URL = 'http://localhost:3000/api';
 
-export interface ShiftSession {
-  shiftId: number;
-  employeeId: number;
-  shiftDate: string;
-  startTime: string;
-  endTime: string | null;
-  openingCash: string;
-  closingCash: string;
-  status: string;
-  // Note: the backend actually calculates cashVariance natively now
-}
+import type { ShiftSession } from 'shared/models';
 
 export const shiftSummaryApi = {
   async getSummary(startDate: string, endDate: string): Promise<ShiftSession[]> {

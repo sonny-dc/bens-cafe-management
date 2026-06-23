@@ -7,7 +7,7 @@ import type {
 import type {
     User,
     CreateUserRepositoryInput,
-} from "shared/models";
+} from "../models/index.js";
 
 
 import { 
@@ -15,7 +15,7 @@ import {
     ACCOUNT_STATUS,
     type UserRole,
     type AccountStatus
-} from "shared/constants";
+} from "../config/constants.js";
 
 import { withConnection, withTransaction } from "../config/database.js";
 

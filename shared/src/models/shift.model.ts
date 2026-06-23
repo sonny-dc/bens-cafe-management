@@ -16,6 +16,18 @@ export interface Shift {
     updatedAt: Date | null;
 }
 
+export interface ShiftSession {
+  shiftId: number;
+  employeeId: number;
+  shiftDate: string;
+  startTime: string;
+  endTime: string | null;
+  openingCash: string;
+  closingCash: string;
+  status: string;
+  // Note: the backend actually calculates cashVariance natively now
+}
+
 export interface StartShiftInput {
     employeeId: number;
     openingCash: string;

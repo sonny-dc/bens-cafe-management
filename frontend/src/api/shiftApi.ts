@@ -2,8 +2,6 @@ const API_BASE_URL = "http://localhost:3000/api"; // Replace with your actual ba
 
 import type { Shift } from 'shared/models';
 
-export type { Shift };
-
 export const shiftApi = {
   async getActiveShift(employeeId: number): Promise<Shift | null> {
     const response = await fetch(`${API_BASE_URL}/shifts/active/${employeeId}`);
