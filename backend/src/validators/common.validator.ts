@@ -8,6 +8,14 @@ export const decimalString = z
         'Must be a valid number with up to 2 decimal places'
     );
 
+export const nonNegativeDecimalString = z
+    .string()
+    .trim()
+    .regex(
+        /^(0|[1-9]\d*)(\.\d{1,2})?$/,
+        'Must be a valid non-negative number with up to 2 decimal places'
+);
+
 export const nullableDecimalString = z.preprocess(
     (value) => {
         if (value === '' || value === undefined) {
