@@ -1,4 +1,4 @@
-import type { InventoryStatus, RequestStatus } from '../constants/index.js';
+import type { InventoryStatus, RequestStatus, PurchasePlanStatus } from '../constants/index.js';
 
 /**
  * Represents a single inventory item in the cafe's stock
@@ -46,6 +46,6 @@ export interface PurchasePlan {
   planId: number;
   createdAt: string;
   totalCost: number;
-  status: 'pending' | 'received';
+  status: PurchasePlanStatus;
   items: PurchasePlanItem[];
 }

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { PURCHASE_PLAN_STATUS } from '../config/constants.js';
 import { pool } from '../config/database.js';
 
 export async function getAllItems(_req: Request, res: Response): Promise<void> {
@@ -35,7 +36,7 @@ export async function deleteItem(req: Request, res: Response): Promise<void> {
 
 export async function getPurchasePlans(_req: Request, res: Response): Promise<void> {
   try {
-    const [planRows]: any = await pool.query('SELECT * FROM purchase_plans WHERE status = ?', ['pending']);
+    const [planRows]: any = await pool.query('SELECT * FROM purchase_plans WHERE status = ?', [PURCHASE_PLAN_STATUS.PENDING]);
     
     const plans = [];
     for (const planRow of planRows) {
@@ -69,7 +70,7 @@ export async function createPurchasePlan(req: Request, res: Response): Promise<v
     
     const [result]: any = await pool.query(
       'INSERT INTO purchase_plans (total_cost, status) VALUES (?, ?)',
-      [totalCost, 'pending']
+      [totalCost, PURCHASE_PLAN_STATUS.PENDING]
     );
     const planId = result.insertId;
 
@@ -102,7 +103,7 @@ export async function fulfillPurchasePlan(req: Request, res: Response): Promise<
     }
 
     // 3. Mark plan as received
-    await connection.query('UPDATE purchase_plans SET status = ? WHERE plan_id = ?', ['received', id]);
+    await connection.query('UPDATE purchase_plans SET status = ? WHERE plan_id = ?', [PURCHASE_PLAN_STATUS.RECEIVED, id]);
 
     await connection.commit();
     res.status(200).json({ success: true, message: 'Plan fulfilled and stock updated' });
