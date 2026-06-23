@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import {APP_TIME_ZONE, MYSQL_DATETIME_FORMAT, MYSQL_DATE_FORMAT, MYSQL_TIME_FORMAT} from "../../../shared/src/constants/app.constants.js";
+import {APP_TIME_ZONE, MYSQL_DATETIME_FORMAT, MYSQL_DATE_FORMAT, MYSQL_TIME_FORMAT} from "../config/constants.js";
 
 
 /**

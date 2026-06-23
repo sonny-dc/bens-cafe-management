@@ -21,7 +21,7 @@ export async function createStaffMessage(req: Request, res: Response): Promise<v
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An error occurred while creating the staff message.";
-        res.status(400).json({ error: errorMessage });
+        res.status(500).json({ error: errorMessage });
     }
 }
 
@@ -81,8 +81,8 @@ export async function updateStaffMessageStatus(req: Request, res: Response): Pro
             return;
         }
         res.status(200).json({ data: { success: true } });
-    } catch (error: any) {
-        console.error('Error updating staff message status:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while updating the staff message status.";
+        res.status(500).json({ error: errorMessage });
     }
 }

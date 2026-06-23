@@ -12,7 +12,7 @@ import {
   shiftRoutes, 
   staffMessageRoutes,
   salesEntryRoutes,
-  InventoryRoutes,
+  inventoryRequestRoutes,
 } from './routes/index.js';
 
 const app = express();
@@ -52,7 +52,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
 app.use("/api/sales-entries", salesEntryRoutes);
-app.use("/api/inventory", InventoryRoutes);
+app.use("/api/inventory-requests", inventoryRequestRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
