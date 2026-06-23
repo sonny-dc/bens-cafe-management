@@ -1,4 +1,4 @@
-import type { Expense, CreateExpenseInput} from './expense.model.js';
+import type { Expense, CreateExpenseInput } from './expense.model.js';
 import type { PayrollEntry, CreatePayrollEntryInput } from './payroll-entry.model.js';
 
 export interface SalesEntry {
