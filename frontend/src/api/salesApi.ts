@@ -1,21 +1,6 @@
 const API_BASE_URL = 'http://localhost:3000/api';
 
-export interface CreateSalesEntryPayload {
-  cashSales: string;
-  onlineCardSales: string;
-  physicalCashCount: string | null;
-  userId: number | null;
-  payrollEntries: Array<{
-    employeeId: number;
-    grossPay: string;
-  }>;
-  expenses: Array<{
-    description: string | null;
-    amount: string;
-    userId: number | null;
-    expenseCategory: string;
-  }>;
-}
+import type { CreateSalesEntryTransactionInput as CreateSalesEntryPayload } from 'shared/models';
 
 export const salesApi = {
   async createSalesEntryTransaction(payload: CreateSalesEntryPayload) {

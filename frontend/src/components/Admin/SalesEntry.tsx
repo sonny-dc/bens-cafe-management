@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, Plus } from 'lucide-react';
 import { salesApi } from '../../api/salesApi';
 import { employeeApi } from '../../api/employeeApi';
+import type { Employee } from 'shared/models';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -35,7 +36,7 @@ export function SalesEntry() {
 
   useEffect(() => {
     employeeApi.getEmployees().then(data => {
-      setPayroll(data.filter((e: any) => e.employmentStatus === 'active').map((e: any) => ({
+      setPayroll(data.filter((e: Employee) => e.employmentStatus === 'active').map((e: Employee) => ({
         id: e.employeeId,
         name: `Staff ${e.employeeCode}`,
         role: e.jobRole,
@@ -77,15 +78,20 @@ export function SalesEntry() {
         onlineCardSales: String(parsedCard),
         physicalCashCount: physicalCash ? String(physicalCash) : null,
         userId: null,
+        postedAt: new Date().toISOString(),
         payrollEntries: payroll.filter(p => p.isChecked).map(p => ({
+          salesEntryId: 0,
           employeeId: p.id,
-          grossPay: String(p.dailyRate)
+          grossPay: String(p.dailyRate),
+          postedAt: new Date().toISOString()
         })),
         expenses: expenses.filter(exp => exp.amount).map(exp => ({
+          salesEntryId: 0,
           description: exp.name,
           amount: exp.amount,
           userId: null,
-          expenseCategory: exp.name.includes('Supplies') ? 'supplies' : 'miscellaneous'
+          expenseCategory: (exp.name.includes('Supplies') ? 'supplies' : 'miscellaneous') as 'supplies' | 'miscellaneous',
+          postedAt: new Date().toISOString()
         }))
       });
       setIsSuccess(true);
