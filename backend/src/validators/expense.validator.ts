@@ -17,7 +17,7 @@ export const createExpenseSchema = z.object({
         .max(255, 'description must not exceed 255 characters')
         .nullable()
         .optional()
-        .transform((value) => value ?? null),
+        .transform((value) => value || null),
 
     amount: decimalString,
 

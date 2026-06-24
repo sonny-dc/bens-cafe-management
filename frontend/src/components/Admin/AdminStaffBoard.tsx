@@ -5,6 +5,8 @@ import {
   MessageSquare, AlertTriangle, Info, Package, CheckCircle2, XCircle, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
 import { shiftSummaryApi, type ShiftSession } from '../../api/shiftSummaryApi';
+import { type Note, notesApi } from '../../api/notesApi';
+import { MESSAGE_STATUS, type MessageType, MESSAGE_TYPES } from 'shared/constants';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -14,10 +16,10 @@ const PROFIT_REPORT = [
 ];
 
 // --- HELPERS ---
-const getNoteStyle = (type: string) => {
+const getNoteStyle = (type: MessageType) => {
   switch (type) {
-    case 'urgent': return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', icon: AlertTriangle };
-    case 'concern': return { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-700', icon: MessageSquare };
+    case MESSAGE_TYPES.URGENT: return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', icon: AlertTriangle };
+    case MESSAGE_TYPES.CONCERN: return { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-700', icon: MessageSquare };
     default: return { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700', icon: Info };
   }
 };
@@ -35,7 +37,7 @@ export function AdminStaffBoard() {
   // API State
   const [allShifts, setAllShifts] = useState<ShiftSession[]>([]);
   const [activeShifts, setActiveShifts] = useState<any[]>([]);
-  const [staffNotes, setStaffNotes] = useState<any[]>([]);
+  const [staffNotes, setStaffNotes] = useState<Note[]>([]);
   const [inventoryRequests, setInventoryRequests] = useState<any[]>([]);
   
   const [isLoadingShifts, setIsLoadingShifts] = useState(false);
@@ -61,9 +63,8 @@ export function AdminStaffBoard() {
       setActiveShifts(activeJson.data || []);
 
       // 3. Fetch Staff Notes
-      const notesRes = await fetch(`${API_BASE_URL}/staff-messages`);
-      const notesJson = await notesRes.json();
-      setStaffNotes((notesJson.data || []).filter((n: any) => n.messageStatus === 'new'));
+      const notes = await notesApi.getAllNotes();
+      setStaffNotes(notes.filter((note) => note.messageStatus === MESSAGE_STATUS.NEW));
 
       // 4. Fetch Inventory Requests
       const invRes = await fetch(`${API_BASE_URL}/inventory-requests`);
@@ -77,14 +78,11 @@ export function AdminStaffBoard() {
     }
   };
 
-  const handleAcknowledgeNote = async (id: number) => {
+  const handleAcknowledgeNote = async (messageId: number) => {
     try {
-      await fetch(`${API_BASE_URL}/staff-messages/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'acknowledged' })
-      });
-      setStaffNotes(prev => prev.filter(n => n.messageId !== id));
+      await notesApi.markNoteAsAcknowledged(messageId);
+      setStaffNotes((prev) => 
+        prev.filter((note) => note.messageId !== messageId));
     } catch (err) {
       console.error(err);
     }

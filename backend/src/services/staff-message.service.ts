@@ -1,5 +1,5 @@
 import { staffMessageRepository } from '../repositories/index.js';
-import type { StaffMessage, CreateStaffMessageInput } from '../models/index.js';
+import type { StaffMessage, CreateStaffMessageInput, UpdateStaffMessageStatusInput } from '../models/index.js';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 
 export async function createStaffMessage(input: Omit<CreateStaffMessageInput, 'postedAt'>): Promise<StaffMessage> {
@@ -15,10 +15,6 @@ export async function getStaffMessagesByEmployee(employeeId: number): Promise<St
     return staffMessageRepository.getStaffMessagesByEmployee(employeeId);
 }
 
-export async function markStaffMessageAsRead(messageId: number): Promise<boolean> {
-    return staffMessageRepository.markStaffMessageAsRead(messageId, getCurrentAppDateTime());
-}
-
-export async function updateStaffMessageStatus(messageId: number, status: string): Promise<boolean> {
-    return staffMessageRepository.updateStaffMessageStatus(messageId, status);
+export async function updateStaffMessageStatus(input: Omit<UpdateStaffMessageStatusInput, 'readAt'>): Promise<boolean> {
+    return staffMessageRepository.updateStaffMessageStatus({ ...input, readAt: getCurrentAppDateTime() });
 }
