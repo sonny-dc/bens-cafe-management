@@ -4,7 +4,7 @@ import { Check, ChevronRight, ChevronLeft, Plus } from 'lucide-react';
 import { salesApi } from '../../api/salesApi';
 import { employeeApi } from '../../api/employeeApi';
 import type { Employee } from 'shared/models';
-import { EMPLOYMENT_STATUS } from 'shared/constants';
+import { EMPLOYMENT_STATUS, EXPENSE_CATEGORIES } from 'shared/constants';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -91,7 +91,7 @@ export function SalesEntry() {
           description: exp.name,
           amount: exp.amount,
           userId: null,
-          expenseCategory: (exp.name.includes('Supplies') ? 'supplies' : 'miscellaneous') as 'supplies' | 'miscellaneous',
+          expenseCategory: exp.name.includes('Supplies') ? EXPENSE_CATEGORIES.SUPPLIES : EXPENSE_CATEGORIES.MISCELLANEOUS,
           postedAt: new Date().toISOString()
         }))
       });

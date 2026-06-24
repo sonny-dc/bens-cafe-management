@@ -5,6 +5,8 @@ import { notesApi, type Note, type MessageType } from '../../api/notesApi';
 
 const EMPLOYEE_ID = 1; // Hardcoded for now
 
+import { MESSAGE_TYPES } from 'shared/constants';
+
 const CATEGORIES: {
   value: MessageType;
   label: string;
@@ -13,21 +15,21 @@ const CATEGORIES: {
   activeClasses: string;
 }[] = [
   {
-    value: 'general',
+    value: MESSAGE_TYPES.GENERAL,
     label: 'General',
     description: 'Just a standard note',
     icon: Info,
     activeClasses: 'bg-blue-50 border-blue-300 text-blue-700',
   },
   {
-    value: 'concern',
+    value: MESSAGE_TYPES.CONCERN,
     label: 'Concern',
     description: 'Something needs addressing',
     icon: MessageSquare,
     activeClasses: 'bg-amber-50 border-amber-300 text-amber-700',
   },
   {
-    value: 'urgent',
+    value: MESSAGE_TYPES.URGENT,
     label: 'Urgent',
     description: 'Needs immediate attention',
     icon: AlertTriangle,
@@ -51,7 +53,7 @@ export function NotesManager() {
 
   const [subject, setSubject] = useState('');
   const [messageText, setMessageText] = useState('');
-  const [messageType, setMessageType] = useState<MessageType>('general');
+  const [messageType, setMessageType] = useState<MessageType>(MESSAGE_TYPES.GENERAL);
 
   useEffect(() => { loadNotes(); }, []);
 
@@ -76,7 +78,7 @@ export function NotesManager() {
       setNotes(prev => [newNote, ...prev]);
       setSubject('');
       setMessageText('');
-      setMessageType('general');
+      setMessageType(MESSAGE_TYPES.GENERAL);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3500);
     } catch (err: any) {
