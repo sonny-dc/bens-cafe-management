@@ -9,7 +9,7 @@ export interface InventoryRequest {
   requestId: number;
   employeeId: number;
   itemId: number;
-  itemName?: string;
+  itemName: string;
   requestedQuantity: string;
   requestedUnit: string;
   reason: string;
@@ -39,7 +39,7 @@ export const inventoryApi = {
   },
 
   // Submit a new request
-  async createRequest(payload: { employeeId: number; itemId: number; itemName?: string; requestedQuantity: string; requestedUnit: string; reason: string }): Promise<InventoryRequest> {
+  async createRequest(payload: { employeeId: number; itemId: number; itemName: string; requestedQuantity: string; requestedUnit: string; reason: string }): Promise<InventoryRequest> {
     const newReq: InventoryRequest = {
       ...payload,
       requestId: reqIdCounter++,
