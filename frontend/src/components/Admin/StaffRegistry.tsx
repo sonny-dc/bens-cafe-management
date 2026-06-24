@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Search, Plus, Edit2, Trash2, X, AlertTriangle, ShieldCheck, Clock, CircleDot } from 'lucide-react';
-import { employeeApi, type EmployeeProfile } from '../../api/employeeApi';
+import { employeeApi } from '../../api/employeeApi';
+import  { type EmployeeProfile, type UpdateEmployeeInput } from 'shared/models';
+import { EMPLOYMENT_STATUS, type EmploymentStatus } from 'shared/constants';
 
 export function StaffRegistry() {
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
@@ -23,7 +25,7 @@ export function StaffRegistry() {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      const data = await employeeApi.getAll();
+      const data = await employeeApi.getAllEmployees();
       setEmployees(data);
     } catch (err) {
       console.error(err);
@@ -36,10 +38,14 @@ export function StaffRegistry() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
-      fullName: formData.get('fullName'),
-      username: formData.get('username'),
-      jobRole: formData.get('jobRole'),
-      hourlyRate: Number(formData.get('hourlyRate')),
+      fullName: String(formData.get('fullName') || '').trim(),
+      username: String(formData.get('username') || '').trim(),
+      password: 'password123',
+      employeeCode: `EMP-${Date.now()}`,
+      jobRole: String(formData.get('jobRole') || '').trim(),
+      defaultShiftHours: '8.00',
+      hourlyRate: String(formData.get('hourlyRate') || '0.00'),
+
     };
 
     try {
@@ -57,24 +63,37 @@ export function StaffRegistry() {
   const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editingEmployee) return;
-    
+
     const formData = new FormData(e.currentTarget);
-    const jobRole = formData.get('jobRole') as string;
-    const hourlyRate = Number(formData.get('hourlyRate'));
-    const status = formData.get('employmentStatus') as 'active' | 'inactive';
+
+    const jobRole = String(formData.get('jobRole') || '').trim();
+    const hourlyRate = String(formData.get('hourlyRate') || '0.00');
+    const employmentStatus = formData.get('employmentStatus') as EmploymentStatus;
+
+    const payload: UpdateEmployeeInput = {};
+
+    if (jobRole !== editingEmployee.jobRole) {
+      payload.jobRole = jobRole;
+    }
+
+    if (Number(hourlyRate) !== Number(editingEmployee.hourlyRate)) {
+      payload.hourlyRate = hourlyRate;
+    }
+
+    if (employmentStatus !== editingEmployee.employmentStatus) {
+      payload.employmentStatus = employmentStatus;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      setEditingEmployee(null);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
-      if (jobRole !== editingEmployee.jobRole) {
-        await employeeApi.updateRole(editingEmployee.employeeId, jobRole);
-      }
-      if (hourlyRate !== Number(editingEmployee.hourlyRate)) {
-        await employeeApi.updateHourlyRate(editingEmployee.employeeId, hourlyRate);
-      }
-      if (status !== editingEmployee.employmentStatus) {
-        await employeeApi.updateStatus(editingEmployee.employeeId, status);
-      }
-      
+
+      await employeeApi.update(editingEmployee.employeeId, payload);
+
       await fetchEmployees();
       setEditingEmployee(null);
     } catch (err: any) {
@@ -198,12 +217,12 @@ export function StaffRegistry() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border
-                        ${emp.employmentStatus === 'active' 
+                        ${emp.employmentStatus === EMPLOYMENT_STATUS.ACTIVE 
                           ? 'bg-green-50 text-green-700 border-green-200' 
                           : 'bg-gray-100 text-gray-600 border-gray-200'}`}
                       >
-                        <CircleDot size={10} className={emp.employmentStatus === 'active' ? 'text-green-500 animate-pulse' : 'text-gray-400'} />
-                        {emp.employmentStatus === 'active' ? 'Active' : 'Inactive'}
+                        <CircleDot size={10} className={emp.employmentStatus === EMPLOYMENT_STATUS.ACTIVE ? 'text-green-500 animate-pulse' : 'text-gray-400'} />
+                        {emp.employmentStatus === EMPLOYMENT_STATUS.ACTIVE ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -351,8 +370,8 @@ export function StaffRegistry() {
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Employment Status</label>
                   <select name="employmentStatus" defaultValue={editingEmployee.employmentStatus} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value={EMPLOYMENT_STATUS.ACTIVE}>Active</option>
+                    <option value={EMPLOYMENT_STATUS.INACTIVE}>Inactive</option>
                   </select>
                 </div>
 

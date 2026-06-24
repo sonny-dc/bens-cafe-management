@@ -91,5 +91,20 @@ export async function deactivateEmployee(employeeId: number): Promise<Employee |
  * Also deletes the associated user account.
  */
 export async function deleteEmployee(employeeId: number): Promise<boolean> {
-    return await employeeRepository.deleteEmployee(employeeId);
+    return withTransaction(async (connection) => {
+        const employee = await employeeRepository.getEmployeeByIdWithConnection(employeeId, connection);
+        if (!employee) {
+            return false;
+        }
+        const isEmployeeDeleted = await employeeRepository.deleteEmployee(employeeId, connection);
+        if (!isEmployeeDeleted) {
+            throw new Error(`Failed to delete employee with ID ${employeeId}`);
+        }
+        const isUserDeleted = await userRepository.deleteUserByIdWithConnection(employee.userId, connection);
+        if (!isUserDeleted) {
+            throw new Error(`Failed to delete user account for employee with ID ${employeeId}`);
+        }
+
+        return true;
+    });
 }

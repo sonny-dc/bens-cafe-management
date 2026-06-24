@@ -176,3 +176,46 @@ export async function getUserById(
         return getUserByIdWithConnection(connection, userId);
     });
 }
+
+/**
+ * CAUTION: Be careful when using this function. It will permanently delete a 
+ * user account from the database and also its associated employee record if it 
+ * exists. This action cannot be undone. Make sure to confirm the userId and ensure
+ * that you have the necessary permissions before calling this function.
+ * 
+ * USE CASE: For deleting other admins.
+ */
+export async function deleteUserById(
+    userId: number
+): Promise<boolean> {
+    return withConnection(async (connection) => {
+        const [result] = await connection.execute<ResultSetHeader>(
+            `
+            DELETE FROM users
+            WHERE user_id = ?
+            `,
+            [userId]
+        );
+        return result.affectedRows > 0;
+    });
+}
+
+/**
+ * CAUTION: Note the caution in deleteUserById.
+ * 
+ * USE CASE: Mainly for employee deletion use case, this function 
+ * deletes a user account using an existing database connection.
+ */
+export async function deleteUserByIdWithConnection(
+    userId: number,
+    connection: PoolConnection
+): Promise<boolean> {
+    const [result] = await connection.execute<ResultSetHeader>(
+        `
+        DELETE FROM users
+        WHERE user_id = ?
+        `,
+        [userId]
+    );
+    return result.affectedRows > 0;
+}

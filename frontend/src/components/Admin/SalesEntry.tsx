@@ -36,7 +36,7 @@ export function SalesEntry() {
   const [payroll, setPayroll] = useState<EmployeePayroll[]>([]);
 
   useEffect(() => {
-    employeeApi.getEmployees().then(data => {
+    employeeApi.getAllEmployees().then(data => {
       setPayroll(data.filter((e: Employee) => e.employmentStatus === EMPLOYMENT_STATUS.ACTIVE).map((e: Employee) => ({
         id: e.employeeId,
         name: `Staff ${e.employeeCode}`,

@@ -3,7 +3,6 @@ import type { StaffMessage, CreateStaffMessageInput, UpdateStaffMessageStatusInp
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 
 export async function createStaffMessage(input: Omit<CreateStaffMessageInput, 'postedAt'>): Promise<StaffMessage> {
-    if (!input.messageText.trim()) throw new Error('Message is required.');
     return staffMessageRepository.createStaffMessage({...input, postedAt: getCurrentAppDateTime()});
 }
 

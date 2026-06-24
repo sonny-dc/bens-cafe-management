@@ -49,7 +49,7 @@ function mapEmployeeRow(row: EmployeeRow): Employee {
 
 
 /**
- * Internal repository helper for fetching one employee profile using
+ * Repository helper for fetching one employee profile using
  * an existing database connection.
  *
  * This is used inside transactions so the INSERT/UPDATE query and the
@@ -58,9 +58,9 @@ function mapEmployeeRow(row: EmployeeRow): Employee {
  *
  * Returns null when no employee profile matches the given employeeId.
  */
-async function getEmployeeByIdWithConnection(
-    connection: PoolConnection,
-    employeeId: number
+export async function getEmployeeByIdWithConnection(
+    employeeId: number,
+    connection: PoolConnection
 ): Promise<Employee | null> {
     const [rows] = await connection.query<EmployeeRow[]>(
         `
@@ -101,7 +101,7 @@ async function updateEmployeeStatus(
             return null;
         }
 
-        return getEmployeeByIdWithConnection(connection, employeeId);
+        return getEmployeeByIdWithConnection(employeeId, connection);
     });
 }
 
@@ -127,7 +127,7 @@ export async function getEmployeeById(
     employeeId: number
 ): Promise<Employee | null>{
     return withConnection(async (connection) => {
-        return getEmployeeByIdWithConnection(connection, employeeId);
+        return getEmployeeByIdWithConnection(employeeId, connection);
     });
 }
 
@@ -160,8 +160,8 @@ export async function createEmployeeWithConnection(
         ]
     );
     const employee = await getEmployeeByIdWithConnection(
-        connection, 
-        result.insertId
+        result.insertId,
+        connection
     );
     if (employee === null) {
         throw new Error("Created employee profile could not be found.");
@@ -206,7 +206,7 @@ export async function updateEmployee(
         }
 
         if (fields.length === 0) {
-            return getEmployeeByIdWithConnection(connection, employeeId);
+            return getEmployeeByIdWithConnection(employeeId, connection);
         }
 
         values.push(employeeId);
@@ -224,7 +224,7 @@ export async function updateEmployee(
             return null;
         }
 
-        return getEmployeeByIdWithConnection(connection, employeeId);
+        return getEmployeeByIdWithConnection(employeeId, connection);
     });
 }
 
@@ -260,17 +260,17 @@ export async function deactivateEmployee(
  * In many cases, deactivateEmployee is safer than hard delete.
  */
 export async function deleteEmployee(
-    employeeId: number
+    employeeId: number,
+    connection: PoolConnection
 ): Promise<boolean> {
-    return withConnection(async (connection) => {
-        const [result] = await connection.execute<ResultSetHeader>(
-            `
-            DELETE FROM employee_profiles
-            WHERE employee_id = ?
-            `,
-            [employeeId]
-        );
+    const [result] = await connection.execute<ResultSetHeader>(
+        `
+        DELETE FROM employee_profiles
+        WHERE employee_id = ?
+        `,
+        [employeeId]
+    );
 
-        return result.affectedRows > 0;
-    });
+    return result.affectedRows > 0;
 }
+

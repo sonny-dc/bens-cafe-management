@@ -12,6 +12,10 @@ export interface Employee {
     createdAt: Date;
     updatedAt: Date | null;
 }
+export interface EmployeeProfile extends Employee {
+    username: string;
+    fullName: string;
+}
 
 export interface CreateEmployeeInput {
     userId: number;
