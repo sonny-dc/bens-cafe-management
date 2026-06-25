@@ -21,12 +21,12 @@ export interface InventoryRequest {
  * necessary fields for display in a list.
  */
 export interface InventoryRequestListItem {
-  id: number;
+  requestId: number;
   itemName: string;
   quantity: string;
   requestedBy: string;
-  status: RequestStatus;
-  createdAt: Date;
+  requestStatus: RequestStatus;
+  postedAt: Date;
 }
 
 
@@ -36,7 +36,6 @@ export interface CreateInventoryRequestInput {
     requestedQuantity: string;
     requestedUnit: string;
     reason: string;
-    requestStatus: RequestStatus;
     postedAt: string;
     userId?: number;
 }
