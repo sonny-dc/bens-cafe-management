@@ -1,7 +1,10 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2/promise';
-import type { StaffMessage, CreateStaffMessageInput } from '../models/index.js';
-import type { MessageStatus, MessageType } from '../config/constants.js';
-import { MESSAGE_STATUS } from '../config/constants.js';
+import type { StaffMessage, CreateStaffMessageInput, UpdateStaffMessageStatusInput } from '../models/index.js';
+import {
+    MESSAGE_STATUS,
+    type MessageStatus,
+    type MessageType 
+} from '../config/constants.js';
 
 import { withConnection, withTransaction } from '../config/database.js';
 
@@ -86,21 +89,11 @@ export async function getStaffMessagesByEmployee(employeeId: number): Promise<St
     });
 }
 
-export async function markStaffMessageAsRead(messageId: number, readAt: string): Promise<boolean> {
+export async function updateStaffMessageStatus(input: UpdateStaffMessageStatusInput): Promise<boolean> {
     return withConnection(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
             `UPDATE staff_messages SET message_status = ?, read_at = ? WHERE message_id = ?`,
-            [MESSAGE_STATUS.READ, readAt, messageId]
-        );
-        return result.affectedRows > 0;
-    });
-}
-
-export async function updateStaffMessageStatus(messageId: number, status: string): Promise<boolean> {
-    return withConnection(async (connection) => {
-        const [result] = await connection.execute<ResultSetHeader>(
-            `UPDATE staff_messages SET message_status = ? WHERE message_id = ?`,
-            [status, messageId]
+            [input.status, input.readAt, input.messageId]
         );
         return result.affectedRows > 0;
     });

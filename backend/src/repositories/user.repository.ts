@@ -6,18 +6,15 @@ import type {
 
 import type {
     User,
-    CreateUserRepositoryInput
+    CreateUserRepositoryInput,
 } from "../models/index.js";
 
 
-import type {
-    UserRole,
-    AccountStatus
-} from "../config/constants.js";
-
 import { 
     USER_ROLES,
-    ACCOUNT_STATUS
+    ACCOUNT_STATUS,
+    type UserRole,
+    type AccountStatus
 } from "../config/constants.js";
 
 import { withConnection, withTransaction } from "../config/database.js";
@@ -131,6 +128,41 @@ export async function createUser(
     });
 }
 
+export async function createUserWithConnection(
+    input: CreateUserRepositoryInput,
+    connection: PoolConnection
+): Promise<User> {
+    const [result] = await connection.execute<ResultSetHeader>(
+        `
+        INSERT INTO users (
+            username,
+            password_hash,
+            full_name,
+            role,
+            account_status
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+            input.username,
+            input.passwordHash,
+            input.fullName,
+            input.role ?? USER_ROLES.EMPLOYEE,
+            ACCOUNT_STATUS.ACTIVE
+        ]
+    );
+
+    const user = await getUserByIdWithConnection(
+        connection,
+        result.insertId
+    );
+
+    if (user === null) {
+        throw new Error("Created user account could not be found.");
+    }
+
+    return user;
+}
 
 /**
  * ROUTE / USE CASE: GET /api/users/:userId
@@ -143,4 +175,47 @@ export async function getUserById(
     return withConnection(async (connection) => {
         return getUserByIdWithConnection(connection, userId);
     });
+}
+
+/**
+ * CAUTION: Be careful when using this function. It will permanently delete a 
+ * user account from the database and also its associated employee record if it 
+ * exists. This action cannot be undone. Make sure to confirm the userId and ensure
+ * that you have the necessary permissions before calling this function.
+ * 
+ * USE CASE: For deleting other admins.
+ */
+export async function deleteUserById(
+    userId: number
+): Promise<boolean> {
+    return withConnection(async (connection) => {
+        const [result] = await connection.execute<ResultSetHeader>(
+            `
+            DELETE FROM users
+            WHERE user_id = ?
+            `,
+            [userId]
+        );
+        return result.affectedRows > 0;
+    });
+}
+
+/**
+ * CAUTION: Note the caution in deleteUserById.
+ * 
+ * USE CASE: Mainly for employee deletion use case, this function 
+ * deletes a user account using an existing database connection.
+ */
+export async function deleteUserByIdWithConnection(
+    userId: number,
+    connection: PoolConnection
+): Promise<boolean> {
+    const [result] = await connection.execute<ResultSetHeader>(
+        `
+        DELETE FROM users
+        WHERE user_id = ?
+        `,
+        [userId]
+    );
+    return result.affectedRows > 0;
 }

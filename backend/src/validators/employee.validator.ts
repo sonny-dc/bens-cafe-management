@@ -1,32 +1,28 @@
 import { z } from 'zod';
+import { nonNegativeDecimalString, positiveInt } from './common.validator.js';
+
 import { EMPLOYMENT_STATUS } from '../config/constants.js';
 
-const decimalString = z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid decimal number with up to 2 decimal places");
-
-
 export const employeeIdParamSchema = z.object({
-    employeeId: z.coerce
-        .number()
-        .int()
-        .positive("employeeId must be a positive integer")
+    employeeId: positiveInt
 });
 
 export const registerEmployeeSchema = z.object({
-    username: z.string().min(1),
+    username: z.string().trim().min(1),
     password: z.string().min(6),
-    fullName: z.string().min(1),
-    employeeCode: z.string().min(1),
-    jobRole: z.string().min(1),
-    defaultShiftHours: decimalString,
-    hourlyRate: decimalString
+    fullName: z.string().trim().min(1),
+    employeeCode: z.string().trim().min(1),
+    jobRole: z.string().trim().min(1),
+    defaultShiftHours: nonNegativeDecimalString,
+    hourlyRate: nonNegativeDecimalString
 });
 
 export const updateEmployeeSchema = z.object({
-    jobRole: z.string().optional(),
-    defaultShiftHours: decimalString.optional(),
-    hourlyRate: decimalString.optional(),
+    jobRole: z.string().trim().min(1).optional(),
+    defaultShiftHours: nonNegativeDecimalString.optional(),
+    hourlyRate: nonNegativeDecimalString.optional(),
     employmentStatus: z.enum(Object.values(EMPLOYMENT_STATUS)).optional()
-}).refine( data => Object.values(data).some(value => value !== undefined), {
+}).refine( data => Object.values(data).some((value) => value !== undefined), {
     message: "At least one field must be provided for update."
 });
 

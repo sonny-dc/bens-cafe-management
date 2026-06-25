@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { PURCHASE_PLAN_STATUS } from '../config/constants.js';
+import { PURCHASE_PLAN_STATUS } from 'shared/constants';
 import { pool } from '../config/database.js';
 
 export async function getAllItems(_req: Request, res: Response): Promise<void> {

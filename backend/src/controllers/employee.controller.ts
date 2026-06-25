@@ -23,9 +23,10 @@ export async function getEmployees(
             data: employees
         });
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while retrieving employees.";
         res.status(500).json({
             success: false,
-            message: "An error occurred while retrieving employees."
+            message: errorMessage
         });
     }
 }
@@ -54,8 +55,9 @@ export async function getEmployeeById(
             data: employee
         });
 
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while retrieving the employee.";
+        res.status(500).json({ success: false, message: errorMessage });
     }
 }
 
@@ -80,8 +82,9 @@ export async function registerEmployee(
             message: "Employee registered successfully.",
             data: employee
         });
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while registering the employee.";
+        res.status(500).json({ success: false, message: errorMessage });
     }
 }
 
@@ -108,8 +111,9 @@ export async function updateEmployee(
             data: updatedEmployee
         });
 
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while updating the employee.";
+        res.status(500).json({ success: false, message: errorMessage });
     }
 }
 
@@ -135,8 +139,9 @@ export async function activateEmployee(
             message: "Employee activated successfully.",
             data: activatedEmployee
         });
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while activating the employee.";
+        res.status(500).json({ success: false, message: errorMessage });
     }
 }
 
@@ -162,8 +167,9 @@ export async function deactivateEmployee(
             message: "Employee deactivated successfully.",
             data: deactivatedEmployee
         });
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while deactivating the employee.";
+        res.status(500).json({ success: false, message: errorMessage });
     }
 }
 
@@ -188,7 +194,8 @@ export async function deleteEmployee(
             success: true,
             message: "Employee deleted successfully."
         });
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while deleting the employee.";
+        res.status(500).json({ success: false, message: errorMessage });
     }
 }

@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { validate } from "../middleware/validation.middleware.js";
-import { employeeIdParamSchema, registerEmployeeSchema, updateEmployeeSchema } from "../validators/employee.validator.js";
+import { employeeIdParamSchema, registerEmployeeSchema, updateEmployeeSchema } from "../validators/index.js";
 import { employeeController } from "../controllers/index.js";
 import { REQUEST_TYPES } from "../config/constants.js";
 

@@ -5,6 +5,8 @@ import {
   MessageSquare, AlertTriangle, Info, Package, CheckCircle2, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
 import { shiftSummaryApi, type ShiftSession } from '../../api/shiftSummaryApi';
+import { type Note, notesApi } from '../../api/notesApi';
+import { MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, REQUEST_STATUS } from 'shared/constants';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -14,10 +16,10 @@ const PROFIT_REPORT = [
 ];
 
 // --- HELPERS ---
-const getNoteStyle = (type: string) => {
+const getNoteStyle = (type: MessageType) => {
   switch (type) {
-    case 'urgent': return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', icon: AlertTriangle };
-    case 'concern': return { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-700', icon: MessageSquare };
+    case MESSAGE_TYPES.URGENT: return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', icon: AlertTriangle };
+    case MESSAGE_TYPES.CONCERN: return { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-700', icon: MessageSquare };
     default: return { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700', icon: Info };
   }
 };
@@ -35,7 +37,7 @@ export function AdminStaffBoard() {
   // API State
   const [allShifts, setAllShifts] = useState<ShiftSession[]>([]);
   const [activeShifts, setActiveShifts] = useState<any[]>([]);
-  const [staffNotes, setStaffNotes] = useState<any[]>([]);
+  const [staffNotes, setStaffNotes] = useState<Note[]>([]);
   const [inventoryRequests, setInventoryRequests] = useState<any[]>([]);
   
   const [isLoadingShifts, setIsLoadingShifts] = useState(false);
@@ -61,14 +63,13 @@ export function AdminStaffBoard() {
       setActiveShifts(activeJson.data || []);
 
       // 3. Fetch Staff Notes
-      const notesRes = await fetch(`${API_BASE_URL}/staff-messages`);
-      const notesJson = await notesRes.json();
-      setStaffNotes((notesJson.data || []).filter((n: any) => n.messageStatus === 'new'));
+      const notes = await notesApi.getAllNotes();
+      setStaffNotes(notes.filter((note) => note.messageStatus === MESSAGE_STATUS.NEW));
 
       // 4. Fetch Inventory Requests
       const invRes = await fetch(`${API_BASE_URL}/inventory-requests`);
       const invJson = await invRes.json();
-      setInventoryRequests((invJson.data || []).filter((r: any) => r.status === 'pending'));
+      setInventoryRequests((invJson.data || []).filter((r: any) => r.status === REQUEST_STATUS.PENDING || r.status === REQUEST_STATUS.ACKNOWLEDGED));
 
     } catch (err) {
       console.error(err);
@@ -77,14 +78,11 @@ export function AdminStaffBoard() {
     }
   };
 
-  const handleAcknowledgeNote = async (id: number) => {
+  const handleAcknowledgeNote = async (messageId: number) => {
     try {
-      await fetch(`${API_BASE_URL}/staff-messages/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'acknowledged' })
-      });
-      setStaffNotes(prev => prev.filter(n => n.messageId !== id));
+      await notesApi.markNoteAsAcknowledged(messageId);
+      setStaffNotes((prev) => 
+        prev.filter((note) => note.messageId !== messageId));
     } catch (err) {
       console.error(err);
     }
@@ -363,13 +361,28 @@ export function AdminStaffBoard() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => handleUpdateInventoryRequest(req.id, 'fulfilled')}
-                        className="flex items-center justify-center w-8 h-8 text-[#4a6741] hover:text-white hover:bg-[#4a6741] rounded-lg transition-all shadow-sm border border-[#4a6741]/20" 
-                        title="Approve"
-                      >
-                        <CheckCircle2 size={16} />
-                      </button>
+                      <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md mr-2
+                        ${req.status === REQUEST_STATUS.PENDING ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {req.status}
+                      </span>
+                      {req.status === REQUEST_STATUS.PENDING && (
+                        <button 
+                          onClick={() => handleUpdateInventoryRequest(req.id, REQUEST_STATUS.ACKNOWLEDGED)}
+                          className="flex items-center justify-center px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all shadow-sm border border-blue-200" 
+                          title="Acknowledge"
+                        >
+                          Acknowledge
+                        </button>
+                      )}
+                      {req.status === REQUEST_STATUS.ACKNOWLEDGED && (
+                        <button 
+                          onClick={() => handleUpdateInventoryRequest(req.id, REQUEST_STATUS.FULFILLED)}
+                          className="flex items-center justify-center w-8 h-8 text-[#4a6741] hover:text-white hover:bg-[#4a6741] rounded-lg transition-all shadow-sm border border-[#4a6741]/20" 
+                          title="Approve"
+                        >
+                          <CheckCircle2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))

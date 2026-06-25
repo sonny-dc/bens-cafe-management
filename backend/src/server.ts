@@ -13,7 +13,8 @@ import {
   shiftRoutes, 
   staffMessageRoutes,
   inventoryRequestRoutes,
-  inventoryRoutes
+  inventoryRoutes,
+  salesEntryRoutes
 } from './routes/index.js';
 
 const app = express();
@@ -60,6 +61,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.use("/api/employees", employeeRoutes);
 app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
+app.use("/api/sales-entries", salesEntryRoutes);
 app.use("/api/inventory-requests", inventoryRequestRoutes);
 app.use("/api/inventory", inventoryRoutes);
 

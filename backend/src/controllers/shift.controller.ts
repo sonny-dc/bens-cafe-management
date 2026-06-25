@@ -5,20 +5,15 @@ export async function startShift(req: Request, res: Response): Promise<void> {
     try {
         const { employeeId, openingCash } = req.body;
 
-        if (!employeeId || !openingCash) {
-            res.status(400).json({ error: "employeeId and openingCash are required." });
-            return;
-        }
-
         const shift = await shiftService.startShift({
             employeeId: Number(employeeId),
             openingCash: String(openingCash)
         });
 
         res.status(201).json({ data: shift });
-    } catch (error: any) {
-        console.error("Error starting shift:", error);
-        res.status(400).json({ error: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while starting the shift.";
+        res.status(500).json({ error: errorMessage });
     }
 }
 
@@ -27,35 +22,20 @@ export async function endShift(req: Request, res: Response): Promise<void> {
         const shiftId = Number(req.params.shiftId);
         const { closingCash } = req.body;
 
-        if (!shiftId) {
-            res.status(400).json({ error: "shiftId is required." });
-            return;
-        }
-
-        if (!closingCash) {
-            res.status(400).json({ error: "closingCash is required." });
-            return;
-        }
-
         const shift = await shiftService.endShift(shiftId, {
             closingCash: String(closingCash)
         });
 
         res.status(200).json({ data: shift });
-    } catch (error: any) {
-        console.error("Error ending shift:", error);
-        res.status(400).json({ error: error.message });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while ending the shift.";
+        res.status(500).json({ error: errorMessage });
     }
 }
 
 export async function getActiveShift(req: Request, res: Response): Promise<void> {
     try {
         const employeeId = Number(req.params.employeeId);
-
-        if (!employeeId) {
-            res.status(400).json({ error: "employeeId is required." });
-            return;
-        }
 
         const shift = await shiftService.getActiveShift(employeeId);
 
@@ -65,9 +45,9 @@ export async function getActiveShift(req: Request, res: Response): Promise<void>
         }
 
         res.status(200).json({ data: shift });
-    } catch (error: any) {
-        console.error("Error getting active shift:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting the active shift.";
+        res.status(500).json({ error: errorMessage });
     }
 }
 
@@ -75,9 +55,9 @@ export async function getAllActiveShifts(_req: Request, res: Response): Promise<
     try {
         const shifts = await shiftService.getAllActiveShifts();
         res.status(200).json({ data: shifts });
-    } catch (error: any) {
-        console.error("Error getting all active shifts:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting all active shifts.";
+        res.status(500).json({ error: errorMessage });
     }
 }
 
@@ -92,9 +72,9 @@ export async function getShiftSummary(req: Request, res: Response): Promise<void
 
         const shifts = await shiftService.getShiftSummary(String(start), String(end));
         res.status(200).json({ data: shifts });
-    } catch (error: any) {
-        console.error("Error getting shift summary:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting the shift summary.";
+        res.status(500).json({ error: errorMessage });
     }
 }
 
@@ -109,8 +89,8 @@ export async function archiveShifts(req: Request, res: Response): Promise<void> 
 
         const archivedCount = await shiftService.archiveShifts(String(start), String(end));
         res.status(200).json({ message: "Shifts archived successfully", count: archivedCount });
-    } catch (error: any) {
-        console.error("Error archiving shifts:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while archiving shifts.";
+        res.status(500).json({ error: errorMessage });
     }
 }

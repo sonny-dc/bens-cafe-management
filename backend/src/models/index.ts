@@ -1,4 +1,5 @@
 /**
- * Re-export all models from the shared package
+ * Re-export all shared models from this directory
  */
+
 export * from 'shared/models';

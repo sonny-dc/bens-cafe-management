@@ -1,4 +1,5 @@
 /**
- * Re-export all constants from the shared package
+ * Re-export all shared constants from this directory
  */
+
 export * from 'shared/constants';
