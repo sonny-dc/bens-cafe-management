@@ -131,19 +131,3 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
   );
 }
 
-function EmptyState({ icon: Icon, title, description }: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center justify-center text-center">
-      <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-4">
-        <Icon size={22} className="text-gray-400" />
-      </div>
-      <h3 className="font-semibold text-gray-800 font-poppins text-lg mb-1">{title}</h3>
-      <p className="text-gray-500 text-sm max-w-xs">{description}</p>
-      <span className="mt-4 text-xs font-medium text-gray-400 bg-gray-100 px-3 py-1 rounded-full">Coming soon</span>
-    </div>
-  );
-}

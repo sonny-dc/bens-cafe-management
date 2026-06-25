@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npm run build && node dist/server.js",
     "build": "tsc",
-    "dev": "node --watch --loader ts-node/esm src/server.ts"
+    "dev": "tsx watch src/server.ts"
   },
   "keywords": [],
   "author": "",
@@ -19,18 +19,23 @@
     "decimal.js": "^10.6.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-xml-bodyparser": "^0.4.1",
     "luxon": "^3.7.2",
     "mysql2": "^3.22.5",
     "shared": "file:../shared",
+    "xml2js": "^0.6.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/express-xml-bodyparser": "^0.3.5",
     "@types/luxon": "^3.7.2",
     "@types/node": "^25.9.3",
+    "@types/xml2js": "^0.4.14",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }

@@ -74,6 +74,9 @@ export function SalesEntry() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      // Persist calculated budget for the Inventory Calculator
+      localStorage.setItem('restockingAllotment', restockingAllotment.toString());
+      
       await salesApi.createSalesEntryTransaction({
         cashSales: String(parsedCash),
         onlineCardSales: String(parsedCard),
