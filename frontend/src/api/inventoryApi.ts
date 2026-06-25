@@ -11,8 +11,7 @@ export const getAllottedBudget = () => {
 };
 export let globalBudgetUsed = 0;
 
-let mockRequests: InventoryRequest[] = [];
-let reqIdCounter = 1;
+
 
 export const inventoryApi = {
   async getInventoryItems(): Promise<InventoryItem[]> {
@@ -71,9 +70,10 @@ export const inventoryApi = {
   },
 
   async getRequestsByEmployee(employeeId: number): Promise<InventoryRequest[]> {
-    return mockRequests
-      .filter(req => req.employeeId === employeeId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const response = await fetch(`http://localhost:3000/api/inventory-requests/employee/${employeeId}`);
+    if (!response.ok) throw new Error('Failed to fetch requests');
+    const json = await response.json();
+    return json.data || [];
   },
 
   async createRequest(payload: {
@@ -84,14 +84,14 @@ export const inventoryApi = {
     requestedUnit: string;
     reason: string;
   }): Promise<InventoryRequest> {
-    const newReq: InventoryRequest = {
-      ...payload,
-      requestId: reqIdCounter++,
-      requestStatus: 'pending',
-      createdAt: new Date().toISOString()
-    };
-    mockRequests.push(newReq);
-    return newReq;
+    const response = await fetch('http://localhost:3000/api/inventory-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('Failed to create request');
+    const json = await response.json();
+    return json.data;
   },
 
   async savePurchasePlan(plan: {
@@ -138,21 +138,21 @@ export const inventoryApi = {
   },
 
   async getAllRequests(): Promise<InventoryRequest[]> {
-    return [...mockRequests].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const response = await fetch('http://localhost:3000/api/inventory-requests');
+    if (!response.ok) throw new Error('Failed to fetch requests');
+    const json = await response.json();
+    return json.data || [];
   },
 
   async updateRequestStatus(
     requestId: number,
     status: 'acknowledged' | 'fulfilled'
   ): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const req = mockRequests.find(r => r.requestId === requestId);
-        if (req) req.requestStatus = status;
-        resolve();
-      }, 400);
+    const response = await fetch(`http://localhost:3000/api/inventory-requests/${requestId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
     });
+    if (!response.ok) throw new Error('Failed to update request status');
   }
 };
