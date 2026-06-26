@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Send, Package, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
-import { inventoryApi, type InventoryItem, type InventoryRequest } from '../../api/inventoryApi';
+import { inventoryApi, type InventoryItem, type StaffInventoryRequest } from '../../api/inventoryApi';
+import { REQUEST_STATUS } from 'shared/constants';
 
 const EMPLOYEE_ID = 1; // Hardcoded for now
 
 export function InventoryManager() {
   const [items, setItems] = useState<InventoryItem[]>([]);
-  const [requests, setRequests] = useState<InventoryRequest[]>([]);
+  const [requests, setRequests] = useState<StaffInventoryRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,21 +59,28 @@ export function InventoryManager() {
     e.preventDefault();
     if (selectedItemId === '' || !quantity.trim() || !unit.trim() || !reason.trim()) return;
     
-    const selectedItem = items.find(i => i.itemId === selectedItemId);
-    
     try {
       setIsSending(true);
       setError(null);
-      const newReq = await inventoryApi.createRequest({
-        employeeId: EMPLOYEE_ID,
-        itemId: selectedItemId,
-        itemName: selectedItem?.itemName,
-        requestedQuantity: quantity,
-        requestedUnit: unit,
-        reason
-      });
       
-      setRequests(prev => [newReq, ...prev]);
+      const newReq = await inventoryApi.createRequest({
+          employeeId: EMPLOYEE_ID,
+          itemId: selectedItemId,
+          requestedQuantity: quantity,
+          requestedUnit: unit,
+          reason
+        });
+      
+      const selectedItem = items.find(item => item.itemId === selectedItemId);
+
+      const newReqWithItemName: StaffInventoryRequest = {
+        ...newReq,
+        itemName: selectedItem?.itemName || `Item #${newReq.itemId}`
+      };
+
+      setRequests(prev => [newReqWithItemName, ...prev]);
+
+
       
       // Reset form
       setSelectedItemId('');
@@ -240,10 +248,8 @@ export function InventoryManager() {
           <div className="flex flex-col gap-3 max-h-[480px] overflow-y-auto pr-0.5">
             <AnimatePresence>
               {requests.map(req => {
-                const isPending = req.requestStatus === 'pending';
-                const isAck = req.requestStatus === 'acknowledged';
-                const isFulfilled = req.requestStatus === 'fulfilled';
-                
+                const isPending = req.requestStatus === REQUEST_STATUS.PENDING;
+
                 return (
                   <motion.div
                     key={req.requestId}
@@ -255,7 +261,6 @@ export function InventoryManager() {
                       <div className="flex items-center gap-2 min-w-0">
                         <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md
                           ${isPending ? 'bg-orange-100 text-orange-700' : 
-                            isAck ? 'bg-blue-100 text-blue-700' : 
                             'bg-emerald-100 text-emerald-700'}`}>
                           {req.requestStatus}
                         </span>

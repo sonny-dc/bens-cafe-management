@@ -6,7 +6,9 @@ import {
 } from 'lucide-react';
 import { shiftSummaryApi, type ShiftSession } from '../../api/shiftSummaryApi';
 import { type Note, notesApi } from '../../api/notesApi';
-import { MESSAGE_STATUS, type MessageType, MESSAGE_TYPES } from 'shared/constants';
+import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type RequestStatus } from 'shared/constants';
+import { type InventoryRequestListItem } from 'shared/models';
+import { inventoryApi } from '../../api/inventoryApi';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -38,7 +40,7 @@ export function AdminStaffBoard() {
   const [allShifts, setAllShifts] = useState<ShiftSession[]>([]);
   const [activeShifts, setActiveShifts] = useState<any[]>([]);
   const [staffNotes, setStaffNotes] = useState<Note[]>([]);
-  const [inventoryRequests, setInventoryRequests] = useState<any[]>([]);
+  const [inventoryRequests, setInventoryRequests] = useState<InventoryRequestListItem[]>([]);
   
   const [isLoadingShifts, setIsLoadingShifts] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
@@ -67,9 +69,8 @@ export function AdminStaffBoard() {
       setStaffNotes(notes.filter((note) => note.messageStatus === MESSAGE_STATUS.NEW));
 
       // 4. Fetch Inventory Requests
-      const invRes = await fetch(`${API_BASE_URL}/inventory-requests`);
-      const invJson = await invRes.json();
-      setInventoryRequests((invJson.data || []).filter((r: any) => r.status === 'pending'));
+      const pendingInventoryRequests = await inventoryApi.getPendingRequestsSimplified();
+      setInventoryRequests(pendingInventoryRequests);
 
     } catch (err) {
       console.error(err);
@@ -88,14 +89,17 @@ export function AdminStaffBoard() {
     }
   };
 
-  const handleUpdateInventoryRequest = async (id: number, status: string) => {
+  
+  const handleUpdateInventoryRequest = async (
+    requestId: number,
+    requestStatus: RequestStatus
+  ) => {
     try {
-      await fetch(`${API_BASE_URL}/inventory-requests/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      setInventoryRequests(prev => prev.filter(r => r.id !== id));
+      await inventoryApi.updateRequestStatus(requestId, requestStatus);
+
+      setInventoryRequests(prev =>
+        prev.filter(request => request.requestId !== requestId)
+      );
     } catch (err) {
       console.error(err);
     }
@@ -345,13 +349,13 @@ export function AdminStaffBoard() {
                 <p className="text-sm text-gray-500 text-center py-4">No pending inventory requests.</p>
               ) : (
                 inventoryRequests.map(req => (
-                  <div key={req.id} className="group flex items-center justify-between p-3.5 rounded-xl border border-gray-200 bg-white hover:border-[#4a6741]/40 hover:shadow-md transition-all">
+                  <div key={req.requestId} className="group flex items-center justify-between p-3.5 rounded-xl border border-gray-200 bg-white hover:border-[#4a6741]/40 hover:shadow-md transition-all">
                     <div className="flex items-center gap-3.5">
                       <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 text-gray-500">
                         <Package size={18} />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900 mb-0.5">{req.item}</p>
+                        <p className="text-sm font-bold text-gray-900 mb-0.5">{req.itemName}</p>
                         <div className="flex items-center gap-2 text-[11px] text-gray-500 font-medium">
                           <span className="bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200 text-gray-700">{req.quantity}</span>
                           <span>•</span>
@@ -362,9 +366,9 @@ export function AdminStaffBoard() {
                     
                     <div className="flex items-center gap-2">
                       <button 
-                        onClick={() => handleUpdateInventoryRequest(req.id, 'fulfilled')}
+                        onClick={() => handleUpdateInventoryRequest(req.requestId, REQUEST_STATUS.ACKNOWLEDGED)}
                         className="flex items-center justify-center w-8 h-8 text-[#4a6741] hover:text-white hover:bg-[#4a6741] rounded-lg transition-all shadow-sm border border-[#4a6741]/20" 
-                        title="Approve"
+                        title="Acknowledge Request"
                       >
                         <CheckCircle2 size={16} />
                       </button>
