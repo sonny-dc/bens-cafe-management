@@ -6,4 +6,3 @@ export * from './user.model.js';
 export * from './sales-entry.model.js';
 export * from './expense.model.js';
 export * from './payroll-entry.model.js';
-export * from './inventory-request.model.js';

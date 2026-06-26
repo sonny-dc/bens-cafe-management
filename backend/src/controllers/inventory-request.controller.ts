@@ -1,168 +1,72 @@
 import type { Request, Response } from 'express';
 import { inventoryRequestService } from '../services/index.js';
 
-export async function getAllInventoryRequests(
-    _req: Request,
-    res: Response
-): Promise<void> {
+export async function getAllInventoryRequests(_req: Request, res: Response): Promise<void> {
     try {
-        const inventoryRequests = await inventoryRequestService.getAllInventoryRequests();
-        if (inventoryRequests.length === 0) {
-            res.status(404).json({
-                success: false,
-                message: 'No inventory requests found.'
-            });
-            return;
-        }
-        res.status(200).json({
-            success: true,
-            message: 'Inventory requests retrieved successfully.',
-            data: inventoryRequests
-        });
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch inventory requests';
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        const requests = await inventoryRequestService.getAllInventoryRequests();
+        res.status(200).json({ data: requests });
+    } catch (error: any) {
+        console.error('Error fetching inventory requests:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 }
 
-export async function getAllInventoryRequestsSimplified(
-    _req: Request,
-    res: Response
-): Promise<void> {
+export async function getInventoryRequestsByEmployee(req: Request, res: Response): Promise<void> {
     try {
-        const inventoryRequests = await inventoryRequestService.getAllInventoryRequestsSimplified();
-        if (inventoryRequests.length === 0) {
-            res.status(404).json({
-                success: false,
-                message: 'No inventory requests found.'
-            });
+        const employeeId = Number(req.params.employeeId);
+        if (!employeeId) {
+            res.status(400).json({ error: 'employeeId is required.' });
             return;
         }
-        res.status(200).json({
-            success: true,
-            message: 'Inventory requests retrieved successfully.',
-            data: inventoryRequests
-        });
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch inventory requests';
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        const requests = await inventoryRequestService.getInventoryRequestsByEmployee(employeeId);
+        res.status(200).json({ data: requests });
+    } catch (error: any) {
+        console.error('Error fetching inventory requests by employee:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 }
 
-export async function getInventoryRequestById(
-    req: Request,
-    res: Response
-): Promise<void> {
+export async function createInventoryRequest(req: Request, res: Response): Promise<void> {
     try {
-        const requestId = Number(req.params.requestId);
-        const inventoryRequest = await inventoryRequestService.getInventoryRequestById(requestId);
-        if (!inventoryRequest) {
-            res.status(404).json({
-                success: false,
-                message: 'Inventory request not found.'
-            });
+        const { employeeId, itemId, requestedQuantity, requestedUnit, reason } = req.body;
+        if (!employeeId || !itemId || !requestedQuantity || !requestedUnit || !reason) {
+            res.status(400).json({ error: 'Missing required fields.' });
             return;
         }
-        res.status(200).json({
-            success: true,
-            message: 'Inventory request retrieved successfully.',
-            data: inventoryRequest
-        });
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch inventory request';
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        
+        const insertId = await inventoryRequestService.createInventoryRequest(
+            employeeId, itemId, Number(requestedQuantity), requestedUnit, reason, 'pending'
+        );
+        
+        // Fetch the newly created request so we can return it
+        const newRequests = await inventoryRequestService.getInventoryRequestsByEmployee(employeeId);
+        const newRequest = newRequests.find((r: any) => r.requestId === insertId);
+        
+        res.status(201).json({ data: newRequest || { requestId: insertId, success: true } });
+    } catch (error: any) {
+        console.error('Error creating inventory request:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 }
 
-export async function getInventoryRequestByIdSimplified(
-    req: Request,
-    res: Response
-): Promise<void> {
+export async function updateInventoryRequestStatus(req: Request, res: Response): Promise<void> {
     try {
-        const requestId = Number(req.params.requestId);
-        const inventoryRequest = await inventoryRequestService.getInventoryRequestByIdSimplified(requestId);
-        if (!inventoryRequest) {
-            res.status(404).json({
-                success: false,
-                message: 'Inventory request not found.'
-            });
+        const requestId = Number(req.params.id);
+        const { status } = req.body;
+        
+        if (!status) {
+            res.status(400).json({ error: 'status is required.' });
             return;
         }
-        res.status(200).json({
-            success: true,
-            message: 'Inventory request retrieved successfully.',
-            data: inventoryRequest
-        });
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch inventory request';
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
-    }
-}
 
-export async function createInventoryRequest(
-    req: Request,
-    res: Response
-): Promise<void> {
-    try {
-        const inventoryRequest = await inventoryRequestService.createInventoryRequest(req.body);
-        if (!inventoryRequest) {
-            res.status(400).json({
-                success: false,
-                message: 'Failed to create inventory request.'
-            });
+        const success = await inventoryRequestService.updateInventoryRequestStatus(requestId, status);
+        if (!success) {
+            res.status(404).json({ error: 'Inventory request not found.' });
             return;
         }
-        res.status(201).json({
-            success: true,
-            message: 'Inventory request created successfully.',
-            data: inventoryRequest
-        });
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to create inventory request';
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        res.status(200).json({ data: { success: true } });
+    } catch (error: any) {
+        console.error('Error updating inventory request status:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 }
-
-export async function updateInventoryRequestStatus(
-    req: Request,
-    res: Response
-): Promise<void> {
-    try {
-        const requestId = Number(req.params.requestId);
-        const inventoryRequest = await inventoryRequestService.updateInventoryRequestStatus({ ...req.body, requestId });
-        if (!inventoryRequest) {
-            res.status(404).json({
-                success: false,
-                message: 'Inventory request not found.'
-            });
-            return;
-        }
-        res.status(200).json({
-            success: true,
-            message: 'Inventory request status updated successfully.',
-            data: inventoryRequest
-        });
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update inventory request status';
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
-    }
-}
-    

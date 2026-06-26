@@ -164,7 +164,7 @@ export async function createEmployeeWithConnection(
         connection
     );
     if (employee === null) {
-        throw new Error("Created employee profile could not be found. Error occurred during creation.");
+        throw new Error("Created employee profile could not be found.");
     }
     return employee;
 }
