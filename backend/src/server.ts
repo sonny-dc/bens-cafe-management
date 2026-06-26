@@ -3,18 +3,16 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import xmlparser from 'express-xml-bodyparser';
-import { testConnection } from './config/database.js';
+import {fileURLToPath} from 'url';
+import {testConnection} from './config/database.js';
 
 // Route imports
 import {
   employeeRoutes, 
   shiftRoutes, 
   staffMessageRoutes,
+  salesEntryRoutes,
   inventoryRequestRoutes,
-  inventoryRoutes,
-  salesEntryRoutes
 } from './routes/index.js';
 
 const app = express();
@@ -37,18 +35,10 @@ const PORT = process.env.PORT;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// XML Parser middleware (parses application/xml)
-app.use(xmlparser({ explicitArray: true, normalize: false }));
 
 // CORS middleware
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || origin.startsWith('http://localhost:')) {
-      callback(null, true);
-    } else {
-      callback(null, process.env.CORS_ORIGIN);
-    }
-  },
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
@@ -63,7 +53,6 @@ app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
 app.use("/api/sales-entries", salesEntryRoutes);
 app.use("/api/inventory-requests", inventoryRequestRoutes);
-app.use("/api/inventory", inventoryRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

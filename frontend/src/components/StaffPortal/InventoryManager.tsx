@@ -242,6 +242,7 @@ export function InventoryManager() {
               {requests.map(req => {
                 const isPending = req.requestStatus === 'pending';
                 const isAck = req.requestStatus === 'acknowledged';
+                const isFulfilled = req.requestStatus === 'fulfilled';
                 
                 return (
                   <motion.div

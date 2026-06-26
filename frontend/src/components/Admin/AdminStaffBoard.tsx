@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, Clock, Banknote, 
-  MessageSquare, AlertTriangle, Info, Package, CheckCircle2, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
+  Users, Clock, Banknote, TrendingUp, TrendingDown, 
+  MessageSquare, AlertTriangle, Info, Package, CheckCircle2, XCircle, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
 import { shiftSummaryApi, type ShiftSession } from '../../api/shiftSummaryApi';
 import { type Note, notesApi } from '../../api/notesApi';
-import { MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, REQUEST_STATUS } from 'shared/constants';
+import { MESSAGE_STATUS, type MessageType, MESSAGE_TYPES } from 'shared/constants';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -69,7 +69,7 @@ export function AdminStaffBoard() {
       // 4. Fetch Inventory Requests
       const invRes = await fetch(`${API_BASE_URL}/inventory-requests`);
       const invJson = await invRes.json();
-      setInventoryRequests((invJson.data || []).filter((r: any) => r.status === REQUEST_STATUS.PENDING || r.status === REQUEST_STATUS.ACKNOWLEDGED));
+      setInventoryRequests((invJson.data || []).filter((r: any) => r.status === 'pending'));
 
     } catch (err) {
       console.error(err);
@@ -361,28 +361,13 @@ export function AdminStaffBoard() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md mr-2
-                        ${req.status === REQUEST_STATUS.PENDING ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {req.status}
-                      </span>
-                      {req.status === REQUEST_STATUS.PENDING && (
-                        <button 
-                          onClick={() => handleUpdateInventoryRequest(req.id, REQUEST_STATUS.ACKNOWLEDGED)}
-                          className="flex items-center justify-center px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-white hover:bg-blue-600 rounded-lg transition-all shadow-sm border border-blue-200" 
-                          title="Acknowledge"
-                        >
-                          Acknowledge
-                        </button>
-                      )}
-                      {req.status === REQUEST_STATUS.ACKNOWLEDGED && (
-                        <button 
-                          onClick={() => handleUpdateInventoryRequest(req.id, REQUEST_STATUS.FULFILLED)}
-                          className="flex items-center justify-center w-8 h-8 text-[#4a6741] hover:text-white hover:bg-[#4a6741] rounded-lg transition-all shadow-sm border border-[#4a6741]/20" 
-                          title="Approve"
-                        >
-                          <CheckCircle2 size={16} />
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => handleUpdateInventoryRequest(req.id, 'fulfilled')}
+                        className="flex items-center justify-center w-8 h-8 text-[#4a6741] hover:text-white hover:bg-[#4a6741] rounded-lg transition-all shadow-sm border border-[#4a6741]/20" 
+                        title="Approve"
+                      >
+                        <CheckCircle2 size={16} />
+                      </button>
                     </div>
                   </div>
                 ))

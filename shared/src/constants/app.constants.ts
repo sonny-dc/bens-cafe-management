@@ -60,11 +60,6 @@ export const MESSAGE_STATUS = {
     ACKNOWLEDGED: 'acknowledged'
 } as const;
 
-export const PURCHASE_PLAN_STATUS = {
-    PENDING: 'pending',
-    RECEIVED: 'received'
-} as const;
-
 // Request Type Definitions
 export const REQUEST_TYPES = {
     BODY: 'body',
@@ -95,4 +90,4 @@ export type ExpenseCategory = typeof EXPENSE_CATEGORIES[keyof typeof EXPENSE_CAT
 export type MessageType = typeof MESSAGE_TYPES[keyof typeof MESSAGE_TYPES];
 export type MessageStatus = typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];
 export type RequestType = typeof REQUEST_TYPES[keyof typeof REQUEST_TYPES];
-export type PurchasePlanStatus = typeof PURCHASE_PLAN_STATUS[keyof typeof PURCHASE_PLAN_STATUS];
+
