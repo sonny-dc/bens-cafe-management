@@ -249,8 +249,6 @@ export function InventoryManager() {
             <AnimatePresence>
               {requests.map(req => {
                 const isPending = req.requestStatus === REQUEST_STATUS.PENDING;
-                const isAck = req.requestStatus === REQUEST_STATUS.ACKNOWLEDGED;
-                const isFulfilled = req.requestStatus === REQUEST_STATUS.FULFILLED;
 
                 return (
                   <motion.div
@@ -263,7 +261,6 @@ export function InventoryManager() {
                       <div className="flex items-center gap-2 min-w-0">
                         <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md
                           ${isPending ? 'bg-orange-100 text-orange-700' : 
-                            isAck ? 'bg-blue-100 text-blue-700' : 
                             'bg-emerald-100 text-emerald-700'}`}>
                           {req.requestStatus}
                         </span>

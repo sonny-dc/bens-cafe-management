@@ -366,9 +366,9 @@ export function AdminStaffBoard() {
                     
                     <div className="flex items-center gap-2">
                       <button 
-                        onClick={() => handleUpdateInventoryRequest(req.requestId, REQUEST_STATUS.FULFILLED)}
+                        onClick={() => handleUpdateInventoryRequest(req.requestId, REQUEST_STATUS.ACKNOWLEDGED)}
                         className="flex items-center justify-center w-8 h-8 text-[#4a6741] hover:text-white hover:bg-[#4a6741] rounded-lg transition-all shadow-sm border border-[#4a6741]/20" 
-                        title="Approve"
+                        title="Acknowledge Request"
                       >
                         <CheckCircle2 size={16} />
                       </button>

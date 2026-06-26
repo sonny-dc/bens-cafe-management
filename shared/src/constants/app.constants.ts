@@ -30,8 +30,7 @@ export const INVENTORY_STATUS = {
 
 export const REQUEST_STATUS = {
     PENDING: 'pending',
-    ACKNOWLEDGED: 'acknowledged',
-    FULFILLED: 'fulfilled'
+    ACKNOWLEDGED: 'acknowledged'
 } as const;
 
 export const EXPENSE_CATEGORIES = {

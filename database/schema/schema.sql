@@ -113,7 +113,7 @@ CREATE TABLE inventory_requests (
   requested_quantity DECIMAL(10,2) NOT NULL,
   requested_unit VARCHAR(20) NOT NULL,
   reason VARCHAR(255) NOT NULL,
-  request_status ENUM('pending', 'acknowledged', 'fulfilled') NOT NULL DEFAULT 'pending',
+  request_status ENUM('pending', 'acknowledged') NOT NULL DEFAULT 'pending',
   posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   read_at DATETIME NULL DEFAULT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
