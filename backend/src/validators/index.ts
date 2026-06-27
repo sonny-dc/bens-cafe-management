@@ -6,3 +6,4 @@ export * from './common.validator.js';
 export * from './shift.validator.js';
 export * from './staff-message.validator.js';
 export * from './inventory-request.validator.js';
+export * from './auth.validator.js';

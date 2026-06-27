@@ -1,13 +1,11 @@
-const API_BASE_URL = 'http://localhost:3000/api';
-
+import { apiFetch } from './apiFetch';
 import type { CreateSalesEntryTransactionInput as CreateSalesEntryPayload } from 'shared/models';
 
 export const salesApi = {
   async createSalesEntryTransaction(payload: CreateSalesEntryPayload) {
-    const res = await fetch(`${API_BASE_URL}/sales-entries`, {
+    const res = await apiFetch('/sales-entries', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

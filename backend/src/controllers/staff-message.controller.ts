@@ -37,10 +37,15 @@ export async function getStaffMessagesByEmployee(req: Request, res: Response): P
 
 export async function updateStaffMessageStatus(req: Request, res: Response): Promise<void> {
     try {
+        const userId = req.session.user?.userId;
+        if (!userId) {
+            res.status(403).json({ error: 'Admin access required.' });
+            return;
+        }
         const messageId = Number(req.params.messageId);
         const { status } = req.body;
        
-        const success = await staffMessageService.updateStaffMessageStatus({messageId, status});
+        const success = await staffMessageService.updateStaffMessageStatus({messageId, status, userId});
         if (!success) {
             res.status(404).json({ error: 'Staff message not found.' });
             return;

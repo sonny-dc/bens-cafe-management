@@ -4,13 +4,13 @@ import {
   Users, Clock, Banknote, TrendingUp, TrendingDown, 
   MessageSquare, AlertTriangle, Info, Package, CheckCircle2, XCircle, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
-import { shiftSummaryApi, type ShiftSession } from '../../api/shiftSummaryApi';
+import { shiftSummaryApi } from '../../api/shiftSummaryApi';
+import { type ShiftSession } from 'shared/models';
 import { type Note, notesApi } from '../../api/notesApi';
 import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type RequestStatus } from 'shared/constants';
 import { type InventoryRequestListItem } from 'shared/models';
 import { inventoryApi } from '../../api/inventoryApi';
-
-const API_BASE_URL = 'http://localhost:3000/api';
+import { apiFetch } from '../../api/apiFetch';
 
 // --- MOCK DATA FOR PROFIT REPORT (Still mock since we haven't built sales summary per employee) ---
 const PROFIT_REPORT = [
@@ -60,7 +60,11 @@ export function AdminStaffBoard() {
       setAllShifts(shiftData);
 
       // 2. Fetch Active Shifts
-      const activeRes = await fetch(`${API_BASE_URL}/shifts/active/all`);
+      const activeRes = await apiFetch('/shifts/active/all');
+      if (!activeRes.ok) {
+        const error = await activeRes.json().catch(() => ({}));
+        throw new Error(error.message || error.error || 'Failed to fetch active shifts');
+      }
       const activeJson = await activeRes.json();
       setActiveShifts(activeJson.data || []);
 

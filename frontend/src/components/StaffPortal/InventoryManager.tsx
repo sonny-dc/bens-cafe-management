@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Send, Package, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
-import { inventoryApi, type InventoryItem, type StaffInventoryRequest } from '../../api/inventoryApi';
+import { inventoryApi, type InventoryItem } from '../../api/inventoryApi';
 import { REQUEST_STATUS } from 'shared/constants';
-
-const EMPLOYEE_ID = 1; // Hardcoded for now
+import type { StaffInventoryRequest } from 'shared/models';
 
 export function InventoryManager() {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -29,7 +28,7 @@ export function InventoryManager() {
       setIsLoading(true);
       const [fetchedItems, fetchedRequests] = await Promise.all([
         inventoryApi.getInventoryItems(),
-        inventoryApi.getRequestsByEmployee(EMPLOYEE_ID)
+        inventoryApi.getMyRequests()
       ]);
       setItems(fetchedItems);
       setRequests(fetchedRequests);
@@ -64,7 +63,6 @@ export function InventoryManager() {
       setError(null);
       
       const newReq = await inventoryApi.createRequest({
-          employeeId: EMPLOYEE_ID,
           itemId: selectedItemId,
           requestedQuantity: quantity,
           requestedUnit: unit,
@@ -267,7 +265,7 @@ export function InventoryManager() {
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-gray-400">
                         <Clock size={11} />
-                        {new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                        {new Date(req.postedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                     

@@ -3,8 +3,12 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
+import session from 'express-session';
 import {fileURLToPath} from 'url';
-import {testConnection} from './config/database.js';
+
+import { testConnection } from './config/database.js';
+import { sessionStore } from './config/session-store.js';
+import { SESSION_COOKIE_NAME } from 'shared/constants';
 
 // Route imports
 import {
@@ -13,6 +17,7 @@ import {
   staffMessageRoutes,
   salesEntryRoutes,
   inventoryRequestRoutes,
+  authRoutes
 } from './routes/index.js';
 
 const app = express();
@@ -30,11 +35,17 @@ if (!process.env.PORT) {
   process.exit(1);
 }
 
+if (!process.env.SESSION_SECRET) {
+  console.error('ERROR: SESSION_SECRET is not defined in .env file');
+  process.exit(1);
+}
+
 const PORT = process.env.PORT;
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 
 // CORS middleware
 app.use(cors({
@@ -44,10 +55,29 @@ app.use(cors({
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
 }));
 
+
+// Session middleware
+app.use(session({
+  name: SESSION_COOKIE_NAME,
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore,
+  cookie: {
+    httpOnly: true,
+    secure: false, // Set to true if using HTTPS
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 * 8, // 8 hours
+  },
+}));
+
+
 // API Routes
 app.get('/', (_req: Request, res: Response) => {
   res.json({ message: 'Bens Cafe Management API is running' });
 });
+
+app.use("/api/auth", authRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);

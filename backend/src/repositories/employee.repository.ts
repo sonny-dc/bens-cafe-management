@@ -31,7 +31,10 @@ type EmployeeRow = RowDataPacket & {
 };
 
 
+// ===============================
 // Helper Functions
+// ===============================
+
 function mapEmployeeRow(row: EmployeeRow): Employee {
     return {
         employeeId: row.employee_id,
@@ -80,6 +83,26 @@ export async function getEmployeeByIdWithConnection(
     return mapEmployeeRow(row);
 }
 
+export async function getEmployeeByUserIdWithConnection(
+    userId: number,
+    connection: PoolConnection
+): Promise<Employee | null> {
+    const [rows] = await connection.query<EmployeeRow[]>(
+        `
+        SELECT * FROM employee_profiles
+        WHERE user_id = ?
+        LIMIT 1
+        `
+        ,
+        [userId]
+    );
+    const row = rows[0];
+    if (row === undefined){
+        return null;
+    }
+    return mapEmployeeRow(row);
+}
+
 /**
  * Shared repository function for employment status updates.
  */
@@ -101,32 +124,6 @@ async function updateEmployeeStatus(
             return null;
         }
 
-        return getEmployeeByIdWithConnection(employeeId, connection);
-    });
-}
-
-/**
- * ROUTE: GET /api/employees
- */
-export async function getEmployees(): Promise<Employee[]>{
-    return withConnection(async (connection) => {
-        const [rows] = await connection.query<EmployeeRow[]>(
-            `
-            SELECT * FROM employee_profiles
-            ORDER BY created_at DESC
-            `
-        );
-        return rows.map(mapEmployeeRow);
-    });
-}
-
-/**
- * ROUTE: GET /api/employees/:employeeId
- */
-export async function getEmployeeById(
-    employeeId: number
-): Promise<Employee | null>{
-    return withConnection(async (connection) => {
         return getEmployeeByIdWithConnection(employeeId, connection);
     });
 }
@@ -169,6 +166,43 @@ export async function createEmployeeWithConnection(
     return employee;
 }
 
+// ===============================
+// REPOSITORY FUNCTIONS
+// ===============================
+
+/**
+ * ROUTE: GET /api/employees
+ */
+export async function getEmployees(): Promise<Employee[]>{
+    return withConnection(async (connection) => {
+        const [rows] = await connection.query<EmployeeRow[]>(
+            `
+            SELECT * FROM employee_profiles
+            ORDER BY created_at DESC
+            `
+        );
+        return rows.map(mapEmployeeRow);
+    });
+}
+
+/**
+ * ROUTE: GET /api/employees/:employeeId
+ */
+export async function getEmployeeById(
+    employeeId: number
+): Promise<Employee | null>{
+    return withConnection(async (connection) => {
+        return getEmployeeByIdWithConnection(employeeId, connection);
+    });
+}
+
+export async function getEmployeeByUserId(
+    userId: number
+): Promise<Employee | null> {
+    return withConnection(async (connection) => {
+        return getEmployeeByUserIdWithConnection(userId, connection);
+    });
+}
 
 /**
  * ROUTE: PATCH /api/employees/:employeeId

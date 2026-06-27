@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { API_BASE_URL } from 'shared/constants';
+import { apiFetch } from '../api/apiFetch';
 
 export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const [username, setUsername] = useState('');
@@ -31,12 +33,9 @@ export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onCl
     };
 
     try {
-      const response = await fetch('http://localhost:3000/api/employees', {
+      const response = await apiFetch(`${API_BASE_URL}/employees`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {

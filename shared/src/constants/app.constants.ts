@@ -1,6 +1,9 @@
 // Use ctrl + f to find specific constants or types in this file
 
-// Model constants and types for the application
+// ===============================
+// Model Constants
+// ===============================
+
 export const USER_ROLES = {
     ADMIN: 'admin',
     EMPLOYEE: 'employee'
@@ -59,14 +62,21 @@ export const MESSAGE_STATUS = {
     ACKNOWLEDGED: 'acknowledged'
 } as const;
 
-// Request Type Definitions
 export const REQUEST_TYPES = {
     BODY: 'body',
     QUERY: 'query',
     PARAMS: 'params'
 } as const;
 
-// Utils constants
+// ===============================
+// Database Constants
+// ===============================
+
+export const SESSION_COOKIE_NAME = 'bens_cafe_session_id';
+
+// ===============================
+// Utils Constants
+// ===============================
 
 // password-hash.ts
 export const SALT_ROUNDS = 12;
@@ -78,7 +88,16 @@ export const MYSQL_DATE_FORMAT = "yyyy-MM-dd";
 export const MYSQL_TIME_FORMAT = "HH:mm:ss";
 
 
-// Type Exports
+// ===============================
+// API Constants
+// ===============================
+export const API_BASE_URL = 'http://localhost:3000/api';
+
+
+// ===============================
+// Type Definitions
+// ===============================
+
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 export type AccountStatus = typeof ACCOUNT_STATUS[keyof typeof ACCOUNT_STATUS];
 export type EmploymentStatus = typeof EMPLOYMENT_STATUS[keyof typeof EMPLOYMENT_STATUS];

@@ -1,28 +1,87 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StaffPortal } from './components/StaffPortal/StaffPortal';
 import { AdminPortal } from './components/Admin/AdminPortal';
 import { Login } from './components/Auth/Login';
+import { USER_ROLES, type UserRole, API_BASE_URL } from 'shared/constants';
 import './App.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [role, setRole] = useState<'admin' | 'staff' | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
-  const handleLogin = (userRole: 'admin' | 'staff') => {
+  const handleLogin = (userRole: UserRole) => {
     setRole(userRole);
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setRole(null);
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAuthenticated(false);
+      setRole(null);
+    }
   };
+
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          setIsAuthenticated(false);
+          setRole(null);
+          return;
+        }
+
+        const result = await response.json();
+
+        const userRole = result.data.role as UserRole;
+
+        if (
+          userRole !== USER_ROLES.ADMIN &&
+          userRole !== USER_ROLES.EMPLOYEE
+        ) {
+          setIsAuthenticated(false);
+          setRole(null);
+          return;
+        }
+
+        setRole(userRole);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error(error);
+        setIsAuthenticated(false);
+        setRole(null);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    }
+
+    checkSession();
+  }, []);
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-2 border-[#4a6741]/30 border-t-[#4a6741] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !role) {
     return <Login onLogin={handleLogin} />;
   }
 
-  if (role === 'staff') {
+  if (role === USER_ROLES.EMPLOYEE) {
     return (
       <div className="relative">
         <StaffPortal onLogout={handleLogout} />

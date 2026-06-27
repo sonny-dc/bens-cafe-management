@@ -1,7 +1,7 @@
 import type { PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { withConnection, withTransaction } from '../config/database.js';
 import {type RequestStatus, REQUEST_STATUS } from '../config/constants.js';
-import type { InventoryRequest, CreateInventoryRequestInput, UpdateInventoryRequestInput, InventoryRequestListItem } from '../models/index.js';
+import type { InventoryRequest, CreateInventoryRequestRepositoryInput, UpdateInventoryRequestInput, InventoryRequestListItem, StaffInventoryRequest } from '../models/index.js';
 
 /**
  * For SELECT * FROM inventory_requests, we define a type that
@@ -37,6 +37,64 @@ type InventoryRequestListItemRow = RowDataPacket & {
     posted_at: Date;
 }
 
+type StaffInventoryRequestRow = RawInventoryRequestRow & {
+    item_name: string;
+};
+
+/**
+ * Fetches all inventory requests for a specific employee
+ * simplified as abstracted list items.
+ */
+const simplifiedInventoryRequestFieldsByEmployeeId = 
+                `SELECT
+                r.request_id,
+                i.item_name,
+                CONCAT(r.requested_quantity, ' ', r.requested_unit) as quantity,
+                u.full_name as requested_by,
+                r.request_status,
+                r.posted_at
+                FROM inventory_requests r
+                JOIN inventory_items i ON r.item_id = i.item_id
+                JOIN employee_profiles e ON r.employee_id = e.employee_id
+                JOIN users u ON e.user_id = u.user_id
+                WHERE r.employee_id = ?
+                ORDER BY r.posted_at ASC`;
+
+/**
+ * Fetches all inventory requests, simplified.
+ */
+const simplifiedInventoryRequestFields = 
+                `SELECT
+                r.request_id,
+                i.item_name,
+                CONCAT(r.requested_quantity, ' ', r.requested_unit) as quantity,
+                u.full_name as requested_by,
+                r.request_status,
+                r.posted_at
+                FROM inventory_requests r
+                JOIN inventory_items i ON r.item_id = i.item_id
+                JOIN employee_profiles e ON r.employee_id = e.employee_id
+                JOIN users u ON e.user_id = u.user_id
+                ORDER BY r.posted_at ASC`;
+
+/**
+ * Fetches a single inventory request by its ID, simplified.
+ */
+const simplifiedInventoryRequestFieldsById = 
+                `SELECT
+                r.request_id,
+                i.item_name,
+                CONCAT(r.requested_quantity, ' ', r.requested_unit) as quantity,
+                u.full_name as requested_by,
+                r.request_status,
+                r.posted_at
+                FROM inventory_requests r
+                JOIN inventory_items i ON r.item_id = i.item_id
+                JOIN employee_profiles e ON r.employee_id = e.employee_id
+                JOIN users u ON e.user_id = u.user_id
+                WHERE r.request_id = ?
+                LIMIT 1`;
+
 // ===========================
 // MAPPERS
 // ===========================
@@ -55,6 +113,15 @@ function mapInventoryRequestRow(row: RawInventoryRequestRow): InventoryRequest{
         createdAt: row.created_at,
         userId: row.user_id,
         updatedAt: row.updated_at
+    };
+}
+
+function mapStaffInventoryRequestRow(
+    row: StaffInventoryRequestRow
+): StaffInventoryRequest {
+    return {
+        ...mapInventoryRequestRow(row),
+        itemName: row.item_name
     };
 }
 
@@ -100,19 +167,7 @@ export async function getInventoryRequestListItemByIdWithConnection(
     connection: PoolConnection
 ): Promise<InventoryRequestListItem | null> {
     const [rows] = await connection.query<InventoryRequestListItemRow[]>(
-        `SELECT
-            r.request_id,
-            i.item_name,
-            CONCAT(r.requested_quantity, ' ', r.requested_unit) as quantity,
-            u.full_name as requested_by,
-            r.request_status,
-            r.posted_at
-            FROM inventory_requests r
-            JOIN inventory_items i ON r.item_id = i.item_id
-            JOIN employee_profiles e ON r.employee_id = e.employee_id
-            JOIN users u ON e.user_id = u.user_id
-            WHERE r.request_id = ?
-            LIMIT 1`,
+        simplifiedInventoryRequestFieldsById,
         [requestId]
     );
 
@@ -122,6 +177,17 @@ export async function getInventoryRequestListItemByIdWithConnection(
     }
 
     return mapInventoryRequestListItemRow(row);
+}
+
+export async function getAllInventoryRequestsByEmployeeIdWithConnection(
+    employeeId: number,
+    connection: PoolConnection
+): Promise<InventoryRequestListItem[]> {
+    const [rows] = await connection.query<InventoryRequestListItemRow[]>(
+        simplifiedInventoryRequestFieldsByEmployeeId,
+        [employeeId]
+    );
+    return rows.map(mapInventoryRequestListItemRow);
 }
 
 // ==============================================
@@ -140,6 +206,22 @@ export async function getInventoryRequestListItemById(requestId: number): Promis
     });
 }
 
+export async function getAllInventoryRequestsByEmployeeId(employeeId: number): Promise<StaffInventoryRequest[]> {
+    return withConnection(async (connection) => {
+        const [rows] = await connection.query<StaffInventoryRequestRow[]>(
+            `
+            SELECT r.*,
+                i.item_name
+                FROM inventory_requests r
+                JOIN inventory_items i ON r.item_id = i.item_id
+                WHERE r.employee_id = ?
+                ORDER BY r.posted_at ASC
+            `,
+            [employeeId]
+        );
+        return rows.map(mapStaffInventoryRequestRow);
+    });
+}
 
 /**
  * Fetches all inventory requests from the database, returning
@@ -165,27 +247,19 @@ export async function getAllInventoryRequests(): Promise<InventoryRequest[]> {
 export async function getAllInventoryRequestListItems(): Promise<InventoryRequestListItem[]> {
     return withConnection(async (connection) => {
         const [rows] = await connection.query<InventoryRequestListItemRow[]>(
-            `SELECT 
-                r.request_id,
-                i.item_name,
-                CONCAT(r.requested_quantity, ' ', r.requested_unit) as quantity,
-                u.full_name as requested_by,
-                r.request_status,
-                r.posted_at
-             FROM inventory_requests r
-             JOIN inventory_items i ON r.item_id = i.item_id
-             JOIN employee_profiles e ON r.employee_id = e.employee_id
-             JOIN users u ON e.user_id = u.user_id
-             ORDER BY r.posted_at ASC`
+            simplifiedInventoryRequestFields
         );
         return rows.map(mapInventoryRequestListItemRow);
     });
 }
 
-export async function createInventoryRequest(input: CreateInventoryRequestInput): Promise<InventoryRequest> {
+export async function createInventoryRequest(
+    input: CreateInventoryRequestRepositoryInput
+): Promise<InventoryRequest> {
     return withTransaction(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
-            `INSERT INTO inventory_requests (
+            `
+            INSERT INTO inventory_requests (
                 employee_id, 
                 item_id, 
                 requested_quantity, 
@@ -195,25 +269,29 @@ export async function createInventoryRequest(input: CreateInventoryRequestInput)
                 posted_at, 
                 user_id
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `,
             [
-                input.employeeId, 
-                input.itemId, 
-                input.requestedQuantity, 
-                input.requestedUnit, 
-                input.reason, 
-                REQUEST_STATUS.PENDING, 
-                input.postedAt, 
+                input.employeeId,
+                input.itemId,
+                input.requestedQuantity,
+                input.requestedUnit,
+                input.reason,
+                REQUEST_STATUS.PENDING,
+                input.postedAt,
                 input.userId || null
             ]
         );
+
         const inventoryRequest = await getInventoryRequestByIdWithConnection(
-            result.insertId, 
+            result.insertId,
             connection
         );
+
         if (inventoryRequest === null) {
             throw new Error('Created inventory request could not be found. Error occurred during creation.');
         }
+
         return inventoryRequest;
     });
 }

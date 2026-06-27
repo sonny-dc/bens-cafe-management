@@ -6,8 +6,8 @@ import type {
 
 import type {
     Shift,
-    StartShiftInput,
-    EndShiftInput
+    StartShiftRepositoryInput,
+    EndShiftRepositoryInput
 } from '../models/index.js';
 
 import { 
@@ -129,7 +129,7 @@ export async function getShiftById(
 }
 
 export async function startShift(
-    input: StartShiftInput
+    input: StartShiftRepositoryInput
 ): Promise<Shift> {
     return withTransaction(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
@@ -165,7 +165,8 @@ export async function startShift(
 
 export async function endShift(
     shiftId: number,
-    input: EndShiftInput
+    employeeId: number,
+    input: EndShiftRepositoryInput
 ): Promise<Shift | null> {
     return withTransaction(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
@@ -175,13 +176,14 @@ export async function endShift(
                 end_time = ?,
                 closing_cash = ?,
                 shift_status = ?
-            WHERE shift_id = ? AND shift_status = ?
+            WHERE shift_id = ? AND employee_id = ? AND shift_status = ?
             `,
             [
                 input.endTime, 
                 input.closingCash, 
                 SHIFT_STATUS.COMPLETED, 
                 shiftId, 
+                employeeId,
                 SHIFT_STATUS.IN_PROGRESS
             ]
         );

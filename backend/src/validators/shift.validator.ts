@@ -6,7 +6,6 @@ export const shiftIdParamSchema = z.object({
 });
 
 export const startShiftSchema = z.object({
-    employeeId: positiveInt,
     openingCash: nonNegativeDecimalString,
 });
 

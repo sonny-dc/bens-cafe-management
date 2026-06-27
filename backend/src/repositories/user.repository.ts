@@ -80,6 +80,33 @@ async function getUserByIdWithConnection(
 }
 
 /**
+ * Internal repository helper for fetching one user account by username using
+ * an existing database connection.
+ * 
+ * This is useful for authentication purposes, where you need to retrieve a user by their username.
+ */
+export async function getUserByUsernameWithConnection(
+    username: string,
+    connection: PoolConnection
+): Promise<User | null> {
+    const [rows] = await connection.query<UserRow[]>(
+        `
+        SELECT *
+        FROM users
+        WHERE username = ?
+        LIMIT 1
+        `,
+        [username]
+    );
+    const row = rows[0];
+
+    if (row === undefined) {
+        return null;
+    }
+    return mapUserRow(row);
+}
+
+/**
  * ROUTE / USE CASE: POST /api/users
  *
  * Creates a user account.
@@ -174,6 +201,18 @@ export async function getUserById(
 ): Promise<User | null> {
     return withConnection(async (connection) => {
         return getUserByIdWithConnection(connection, userId);
+    });
+}
+
+/**
+ * Used to fetch a user account by username, typically for authentication purposes.
+ * Returns null when no user account matches the given username.
+ */
+export async function getUserByUsername(
+    username: string
+): Promise<User | null> {
+    return withConnection(async (connection) => {
+        return getUserByUsernameWithConnection(username, connection);
     });
 }
 

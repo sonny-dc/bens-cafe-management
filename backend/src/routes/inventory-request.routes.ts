@@ -6,23 +6,45 @@ import {
     updateInventoryRequestStatusSchema,
     inventoryRequestIdParamSchema
 } from '../validators/index.js';
+
 import { validate } from '../middleware/validation.middleware.js';
+import { requireAdmin, requireEmployee } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
 // ==========================
 // GET ROUTES
 // ==========================
-router.get('/', inventoryRequestController.getAllInventoryRequests);
-router.get('/simplified', inventoryRequestController.getAllInventoryRequestsSimplified);
+
+// Admin gets all inventory requests
+router.get('/', 
+    requireAdmin,
+    inventoryRequestController.getAllInventoryRequests
+);
+
+// Admin gets all inventory requests simplified
+router.get('/simplified', 
+    requireAdmin,
+    inventoryRequestController.getAllInventoryRequestsSimplified
+);
 
 router.get(
+    '/my',
+    requireEmployee,
+    inventoryRequestController.getMyInventoryRequests
+)
+
+// Admin gets an inventory request by ID
+router.get(
     '/:requestId',
+    requireAdmin,
     validate(inventoryRequestIdParamSchema, REQUEST_TYPES.PARAMS),
     inventoryRequestController.getInventoryRequestById
 )
+// Admin gets an inventory request by ID simplified
 router.get(
     '/simplified/:requestId',
+    requireAdmin,
     validate(inventoryRequestIdParamSchema, REQUEST_TYPES.PARAMS),
     inventoryRequestController.getInventoryRequestByIdSimplified
 )
@@ -30,8 +52,11 @@ router.get(
 // ==========================
 // POST ROUTES
 // ==========================
+
+// Employee creates a new inventory request
 router.post(
     '/',
+    requireEmployee,
     validate(createInventoryRequestSchema, REQUEST_TYPES.BODY),
     inventoryRequestController.createInventoryRequest
 )
@@ -39,8 +64,11 @@ router.post(
 // ==========================
 // PUT/PATCH ROUTES
 // ==========================
+
+// Admin updates the status of an inventory request
 router.patch(
     '/:requestId/status',
+    requireAdmin,
     validate(inventoryRequestIdParamSchema, REQUEST_TYPES.PARAMS),
     validate(updateInventoryRequestStatusSchema, REQUEST_TYPES.BODY),
     inventoryRequestController.updateInventoryRequestStatus

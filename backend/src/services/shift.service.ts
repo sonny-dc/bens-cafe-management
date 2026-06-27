@@ -1,22 +1,31 @@
 import { shiftRepository } from '../repositories/index.js';
 import type { Shift, StartShiftInput, EndShiftInput } from '../models/index.js';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
+import { SHIFT_STATUS } from '../config/constants.js';
 
-export async function startShift(input: Omit<StartShiftInput, 'startTime'>): Promise<Shift> {
+export async function startShift(
+    employeeId: number, 
+    input: StartShiftInput
+): Promise<Shift> {
     // Check if the employee already has an active shift
-    const activeShift = await shiftRepository.getActiveShiftByEmployee(input.employeeId);
+    const activeShift = await shiftRepository.getActiveShiftByEmployee(employeeId);
     if (activeShift) {
         throw new Error("Employee already has an active shift.");
     }
 
     // Create new shift
     return shiftRepository.startShift({
-        ...input,
+        employeeId,
+        openingCash: input.openingCash,
         startTime: getCurrentAppDateTime()
     });
 }
 
-export async function endShift(shiftId: number, input: Omit<EndShiftInput, 'endTime'>): Promise<Shift> {
+export async function endShift(
+    shiftId: number, 
+    employeeId: number, 
+    input: EndShiftInput
+): Promise<Shift> {
     // Get the shift
     const shift = await shiftRepository.getShiftById(shiftId);
 
@@ -24,17 +33,23 @@ export async function endShift(shiftId: number, input: Omit<EndShiftInput, 'endT
         throw new Error("Shift not found.");
     }
 
-    if (shift.status === 'completed') {
+    if (shift.employeeId !== employeeId) {
+        throw new Error("You are not allowed to end this shift.");
+    }
+
+    if (shift.status === SHIFT_STATUS.COMPLETED) {
         throw new Error("Shift is already completed.");
     }
+
 
     // Note: cash_variance is calculated by the database dynamically
     // so we just pass the closingCash and end the shift.
     const endedShift = await shiftRepository.endShift(
-        shiftId, 
+        shiftId,
+        employeeId,
         { 
-            ...input,
-             endTime: getCurrentAppDateTime() 
+            closingCash: input.closingCash,
+            endTime: getCurrentAppDateTime() 
         }
     );
 

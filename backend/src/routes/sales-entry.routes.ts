@@ -1,11 +1,14 @@
 import { Router } from 'express';
 
 import { validate } from '../middleware/validation.middleware.js';
+import { requireAdmin } from '../middleware/auth.middleware.js';
 import { salesEntryIdParamSchema, createSalesEntryTransactionSchema } from '../validators/index.js';
 import { salesEntryController } from '../controllers/index.js';
 import { REQUEST_TYPES } from '../config/constants.js';
 
 const router = Router();
+
+router.use(requireAdmin);
 
 router.get('/', salesEntryController.getAllSalesEntries);
 router.get(
