@@ -1,15 +1,27 @@
 import { Router } from "express";
 
 import { validate } from "../middleware/validation.middleware.js";
+import { requireAdmin } from "../middleware/auth.middleware.js";
 import { employeeIdParamSchema, registerEmployeeSchema, updateEmployeeSchema } from "../validators/index.js";
 import { employeeController } from "../controllers/index.js";
 import { REQUEST_TYPES } from "../config/constants.js";
 
 const router = Router();
 
-router.get("/", employeeController.getEmployees);
+router.use(requireAdmin);
+
 router.get(
-    "/:employeeId", 
+    "/",
+    employeeController.getEmployees
+);
+
+router.get(
+    "/profiles",
+    employeeController.getEmployeeProfiles
+);
+
+router.get(
+    "/:employeeId",
     validate(employeeIdParamSchema, REQUEST_TYPES.PARAMS), 
     employeeController.getEmployeeById
 );

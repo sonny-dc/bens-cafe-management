@@ -4,7 +4,6 @@ import { Play, Square, CheckCircle2, AlertCircle, Clock, TrendingUp } from 'luci
 import { shiftApi, type Shift } from '../../api/shiftApi';
 
 export function ShiftManager() {
-  const employeeId = 1;
 
   const [shift, setShift] = useState<Shift | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +19,7 @@ export function ShiftManager() {
     try {
       setIsLoading(true);
       setError(null);
-      setShift(await shiftApi.getActiveShift(employeeId));
+      setShift(await shiftApi.getMyActiveShift());
     } catch (err: any) {
       setError(err.message || 'Failed to load shift');
     } finally {
@@ -34,7 +33,7 @@ export function ShiftManager() {
     try {
       setIsLoading(true);
       setError(null);
-      setShift(await shiftApi.startShift(employeeId, openingCash));
+      setShift(await shiftApi.startShift(openingCash));
       setOpeningCash('');
     } catch (err: any) {
       setError(err.message || 'Failed to start shift');

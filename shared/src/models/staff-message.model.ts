@@ -30,4 +30,5 @@ export interface UpdateStaffMessageStatusInput {
     messageId: number;
     status: MessageStatus;
     readAt: string;
+    userId: number;
 }

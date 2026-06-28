@@ -16,7 +16,31 @@ export interface Shift {
     updatedAt: Date | null;
 }
 
+export interface ShiftSession {
+  shiftId: number;
+  employeeId: number;
+  shiftDate: string;
+  startTime: string;
+  endTime: string | null;
+  openingCash: string;
+  closingCash: string;
+  status: string;
+  
+}
+
+export interface StaffWeeklyPerformance {
+  employeeId: number;
+  fullName: string;
+  jobRole: string;
+  totalCash: string;
+  completedShifts: number;
+}
+
 export interface StartShiftInput {
+    openingCash: string;
+}
+
+export interface StartShiftRepositoryInput {
     employeeId: number;
     openingCash: string;
     /**
@@ -27,7 +51,7 @@ export interface StartShiftInput {
     startTime: string;
 }
 
-export interface EndShiftInput {
+export interface EndShiftRepositoryInput {
     closingCash: string;
     /**
      * This is handled by the services layer to 
@@ -36,3 +60,8 @@ export interface EndShiftInput {
      */
     endTime: string;
 }
+
+export interface EndShiftInput {
+    closingCash: string;
+}
+

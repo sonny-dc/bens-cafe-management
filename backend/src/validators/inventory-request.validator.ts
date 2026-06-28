@@ -7,7 +7,6 @@ export const inventoryRequestIdParamSchema = z.object({
 });
 
 export const createInventoryRequestSchema = z.object({
-    employeeId: positiveInt,
     itemId: positiveInt,
     requestedQuantity: nonNegativeDecimalString,
     requestedUnit: z.string().trim().min(1, 'requestedUnit must not be empty').max(20, 'requestedUnit must not exceed 20 characters'),

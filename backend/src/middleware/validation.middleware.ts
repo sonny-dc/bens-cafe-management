@@ -13,6 +13,11 @@ export function validate(schema: ZodType, requestType: RequestType = REQUEST_TYP
             });
             return;
         }
+        // temporary fix for query validation. might update this later to handle query validation better
+        if (requestType === REQUEST_TYPES.QUERY) {
+            next();
+            return;
+        }
         
         req[requestType] = result.data;
         next();

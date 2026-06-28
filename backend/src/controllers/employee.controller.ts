@@ -31,6 +31,38 @@ export async function getEmployees(
     }
 }
 
+export async function getEmployeeProfiles(
+    _req: Request,
+    res: Response
+): Promise<void> {
+    try {
+        const employees = await employeeService.getEmployeeProfiles();
+        if (employees.length === 0) {
+            res.status(404).json({
+                success: false,
+                message: "No employee profiles found."
+            });
+            return;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Employee profiles retrieved successfully.",
+            data: employees
+        });
+    } catch (error) {
+        const errorMessage =
+            error instanceof Error
+                ? error.message
+                : "An error occurred while retrieving employee profiles.";
+
+        res.status(500).json({
+            success: false,
+            message: errorMessage
+        });
+    }
+}
+
 /**
  * GET /api/employees/:employeeId
  */

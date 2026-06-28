@@ -1,21 +1,20 @@
-const API_BASE_URL = 'http://localhost:3000/api';
-
 import { type MessageType, type MessageStatus, MESSAGE_STATUS } from 'shared/constants';
 import type { StaffMessage } from 'shared/models';
+import { apiFetch } from './apiFetch';
 
 export type { MessageType, MessageStatus };
 export type Note = StaffMessage;
 
 export const notesApi = {
   async getNotesByEmployee(employeeId: number): Promise<Note[]> {
-    const res = await fetch(`${API_BASE_URL}/staff-messages/employee/${employeeId}`);
+    const res = await apiFetch(`/staff-messages/employee/${employeeId}`);
     if (!res.ok) throw new Error('Could not load your notes. Check your connection.');
     const json = await res.json();
     return json.data;
   },
   
   async getAllNotes(): Promise<Note[]> {
-    const res = await fetch(`${API_BASE_URL}/staff-messages`);
+    const res = await apiFetch(`/staff-messages`);
 
     if (!res.ok) {
       throw new Error('Could not load staff notes.');
@@ -27,9 +26,8 @@ export const notesApi = {
 
   // General method to update note status, used by specific methods below
   async updateNoteStatus(messageId: number, status: MessageStatus): Promise<boolean> {
-    const res = await fetch(`${API_BASE_URL}/staff-messages/${messageId}/status`, {
+    const res = await apiFetch(`/staff-messages/${messageId}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
 
@@ -57,9 +55,8 @@ export const notesApi = {
     subject: string | null;
     messageText: string;
   }): Promise<Note> {
-    const res = await fetch(`${API_BASE_URL}/staff-messages`, {
+    const res = await apiFetch('/staff-messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     if (!res.ok) {

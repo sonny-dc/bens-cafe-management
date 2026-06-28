@@ -1,5 +1,5 @@
 import { inventoryRequestRepository } from '../repositories/index.js';
-import type { CreateInventoryRequestInput, UpdateInventoryRequestInput, InventoryRequestListItem, InventoryRequest } from '../models/index.js';
+import type { CreateInventoryRequestInput, UpdateInventoryRequestInput, InventoryRequestListItem, InventoryRequest, StaffInventoryRequest } from '../models/index.js';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 
 
@@ -19,8 +19,12 @@ export async function getAllInventoryRequestsSimplified(): Promise<InventoryRequ
     return inventoryRequestRepository.getAllInventoryRequestListItems();
 }
 
-export async function createInventoryRequest(input: CreateInventoryRequestInput): Promise<InventoryRequest> {
-    return inventoryRequestRepository.createInventoryRequest({...input, postedAt: getCurrentAppDateTime()});
+export async function getMyInventoryRequests(employeeId: number): Promise<StaffInventoryRequest[]> {
+    return inventoryRequestRepository.getAllInventoryRequestsByEmployeeId(employeeId);
+}
+
+export async function createInventoryRequest(input: CreateInventoryRequestInput & { employeeId: number }): Promise<InventoryRequest> {
+    return inventoryRequestRepository.createInventoryRequest({ ...input, postedAt: getCurrentAppDateTime() });
 }
 
 export async function updateInventoryRequestStatus(input: UpdateInventoryRequestInput): Promise<InventoryRequest | null> {

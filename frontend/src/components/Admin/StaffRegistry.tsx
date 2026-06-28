@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, Plus, Edit2, Trash2, X, AlertTriangle, ShieldCheck, Clock, CircleDot } from 'lucide-react';
+import { Users, Search, Plus, Edit2, Trash2, X, ShieldCheck, CircleDot } from 'lucide-react';
 import { employeeApi } from '../../api/employeeApi';
 import  { type EmployeeProfile, type UpdateEmployeeInput } from 'shared/models';
 import { EMPLOYMENT_STATUS, type EmploymentStatus } from 'shared/constants';
@@ -25,7 +25,7 @@ export function StaffRegistry() {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      const data = await employeeApi.getAllEmployees();
+      const data = await employeeApi.getEmployeeProfiles();
       setEmployees(data);
     } catch (err) {
       console.error(err);
@@ -40,7 +40,7 @@ export function StaffRegistry() {
     const data = {
       fullName: String(formData.get('fullName') || '').trim(),
       username: String(formData.get('username') || '').trim(),
-      password: 'password123',
+      password: String(formData.get('password') || '').trim(),
       employeeCode: `EMP-${Date.now()}`,
       jobRole: String(formData.get('jobRole') || '').trim(),
       defaultShiftHours: '8.00',
@@ -125,7 +125,7 @@ export function StaffRegistry() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 -mx-4">
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
         <div className="relative w-full sm:w-96">
@@ -133,6 +133,8 @@ export function StaffRegistry() {
             <Search size={18} className="text-gray-400" />
           </div>
           <input
+            id="staff-search"
+            aria-label="Search employees by name, code, or role"
             type="text"
             placeholder="Search by name, code, or role..."
             value={searchTerm}
@@ -231,6 +233,7 @@ export function StaffRegistry() {
                           onClick={() => setEditingEmployee(emp)}
                           className="p-2 text-gray-400 hover:text-[#4a6741] hover:bg-[#4a6741]/10 rounded-lg transition-colors"
                           title="Edit Employee"
+                          aria-label={`Edit ${emp.fullName}'s details`}
                         >
                           <Edit2 size={16} />
                         </button>
@@ -238,6 +241,7 @@ export function StaffRegistry() {
                           onClick={() => setDeletingEmployee(emp)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Delete Employee"
+                          aria-label={`Delete ${emp.fullName}`}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -275,8 +279,10 @@ export function StaffRegistry() {
                   </div>
                 </div>
                 <button 
+                  title='Close add employee modal'
                   onClick={() => setShowAddModal(false)}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                  aria-label="Close add employee modal"
                 >
                   <X size={16} />
                 </button>
@@ -284,29 +290,42 @@ export function StaffRegistry() {
 
               <form onSubmit={handleAddSubmit} className="p-6 space-y-5">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Name</label>
-                  <input required name="fullName" type="text" placeholder="e.g. Maria Santos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                  <label htmlFor="fullName" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Name</label>
+                  <input required name="fullName" type="text" id="fullName" placeholder="e.g. Maria Santos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Username</label>
-                    <input required name="username" type="text" placeholder="e.g. msantos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    <label htmlFor="username" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Username</label>
+                    <input required name="username" type="text" id="username" placeholder="e.g. msantos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Password (Default)</label>
-                    <input disabled type="text" value="password123" className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 font-mono outline-none cursor-not-allowed" />
+                    <label
+                      htmlFor="add-password"
+                      className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2"
+                    >
+                      Password
+                    </label>
+                    <input
+                      required
+                      name="password"
+                      type="password"
+                      id="add-password"
+                      placeholder="min. 6 characters"
+                      autoComplete="new-password"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
-                    <input required name="jobRole" type="text" placeholder="e.g. Barista" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    <label htmlFor="jobRole" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
+                    <input required name="jobRole" type="text" id="jobRole" placeholder="e.g. Barista" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
-                    <input required name="hourlyRate" type="number" step="0.01" min="0" placeholder="0.00" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    <label htmlFor="hourlyRate" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
+                    <input required name="hourlyRate" type="number" step="0.01" min="0" id="hourlyRate" placeholder="0.00" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
                   </div>
                 </div>
 
@@ -348,6 +367,7 @@ export function StaffRegistry() {
                   </div>
                 </div>
                 <button 
+                  title='Close edit employee modal'
                   onClick={() => setEditingEmployee(null)}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                 >
@@ -358,18 +378,18 @@ export function StaffRegistry() {
               <form onSubmit={handleEditSubmit} className="p-6 space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
-                    <input required name="jobRole" type="text" defaultValue={editingEmployee.jobRole} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    <label htmlFor="jobRole" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
+                    <input required name="jobRole" type="text" id="jobRole" defaultValue={editingEmployee.jobRole} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
-                    <input required name="hourlyRate" type="number" step="0.01" min="0" defaultValue={Number(editingEmployee.hourlyRate)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    <label htmlFor="hourlyRate" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
+                    <input required name="hourlyRate" type="number" step="0.01" min="0" id="hourlyRate" defaultValue={Number(editingEmployee.hourlyRate)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Employment Status</label>
-                  <select name="employmentStatus" defaultValue={editingEmployee.employmentStatus} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all">
+                  <label htmlFor="employmentStatus" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Employment Status</label>
+                  <select name="employmentStatus" title='Employment Status' id="employmentStatus" defaultValue={editingEmployee.employmentStatus} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all">
                     <option value={EMPLOYMENT_STATUS.ACTIVE}>Active</option>
                     <option value={EMPLOYMENT_STATUS.INACTIVE}>Inactive</option>
                   </select>

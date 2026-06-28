@@ -92,8 +92,8 @@ export async function getStaffMessagesByEmployee(employeeId: number): Promise<St
 export async function updateStaffMessageStatus(input: UpdateStaffMessageStatusInput): Promise<boolean> {
     return withConnection(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
-            `UPDATE staff_messages SET message_status = ?, read_at = ? WHERE message_id = ?`,
-            [input.status, input.readAt, input.messageId]
+            `UPDATE staff_messages SET message_status = ?, read_at = ?, user_id = ? WHERE message_id = ?`,
+            [input.status, input.readAt, input.userId, input.messageId]
         );
         return result.affectedRows > 0;
     });

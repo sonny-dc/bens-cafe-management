@@ -6,6 +6,7 @@ import type {
 
 import type {
     Employee,
+    EmployeeProfile,
     CreateEmployeeInput,
     UpdateEmployeeInput
 } from '../models/index.js';
@@ -30,8 +31,25 @@ type EmployeeRow = RowDataPacket & {
     updated_at: Date | null;
 };
 
+type EmployeeProfileRow = RowDataPacket & {
+    employee_id: number;
+    user_id: number;
+    employee_code: string;
+    job_role: string;
+    default_shift_hours: string;
+    hourly_rate: string;
+    daily_pay: string;
+    employment_status: EmploymentStatus;
+    created_at: Date;
+    updated_at: Date | null;
+    username: string;
+    full_name: string;
+}
 
+// ===============================
 // Helper Functions
+// ===============================
+
 function mapEmployeeRow(row: EmployeeRow): Employee {
     return {
         employeeId: row.employee_id,
@@ -47,6 +65,22 @@ function mapEmployeeRow(row: EmployeeRow): Employee {
     };
 }
 
+function mapEmployeeProfileRow(row: EmployeeProfileRow): EmployeeProfile {
+    return {
+        employeeId: row.employee_id,
+        userId: row.user_id,
+        employeeCode: row.employee_code,
+        jobRole: row.job_role,
+        defaultShiftHours: row.default_shift_hours,
+        hourlyRate: row.hourly_rate,
+        dailyPay: row.daily_pay,
+        employmentStatus: row.employment_status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        username: row.username,
+        fullName: row.full_name
+    };
+}
 
 /**
  * Repository helper for fetching one employee profile using
@@ -80,6 +114,26 @@ export async function getEmployeeByIdWithConnection(
     return mapEmployeeRow(row);
 }
 
+export async function getEmployeeByUserIdWithConnection(
+    userId: number,
+    connection: PoolConnection
+): Promise<Employee | null> {
+    const [rows] = await connection.query<EmployeeRow[]>(
+        `
+        SELECT * FROM employee_profiles
+        WHERE user_id = ?
+        LIMIT 1
+        `
+        ,
+        [userId]
+    );
+    const row = rows[0];
+    if (row === undefined){
+        return null;
+    }
+    return mapEmployeeRow(row);
+}
+
 /**
  * Shared repository function for employment status updates.
  */
@@ -101,32 +155,6 @@ async function updateEmployeeStatus(
             return null;
         }
 
-        return getEmployeeByIdWithConnection(employeeId, connection);
-    });
-}
-
-/**
- * ROUTE: GET /api/employees
- */
-export async function getEmployees(): Promise<Employee[]>{
-    return withConnection(async (connection) => {
-        const [rows] = await connection.query<EmployeeRow[]>(
-            `
-            SELECT * FROM employee_profiles
-            ORDER BY created_at DESC
-            `
-        );
-        return rows.map(mapEmployeeRow);
-    });
-}
-
-/**
- * ROUTE: GET /api/employees/:employeeId
- */
-export async function getEmployeeById(
-    employeeId: number
-): Promise<Employee | null>{
-    return withConnection(async (connection) => {
         return getEmployeeByIdWithConnection(employeeId, connection);
     });
 }
@@ -169,6 +197,78 @@ export async function createEmployeeWithConnection(
     return employee;
 }
 
+// ===============================
+// REPOSITORY FUNCTIONS
+// ===============================
+
+/**
+ * ROUTE: GET /api/employees
+ */
+export async function getEmployees(): Promise<Employee[]>{
+    return withConnection(async (connection) => {
+        const [rows] = await connection.query<EmployeeRow[]>(
+            `
+            SELECT * FROM employee_profiles
+            ORDER BY created_at DESC
+            `
+        );
+        return rows.map(mapEmployeeRow);
+    });
+}
+
+/**
+ * ROUTE: GET /api/employees/profiles
+ *
+ * Returns employee profiles with user account information.
+ * This is useful for admin views that need to display employee
+ * information alongside their username and full name.
+ */
+export async function getEmployeeProfiles(): Promise<EmployeeProfile[]> {
+    return withConnection(async (connection) => {
+        const [rows] = await connection.query<EmployeeProfileRow[]>(
+            `
+            SELECT
+                ep.employee_id,
+                ep.user_id,
+                u.username,
+                u.full_name,
+                ep.employee_code,
+                ep.job_role,
+                ep.default_shift_hours,
+                ep.hourly_rate,
+                ep.daily_pay,
+                ep.employment_status,
+                ep.created_at,
+                ep.updated_at
+            FROM employee_profiles ep
+            JOIN users u
+                ON ep.user_id = u.user_id
+            ORDER BY ep.created_at DESC
+            `
+        );
+
+        return rows.map(mapEmployeeProfileRow);
+    });
+}
+
+/**
+ * ROUTE: GET /api/employees/:employeeId
+ */
+export async function getEmployeeById(
+    employeeId: number
+): Promise<Employee | null>{
+    return withConnection(async (connection) => {
+        return getEmployeeByIdWithConnection(employeeId, connection);
+    });
+}
+
+export async function getEmployeeByUserId(
+    userId: number
+): Promise<Employee | null> {
+    return withConnection(async (connection) => {
+        return getEmployeeByUserIdWithConnection(userId, connection);
+    });
+}
 
 /**
  * ROUTE: PATCH /api/employees/:employeeId

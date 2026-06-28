@@ -1,6 +1,5 @@
-const API_BASE_URL = 'http://localhost:3000/api';
-
 import type { EmployeeProfile, RegisterEmployeeInput, UpdateEmployeeInput } from 'shared/models';
+import { apiFetch } from './apiFetch';
 
 // Helper for Error handling
 async function getApiError(res: Response, fallback: string): Promise<Error> {
@@ -10,18 +9,25 @@ async function getApiError(res: Response, fallback: string): Promise<Error> {
 
 export const employeeApi = {
   async getAllEmployees() {
-    const res = await fetch(`${API_BASE_URL}/employees`);
+    const res = await apiFetch('/employees');
     if (!res.ok) {
       throw await getApiError(res, 'Failed to fetch employees');
     }
     const json = await res.json();
     return json.data;
   },
+  async getEmployeeProfiles() {
+    const res = await apiFetch('/employees/profiles');
+    if (!res.ok) {
+      throw await getApiError(res, 'Failed to fetch employee profiles');
+    }
+    const json = await res.json();
+    return json.data;
+  },
   
-async create(payload: RegisterEmployeeInput): Promise<EmployeeProfile> {
-    const res = await fetch(`${API_BASE_URL}/employees`, {
+  async create(payload: RegisterEmployeeInput): Promise<EmployeeProfile> {
+    const res = await apiFetch('/employees', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -34,9 +40,8 @@ async create(payload: RegisterEmployeeInput): Promise<EmployeeProfile> {
   },
   
   async update(employeeId: number, payload: UpdateEmployeeInput): Promise<EmployeeProfile> {
-    const res = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
+    const res = await apiFetch(`/employees/${employeeId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -49,7 +54,7 @@ async create(payload: RegisterEmployeeInput): Promise<EmployeeProfile> {
   },
 
   async delete(employeeId: number): Promise<boolean> {
-    const res = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
+    const res = await apiFetch(`/employees/${employeeId}`, {
       method: 'DELETE',
     });
 
@@ -59,6 +64,5 @@ async create(payload: RegisterEmployeeInput): Promise<EmployeeProfile> {
 
     return true;
   }
-
 }
 

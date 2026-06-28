@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Coffee, Lock, User, ArrowRight } from 'lucide-react';
+import { type UserRole, USER_ROLES, API_BASE_URL } from 'shared/constants';
 
 interface LoginProps {
-  onLogin: (role: 'admin' | 'staff') => void;
+  onLogin: (role: UserRole) => void;
 }
 
 export function Login({ onLogin }: LoginProps) {
@@ -12,30 +13,53 @@ export function Login({ onLogin }: LoginProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!username || !password) {
-      setError('Please enter both username and password.');
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+
+  if (!username || !password) {
+    setError('Please enter both username and password.');
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        username,
+        password
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setError(result.message || 'Invalid username or password.');
+      return;
+    }
+    const userRole = result.data.user.role;
+    if (
+      userRole !== USER_ROLES.ADMIN && 
+      userRole !== USER_ROLES.EMPLOYEE
+    ) {
+      setError('Invalid user role.');
       return;
     }
 
-    setIsLoading(true);
-
-    // MOCK AUTHENTICATION LOGIC
-    setTimeout(() => {
-      setIsLoading(false);
-      // If they type 'admin' anywhere in the username, log in as admin. Else staff.
-      if (username.toLowerCase().includes('admin')) {
-        onLogin('admin');
-      } else if (username.toLowerCase().includes('staff') || password) {
-        onLogin('staff');
-      } else {
-        setError('Invalid credentials');
-      }
-    }, 1200);
-  };
+    onLogin(userRole);
+  } catch (error) {
+    console.error(error);
+    setError('Invalid username or password.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex bg-white font-sans">
@@ -143,7 +167,7 @@ export function Login({ onLogin }: LoginProps) {
               <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
                 <p className="text-xs font-medium text-blue-800 mb-1">Developer Note:</p>
                 <p className="text-[11px] text-blue-600/80 leading-relaxed">
-                  Authentication is currently mocked. Type <strong>"admin"</strong> in the username to view the Admin Portal, or type anything else to view the Staff Portal.
+                  use username: admin, password: admin123 to log in as an admin, or username: msantos, password: password123 to log in as an employee.
                 </p>
               </div>
             </div>

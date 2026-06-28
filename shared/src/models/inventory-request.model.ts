@@ -15,6 +15,10 @@ export interface InventoryRequest {
   updatedAt: Date | null;
 }
 
+export interface StaffInventoryRequest extends InventoryRequest {
+  itemName: string;
+}
+
 /**
  * For get all inventory requests, we return a 
  * simplified version of the request with only the 
@@ -31,16 +35,21 @@ export interface InventoryRequestListItem {
 
 
 export interface CreateInventoryRequestInput {
-    employeeId: number;
     itemId: number;
     requestedQuantity: string;
     requestedUnit: string;
     reason: string;
-    postedAt: string;
     userId?: number;
 }
 
+export interface CreateInventoryRequestRepositoryInput
+ extends CreateInventoryRequestInput {
+  employeeId: number;
+  postedAt: string;
+ }
+
 export interface UpdateInventoryRequestInput {
+    userId: number;
     requestId: number;
     requestStatus: RequestStatus;
     readAt: string;

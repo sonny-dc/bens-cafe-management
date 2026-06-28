@@ -55,6 +55,42 @@ export async function getAllInventoryRequestsSimplified(
     }
 }
 
+export async function getMyInventoryRequests(
+    req: Request,
+    res: Response
+): Promise<void> {
+    try {
+        const employeeId = Number(req.session.user?.employeeId);
+        if (!employeeId) {
+            res.status(403).json({
+                success: false,
+                message: 'Employee profile required'
+            });
+            return;
+        }
+
+        const inventoryRequests = await inventoryRequestService.getMyInventoryRequests(employeeId);
+        if (inventoryRequests.length === 0) {
+            res.status(404).json({
+                success: false,
+                message: 'No inventory requests found for the specified employee.'
+            });
+            return;
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Inventory requests retrieved successfully.',
+            data: inventoryRequests
+        });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch inventory requests';
+        res.status(500).json({
+            success: false,
+            message: errorMessage
+        });
+    }
+}
+
 export async function getInventoryRequestById(
     req: Request,
     res: Response
@@ -116,7 +152,15 @@ export async function createInventoryRequest(
     res: Response
 ): Promise<void> {
     try {
-        const inventoryRequest = await inventoryRequestService.createInventoryRequest(req.body);
+        const employeeId = Number(req.session.user?.employeeId);
+        if (!employeeId) {
+            res.status(403).json({
+                success: false,
+                message: 'Employee profile required.'
+            });
+            return;
+        }
+        const inventoryRequest = await inventoryRequestService.createInventoryRequest({ ...req.body, employeeId });
         if (!inventoryRequest) {
             res.status(400).json({
                 success: false,
@@ -144,7 +188,16 @@ export async function updateInventoryRequestStatus(
 ): Promise<void> {
     try {
         const requestId = Number(req.params.requestId);
-        const inventoryRequest = await inventoryRequestService.updateInventoryRequestStatus({ ...req.body, requestId });
+        const userId = Number(req.session.user?.userId);
+        if (!userId) {
+            res.status(403).json({
+                success: false,
+                message: 'Admin profile required.'
+            });
+            return;
+        }
+
+        const inventoryRequest = await inventoryRequestService.updateInventoryRequestStatus({ ...req.body, requestId: requestId, userId: userId });
         if (!inventoryRequest) {
             res.status(404).json({
                 success: false,
@@ -164,5 +217,4 @@ export async function updateInventoryRequestStatus(
             message: errorMessage
         });
     }
-}
-    
+}    

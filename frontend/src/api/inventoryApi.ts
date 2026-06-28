@@ -1,7 +1,8 @@
 import type { 
   InventoryRequestListItem,
   InventoryRequest,
-  CreateInventoryRequestInput
+  CreateInventoryRequestInput,
+  StaffInventoryRequest
 } from 'shared/models';
 
 import {
@@ -9,10 +10,9 @@ import {
   type RequestStatus
 } from 'shared/constants';
 
-type CreateInventoryRequestPayload = Omit<CreateInventoryRequestInput, 'postedAt'>;
-export type StaffInventoryRequest = InventoryRequest & { itemName: string };
+import { apiFetch } from './apiFetch';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+type CreateInventoryRequestPayload = CreateInventoryRequestInput;
 
 type ApiResponse<T> = {
   success: boolean;
@@ -42,7 +42,7 @@ export const inventoryApi = {
   
   // Fetch all full inventory requests
   async getAllRequests(): Promise<InventoryRequest[]> {
-    const res = await fetch(`${API_BASE_URL}/inventory-requests`);
+    const res = await apiFetch('/inventory-requests');
     const json: ApiResponse<InventoryRequest[]> = await res.json();
 
     if (res.status === 404) {
@@ -55,10 +55,26 @@ export const inventoryApi = {
 
     return json.data || [];
   },
+
+  async getMyRequests(): Promise<StaffInventoryRequest[]> {
+    const res = await apiFetch(`/inventory-requests/my`);
+
+    if (res.status === 404) {
+      return [];
+    }
+
+    const json: ApiResponse<StaffInventoryRequest[]> = await res.json();
+
+    if (!res.ok || !json.success) {
+      throw new Error(json.message || 'Failed to fetch your inventory requests.');
+    }
+
+    return json.data || [];
+  },
   
   // Fetch simplified inventory requests for admin dashboard/list display
   async getAllRequestsSimplified(): Promise<InventoryRequestListItem[]> {
-    const res = await fetch(`${API_BASE_URL}/inventory-requests/simplified`);
+    const res = await apiFetch(`/inventory-requests/simplified`);
     const json: ApiResponse<InventoryRequestListItem[]> = await res.json();
 
     if (res.status === 404) {
@@ -74,7 +90,7 @@ export const inventoryApi = {
   
   // Fetch one full inventory request by ID
   async getRequestById(requestId: number): Promise<InventoryRequest> {
-    const res = await fetch(`${API_BASE_URL}/inventory-requests/${requestId}`);
+    const res = await apiFetch(`/inventory-requests/${requestId}`);
     const json: ApiResponse<InventoryRequest> = await res.json();
 
     if (!res.ok || !json.success || !json.data) {
@@ -86,7 +102,7 @@ export const inventoryApi = {
   
   // Fetch one simplified inventory request by ID
   async getRequestByIdSimplified(requestId: number): Promise<InventoryRequestListItem> {
-    const res = await fetch(`${API_BASE_URL}/inventory-requests/simplified/${requestId}`);
+    const res = await apiFetch(`/inventory-requests/simplified/${requestId}`);
     const json: ApiResponse<InventoryRequestListItem> = await res.json();
 
     if (!res.ok || !json.success || !json.data) {
@@ -121,9 +137,8 @@ export const inventoryApi = {
 
   // Submit a new inventory request
   async createRequest(payload: CreateInventoryRequestPayload): Promise<InventoryRequest> {
-    const res = await fetch(`${API_BASE_URL}/inventory-requests`, {
+    const res = await apiFetch('/inventory-requests', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
@@ -140,9 +155,8 @@ export const inventoryApi = {
     requestId: number,
     requestStatus: RequestStatus
   ): Promise<InventoryRequest> {
-    const res = await fetch(`${API_BASE_URL}/inventory-requests/${requestId}/status`, {
+    const res = await apiFetch(`/inventory-requests/${requestId}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ requestStatus })
     });
 
