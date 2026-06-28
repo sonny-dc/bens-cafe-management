@@ -64,19 +64,13 @@ export async function me(
     req: Request,
     res: Response
 ): Promise<void> {
-    if (!req.session.user) {
-        res.status(401).json({
-            success: false,
-            message: 'Not authenticated. Please log in.'
-        });
-        return;
-    }
+    const user = req.session.user;
 
     res.status(200).json({
         success: true,
         message: 'Current user retrieved successfully.',
         data: {
-            ...req.session.user
+            ...user
         }
     });
 

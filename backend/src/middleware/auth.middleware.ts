@@ -6,7 +6,7 @@ export function requireAuth(
     res: Response,
     next: NextFunction
 ): void {
-    if (!req.session.user) {
+    if (!req.session || !req.session.user) {
         res.status(401).json({
             success: false,
             message: 'Authentication required.'
@@ -21,7 +21,7 @@ export function requireAdmin(
     res: Response,
     next: NextFunction
 ): void {
-    if (!req.session.user){
+    if (!req.session || !req.session.user) {
         res.status(401).json({
             success: false,
             message: 'Authentication required.'
@@ -45,7 +45,7 @@ export function requireEmployee(
     res: Response,
     next: NextFunction
 ): void {
-    if (!req.session.user){
+    if (!req.session || !req.session.user) {
         res.status(401).json({
             success: false,
             message: 'Authentication required.'

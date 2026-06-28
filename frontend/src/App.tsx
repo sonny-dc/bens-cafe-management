@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { StaffPortal } from './components/StaffPortal/StaffPortal';
 import { AdminPortal } from './components/Admin/AdminPortal';
 import { Login } from './components/Auth/Login';
-import { USER_ROLES, type UserRole, API_BASE_URL } from 'shared/constants';
+import { USER_ROLES, type UserRole } from 'shared/constants';
 import './App.css';
+import { apiFetch } from './api/apiFetch';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,9 +18,8 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
+      await apiFetch('/auth/logout', {
         method: 'POST',
-        credentials: 'include',
       });
     } catch (error) {
       console.error(error);
@@ -32,9 +32,7 @@ function App() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-          credentials: 'include',
-        });
+        const response = await apiFetch('/auth/me');
 
         if (!response.ok) {
           setIsAuthenticated(false);
