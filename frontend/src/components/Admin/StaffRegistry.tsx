@@ -4,6 +4,7 @@ import { Users, Search, Plus, Edit2, Trash2, X, ShieldCheck, CircleDot } from 'l
 import { employeeApi } from '../../api/employeeApi';
 import  { type EmployeeProfile, type UpdateEmployeeInput } from 'shared/models';
 import { EMPLOYMENT_STATUS, type EmploymentStatus } from 'shared/constants';
+import { ApiError } from '../../api/apiError';
 
 export function StaffRegistry() {
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
@@ -17,6 +18,9 @@ export function StaffRegistry() {
 
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const getFieldError = (field: string) => fieldErrors[field]?.[0];
 
   useEffect(() => {
     fetchEmployees();
@@ -44,17 +48,28 @@ export function StaffRegistry() {
       employeeCode: `EMP-${Date.now()}`,
       jobRole: String(formData.get('jobRole') || '').trim(),
       defaultShiftHours: '8.00',
-      hourlyRate: String(formData.get('hourlyRate') || '0.00'),
+      hourlyRate: String(formData.get('hourlyRate') || ''),
 
     };
 
     try {
       setIsSubmitting(true);
+      setFormError(null);
+      setFieldErrors({});
+
       await employeeApi.create(data);
       await fetchEmployees();
       setShowAddModal(false);
     } catch (err: any) {
-      alert(err.message || 'Failed to add employee');
+      if (err instanceof ApiError) {
+        setFieldErrors(err.errors?.fieldErrors || {});
+
+        const firstFormError = err.errors?.formErrors?.[0];
+        setFormError(firstFormError || null);
+        return;
+      }
+
+      setFormError(err.message || 'Failed to add employee');
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +159,11 @@ export function StaffRegistry() {
         </div>
         
         <button 
-          onClick={() => setShowAddModal(true)}
+          onClick={() => {
+            setFormError(null);
+            setFieldErrors({});
+            setShowAddModal(true)
+          }}
           className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-sm hover:shadow transition-all"
         >
           <Plus size={18} />
@@ -280,7 +299,11 @@ export function StaffRegistry() {
                 </div>
                 <button 
                   title='Close add employee modal'
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setFormError(null);
+                    setFieldErrors({});
+                  }}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                   aria-label="Close add employee modal"
                 >
@@ -288,16 +311,31 @@ export function StaffRegistry() {
                 </button>
               </div>
 
-              <form onSubmit={handleAddSubmit} className="p-6 space-y-5">
+              <form onSubmit={handleAddSubmit} noValidate className="p-6 space-y-5">
+                {formError && (
+                  <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    {formError}
+                  </div>
+                )}
                 <div>
                   <label htmlFor="fullName" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Full Name</label>
                   <input required name="fullName" type="text" id="fullName" placeholder="e.g. Maria Santos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                  {getFieldError('fullName') && (
+                    <p className="mt-1 text-xs font-medium text-red-600">
+                      {getFieldError('fullName')}
+                    </p>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="username" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Username</label>
                     <input required name="username" type="text" id="username" placeholder="e.g. msantos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    {getFieldError('username') && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {getFieldError('username')}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label
@@ -315,6 +353,11 @@ export function StaffRegistry() {
                       autoComplete="new-password"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all"
                     />
+                    {getFieldError('password') && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {getFieldError('password')}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -322,10 +365,20 @@ export function StaffRegistry() {
                   <div>
                     <label htmlFor="jobRole" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
                     <input required name="jobRole" type="text" id="jobRole" placeholder="e.g. Barista" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    {getFieldError('jobRole') && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {getFieldError('jobRole')}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="hourlyRate" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
                     <input required name="hourlyRate" type="number" step="0.01" min="0" id="hourlyRate" placeholder="0.00" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    {getFieldError('hourlyRate') && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {getFieldError('hourlyRate')}
+                      </p>
+                    )}
                   </div>
                 </div>
 

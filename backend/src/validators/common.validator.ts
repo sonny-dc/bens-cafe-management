@@ -27,6 +27,15 @@ export const nullableDecimalString = z.preprocess(
     decimalString.nullable()
 );
 
+export const hourlyRateSchema = z
+  .string()
+  .trim()
+  .min(1, 'Hourly rate must not be empty')
+  .regex(
+    /^(0|[1-9]\d*)(\.\d{1,2})?$/,
+    'Hourly rate must be a valid non-negative amount with up to 2 decimal places'
+);
+
 export const positiveInt = z.coerce
     .number()
     .int()

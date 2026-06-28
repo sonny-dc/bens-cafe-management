@@ -1,11 +1,6 @@
 import type { EmployeeProfile, RegisterEmployeeInput, UpdateEmployeeInput } from 'shared/models';
 import { apiFetch } from './apiFetch';
-
-// Helper for Error handling
-async function getApiError(res: Response, fallback: string): Promise<Error> {
-  const err = await res.json().catch(() => ({}));
-  return new Error(err.message || err.error || fallback);
-}
+import { getApiError } from './apiError';
 
 export const employeeApi = {
   async getAllEmployees() {

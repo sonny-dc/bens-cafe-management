@@ -8,7 +8,7 @@ export function validate(schema: ZodType, requestType: RequestType = REQUEST_TYP
         if (!result.success) {
             res.status(400).json({
                 success: false, 
-                message: "Input validation failed. Please check the provided data and try again.", 
+                message: "Some information is missing or invalid. Please check the highlighted fields and try again.", 
                 errors: z.flattenError(result.error)
             });
             return;
