@@ -350,7 +350,7 @@ export function AdminStaffBoard() {
                             {report.fullName}
                           </p>
                           <p className="text-[11px] text-gray-500">
-                            {report.jobRole} · {report.completedShifts} completed shifts
+                            {report.jobRole} · {report.completedShifts} completed {report.completedShifts === 1 ? 'shift' : 'shifts'}
                           </p>
                         </div>
                       </div>
