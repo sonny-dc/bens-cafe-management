@@ -10,8 +10,15 @@ const router = Router();
 
 router.use(requireAdmin);
 
-router.get("/",
-    employeeController.getEmployees);
+router.get(
+    "/",
+    employeeController.getEmployees
+);
+
+router.get(
+    "/profiles",
+    employeeController.getEmployeeProfiles
+);
 
 router.get(
     "/:employeeId",

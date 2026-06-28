@@ -28,6 +28,14 @@ export interface ShiftSession {
   
 }
 
+export interface StaffWeeklyPerformance {
+  employeeId: number;
+  fullName: string;
+  jobRole: string;
+  totalCash: string;
+  completedShifts: number;
+}
+
 export interface StartShiftInput {
     openingCash: string;
 }

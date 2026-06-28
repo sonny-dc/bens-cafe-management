@@ -148,6 +148,41 @@ export async function getAllActiveShifts(_req: Request, res: Response): Promise<
     }
 }
 
+export async function getStaffWeeklyPerformance(
+    req: Request, 
+    res: Response
+): Promise<void> {
+    try {
+        const { start, end } = req.query;
+
+        const performance = await shiftService.getStaffWeeklyPerformance(
+            String(start), 
+            String(end)
+        );
+        
+        if (!performance || performance.length === 0) {
+            res.status(404).json({
+                success: false,
+                message: "No staff performance data found for the specified date range."
+            });
+            return;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Staff weekly performance retrieved successfully.",
+            data: performance
+        });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting staff weekly performance.";
+        res.status(500).json({ 
+            success: false,
+            message: errorMessage 
+        });
+    }
+}
+
+
 export async function getShiftSummary(req: Request, res: Response): Promise<void> {
     try {
         const { start, end } = req.query;

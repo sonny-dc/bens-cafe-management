@@ -6,12 +6,14 @@ import type {
 
 import type {
     Shift,
+    StaffWeeklyPerformance,
     StartShiftRepositoryInput,
     EndShiftRepositoryInput
 } from '../models/index.js';
 
 import { 
     SHIFT_STATUS,
+    EMPLOYMENT_STATUS,
     type ShiftStatus
 } from '../config/constants.js';
 
@@ -33,6 +35,14 @@ type ShiftSessionRow = RowDataPacket & {
     updated_at: Date | null;
 };
 
+type StaffWeeklyPerformanceRow = RowDataPacket & {
+  employee_id: number;
+  full_name: string;
+  job_role: string;
+  total_cash: string;
+  completed_shifts: number;
+};
+
 // Helper Functions
 function mapShiftRow(row: ShiftSessionRow): Shift {
     return {
@@ -50,6 +60,18 @@ function mapShiftRow(row: ShiftSessionRow): Shift {
         createdAt: row.created_at,
         updatedAt: row.updated_at
     };
+}
+
+function mapStaffWeeklyPerformanceRow(
+  row: StaffWeeklyPerformanceRow
+): StaffWeeklyPerformance {
+  return {
+    employeeId: row.employee_id,
+    fullName: row.full_name,
+    jobRole: row.job_role,
+    totalCash: row.total_cash,
+    completedShifts: row.completed_shifts
+  };
 }
 
 async function getShiftByIdWithConnection(
@@ -209,6 +231,46 @@ export async function getShiftSummary(startDate: string, endDate: string): Promi
         );
         return rows.map(mapShiftRow);
     });
+}
+
+export async function getStaffWeeklyPerformance(
+  startDate: string,
+  endDate: string
+): Promise<StaffWeeklyPerformance[]> {
+  return withConnection(async (connection) => {
+    const [rows] = await connection.query<StaffWeeklyPerformanceRow[]>(
+      `
+      SELECT
+        e.employee_id,
+        u.full_name,
+        e.job_role,
+        COALESCE(SUM(s.closing_cash), 0) AS total_cash,
+        COUNT(s.shift_id) AS completed_shifts
+      FROM employee_profiles e
+      JOIN users u
+        ON e.user_id = u.user_id
+      LEFT JOIN shift_sessions s
+        ON e.employee_id = s.employee_id
+        AND s.shift_status = ?
+        AND s.shift_date >= ?
+        AND s.shift_date < ?
+      WHERE e.employment_status = ?
+      GROUP BY
+        e.employee_id,
+        u.full_name,
+        e.job_role
+      ORDER BY total_cash DESC
+      `,
+      [
+        SHIFT_STATUS.COMPLETED,
+        startDate,
+        endDate,
+        EMPLOYMENT_STATUS.ACTIVE
+      ]
+    );
+
+    return rows.map(mapStaffWeeklyPerformanceRow);
+  });
 }
 
 export async function archiveShiftsByDateRange(startDate: string, endDate: string): Promise<number> {

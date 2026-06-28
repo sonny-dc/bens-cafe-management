@@ -141,8 +141,10 @@ export function InventoryManager() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Item Selection */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Item</label>
+            <label htmlFor="item" className="block text-sm font-semibold text-gray-700 mb-2">Item</label>
             <select
+              id="item"
+              title="Select an item"
               value={selectedItemId}
               onChange={handleItemSelect}
               required

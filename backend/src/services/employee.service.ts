@@ -1,4 +1,4 @@
-import type { Employee, RegisterEmployeeInput, UpdateEmployeeInput } from "../models/index.js";
+import type { Employee, EmployeeProfile, RegisterEmployeeInput, UpdateEmployeeInput } from "../models/index.js";
 import { USER_ROLES } from "../config/constants.js";
 import { userRepository, employeeRepository } from "../repositories/index.js";
 
@@ -49,6 +49,14 @@ export async function registerEmployee(
  */
 export async function getEmployees(): Promise<Employee[]> {
     return employeeRepository.getEmployees();
+}
+
+/**
+ * Gets all employee profiles with additional user information.
+ * This is useful for displaying employee information in the admin dashboard.
+ */
+export async function getEmployeeProfiles(): Promise<EmployeeProfile[]> {
+    return employeeRepository.getEmployeeProfiles();
 }
  
 /**

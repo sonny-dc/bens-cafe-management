@@ -111,6 +111,7 @@ export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onCl
                 <span className="label-text font-medium text-neutral-700">Role / Position</span>
               </label>
               <select
+                title="Select a role"
                 className="select select-bordered border-neutral-300 w-full bg-white text-neutral-800 focus:border-[#b2beaf] focus:outline-none rounded-xl"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -130,6 +131,7 @@ export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onCl
                 </label>
                 <input
                   type="number"
+                  title="Default Shift"
                   className="input input-bordered border-neutral-300 w-full bg-white text-neutral-800 placeholder:text-neutral-400 focus:border-[#b2beaf] focus:outline-none rounded-xl"
                   value={defaultShift}
                   onChange={(e) => setDefaultShift(Number(e.target.value))}
@@ -140,6 +142,7 @@ export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onCl
                   <span className="label-text font-medium text-neutral-700">Hourly Rate (₱)</span>
                 </label>
                 <input
+                  title="Hourly Rate"
                   type="number"
                   className="input input-bordered border-neutral-300 w-full bg-white text-neutral-800 placeholder:text-neutral-400 focus:border-[#b2beaf] focus:outline-none rounded-xl"
                   value={hourlyRate}

@@ -1,5 +1,5 @@
 import { shiftRepository } from '../repositories/index.js';
-import type { Shift, StartShiftInput, EndShiftInput } from '../models/index.js';
+import type { Shift, StaffWeeklyPerformance, StartShiftInput, EndShiftInput } from '../models/index.js';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 import { SHIFT_STATUS } from '../config/constants.js';
 
@@ -73,6 +73,10 @@ export async function getShiftSummary(startDate: string, endDate: string): Promi
         throw new Error("Start date and end date are required.");
     }
     return shiftRepository.getShiftSummary(startDate, endDate);
+}
+
+export async function getStaffWeeklyPerformance(startDate: string, endDate: string): Promise<StaffWeeklyPerformance[]> {
+    return shiftRepository.getStaffWeeklyPerformance(startDate, endDate);
 }
 
 export async function archiveShifts(startDate: string, endDate: string): Promise<number> {

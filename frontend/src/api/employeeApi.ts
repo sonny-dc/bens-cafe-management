@@ -16,8 +16,16 @@ export const employeeApi = {
     const json = await res.json();
     return json.data;
   },
+  async getEmployeeProfiles() {
+    const res = await apiFetch('/employees/profiles');
+    if (!res.ok) {
+      throw await getApiError(res, 'Failed to fetch employee profiles');
+    }
+    const json = await res.json();
+    return json.data;
+  },
   
-async create(payload: RegisterEmployeeInput): Promise<EmployeeProfile> {
+  async create(payload: RegisterEmployeeInput): Promise<EmployeeProfile> {
     const res = await apiFetch('/employees', {
       method: 'POST',
       body: JSON.stringify(payload),

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { shiftController } from "../controllers/index.js";
-import { startShiftSchema, endShiftSchema, shiftIdParamSchema, employeeIdParamSchema } from "../validators/index.js";
+import { startShiftSchema, endShiftSchema, shiftIdParamSchema, employeeIdParamSchema, getStaffWeeklyPerformanceQuerySchema } from "../validators/index.js";
 import { REQUEST_TYPES } from "../config/constants.js";
 import { validate } from "../middleware/validation.middleware.js";
 import { requireAdmin, requireEmployee } from "../middleware/auth.middleware.js";
@@ -20,18 +20,25 @@ router.post(
     shiftController.startShift
 );
 
-router.post(
-    '/:shiftId/end',
-    requireEmployee,
-    validate(shiftIdParamSchema, REQUEST_TYPES.PARAMS),
-    validate(endShiftSchema, REQUEST_TYPES.BODY),
-    shiftController.endShift
+router.get(
+    '/staff-performance',
+    requireAdmin,
+    validate(getStaffWeeklyPerformanceQuerySchema, REQUEST_TYPES.QUERY),
+    shiftController.getStaffWeeklyPerformance
 );
 
 router.get(
     '/active/all',
     requireAdmin,
     shiftController.getAllActiveShifts
+);
+
+router.post(
+    '/:shiftId/end',
+    requireEmployee,
+    validate(shiftIdParamSchema, REQUEST_TYPES.PARAMS),
+    validate(endShiftSchema, REQUEST_TYPES.BODY),
+    shiftController.endShift
 );
 
 router.get(
