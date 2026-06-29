@@ -1,5 +1,13 @@
 import type { ShiftStatus } from '../constants/index.js';
 
+export interface ActiveShiftItem {
+  id: number;
+  employeeId: number;
+  name: string;
+  role: string;
+  clockInTime: string;
+}
+
 export interface Shift {
     shiftId: number;
     employeeId: number;

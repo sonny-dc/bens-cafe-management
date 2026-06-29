@@ -10,6 +10,7 @@ export interface SalesEntry {
     userId: number | null;
     postedAt: Date;
     createdAt: Date;
+    netProfit?: number;
 }
 
 export interface CreateSalesEntryInput {
