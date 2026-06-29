@@ -17,6 +17,10 @@ import {
   staffMessageRoutes,
   salesEntryRoutes,
   inventoryRequestRoutes,
+  inventoryItemRoutes,
+  restockCalculationRoutes,
+  inventoryBudgetAccountRoutes,
+  inventoryBudgetLogRoutes,
   authRoutes
 } from './routes/index.js';
 
@@ -83,6 +87,10 @@ app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
 app.use("/api/sales-entries", salesEntryRoutes);
 app.use("/api/inventory-requests", inventoryRequestRoutes);
+app.use("/api/inventory-items", inventoryItemRoutes);
+app.use("/api/restock-calculations", restockCalculationRoutes);
+app.use("/api/inventory-budget-accounts", inventoryBudgetAccountRoutes);
+app.use("/api/inventory-budget-logs", inventoryBudgetLogRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
