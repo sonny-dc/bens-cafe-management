@@ -8,3 +8,7 @@ export * from './staff-message.validator.js';
 export * from './inventory-request.validator.js';
 export * from './auth.validator.js';
 export * from './inventory-item.validator.js';
+export * from './restock-calculation.validator.js';
+export * from './inventory-budget-account.validator.js';
+export * from './inventory-budget-log.validator.js';
+export * from './restock-calculation-item.validator.js';

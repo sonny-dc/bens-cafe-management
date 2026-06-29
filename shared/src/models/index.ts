@@ -8,3 +8,8 @@ export * from './payroll-entry.model.js';
 export * from './inventory-request.model.js';
 export * from './auth.model.js';
 export * from './inventory-item.model.js';
+export * from './restock-calculation.model.js';
+export * from './restock-calculation-item.model.js';
+export * from './inventory-budget-account.model.js';
+export * from './inventory-budget-log.model.js';
+export * from './inventory-adjustment.model.js';

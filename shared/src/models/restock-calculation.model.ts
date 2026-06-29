@@ -1,0 +1,30 @@
+export interface RestockCalculation {
+  calculationId: number;
+  userId: number | null;
+  totalEstimatedCost: string;
+  createdAt: Date;
+}
+
+export interface CreateRestockCalculationRepositoryInput {
+  userId: number | null;
+  totalEstimatedCost: string;
+}
+
+export interface UpdateRestockCalculationRepositoryInput {
+  calculationId: number;
+  userId?: number | null;
+  totalEstimatedCost?: string;
+}
+
+/**
+ * Used by controller/service when executing a full restock session.
+ * This comes from the frontend restock cart.
+ */
+export interface RestockCalculationItemInput {
+  itemId: number;
+  quantityToBuy: string;
+}
+
+export interface CreateRestockCalculationInput {
+  items: RestockCalculationItemInput[];
+}

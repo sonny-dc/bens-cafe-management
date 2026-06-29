@@ -6,43 +6,40 @@ import {
   Trash2, Search, ChevronLeft, ChevronRight, X, Calendar, Edit2, ChevronDown
 } from 'lucide-react';
 import { inventoryItemApi } from '../../api/inventoryItemApi';
+import { restockCalculationApi } from '../../api/restockCalculationApi';
+import { inventoryBudgetAccountApi } from '../../api/inventoryBudgetAccountApi';
+import { inventoryBudgetLogApi } from '../../api/inventoryBudgetLogApi';
+
 import {
   INVENTORY_ITEM_CATEGORIES,
   INVENTORY_ITEM_CATEGORY_LABELS,
+  INVENTORY_BUDGET_TRANSACTION_TYPES,
+  INVENTORY_BUDGET_SOURCE_TYPES,
   type InventoryItemCategory
 } from 'shared/constants';
-import type { InventoryItemListItem } from 'shared/models';
+import type { InventoryItemListItem, InventoryBudgetLog, CreateRestockCalculationInput, InventoryBudgetAccount } from 'shared/models';
 import { ApiError } from '../../api/apiError';
-
-
-// ─── Types ───
-interface BudgetAuditLog {
-  id: number;
-  amount: number;
-  type: 'IN' | 'OUT';
-  description: string;
-  createdAt: string;
-}
-
-interface RestockCartItem {
-  itemId: number;
-  itemName: string;
-  unit: string;
-  unitCost: number;
-  quantity: number;
-}
-
-const MOCK_LOGS: BudgetAuditLog[] = [
-  { id: 1, amount: 15000, type: 'IN', description: 'Allotted Budget (Sales - Expenses - Payroll)', createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
-  { id: 2, amount: 4250, type: 'OUT', description: 'Restock: Coffee Beans & Vanilla Syrup', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
-  { id: 3, amount: 8000, type: 'IN', description: 'Allotted Budget (Sales - Expenses - Payroll)', createdAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: 4, amount: 1250, type: 'OUT', description: 'Restock: Paper Cups (500 pcs)', createdAt: new Date(Date.now() - 43200000).toISOString() },
-  { id: 5, amount: 5000, type: 'IN', description: 'Additional allocation from Owner', createdAt: new Date(Date.now() - 21600000).toISOString() },
-];
 
 const ROWS_PER_PAGE = 6;
 
 type Tab = 'stock' | 'restock' | 'audit';
+
+function getBudgetLogDescription(log: InventoryBudgetLog): string {
+  if (log.sourceType === INVENTORY_BUDGET_SOURCE_TYPES.SALES_ENTRY) {
+    return log.salesEntryId
+      ? `Restock budget allocation from Sales Entry #${log.salesEntryId}`
+      : 'Restock budget allocation from sales';
+  }
+
+  if (log.sourceType === INVENTORY_BUDGET_SOURCE_TYPES.RESTOCK_CALCULATION) {
+    return log.restockCalculationId
+      ? `Inventory restock expense from Calculation #${log.restockCalculationId}`
+      : 'Inventory restock expense';
+  }
+
+  return 'Inventory budget transaction';
+}
+
 
 export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subtitle: string) => void }) {
   const [tab, setTab] = useState<Tab>('stock');
@@ -58,6 +55,11 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItemListItem | null>(null);
   const [isSavingItem, setIsSavingItem] = useState(false);
+
+  const [budgetAccount, setBudgetAccount] = useState<InventoryBudgetAccount | null>(null);
+  const [budgetLogs, setBudgetLogs] = useState<InventoryBudgetLog[]>([]);
+  const [isLoadingBudget, setIsLoadingBudget] = useState(false);
+  const [budgetError, setBudgetError] = useState<string | null>(null);
 
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -76,7 +78,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   const [auditDateFilter, setAuditDateFilter] = useState('');
 
   // Restock
-  const [cart, setCart] = useState<RestockCartItem[]>([]);
+  const [cart, setCart] = useState<CreateRestockCalculationInput['items']>([]);
   const [executing, setExecuting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [restockSearch, setRestockSearch] = useState('');
@@ -95,13 +97,40 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
       setIsLoadingItems(false);
     }
   };
+  const fetchInventoryBudget = async () => {
+    try {
+      setIsLoadingBudget(true);
+      setBudgetError(null);
+
+      const [account, logs] = await Promise.all([
+        inventoryBudgetAccountApi.getCurrent(),
+        inventoryBudgetLogApi.getAll()
+      ]);
+
+      setBudgetAccount(account);
+      setBudgetLogs(logs);
+    } catch (err: any) {
+      setBudgetError(err.message || 'Failed to load inventory budget.');
+    } finally {
+      setIsLoadingBudget(false);
+    }
+  };
 
   useEffect(() => {
     fetchInventoryItems();
+    fetchInventoryBudget();
   }, []);
+  const budget = Number(budgetAccount?.currentBalance || 0);
 
-  const budget = MOCK_LOGS.reduce((s, l) => l.type === 'IN' ? s + l.amount : s - l.amount, 0);
-  const cartTotal = cart.reduce((s, c) => s + c.unitCost * c.quantity, 0);
+  const cartTotal = cart.reduce((sum, cartItem) => {
+    const inventoryItem = inventoryItems.find(
+      item => item.itemId === cartItem.itemId
+    );
+
+    if (!inventoryItem) return sum;
+
+    return sum + inventoryItem.unitCost * Number(cartItem.quantityToBuy);
+  }, 0);
   const lowCount = inventoryItems.filter(i => i.stockQty <= i.threshold).length;
 
   // Unique categories for filter
@@ -142,14 +171,29 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
   // Sorted + filtered + paginated audit
   const filteredLogs = useMemo(() => {
-    const sorted = [...MOCK_LOGS].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const mappedLogs = budgetLogs.map(log => ({
+      id: log.budgetLogId,
+      amount: Number(log.amount),
+      transactionType: log.transactionType,
+      description: getBudgetLogDescription(log),
+      createdAt: String(log.postedAt)
+    }));
+
+    const sorted = mappedLogs.sort((a, b) => b.id - a.id);
+
     return sorted.filter(log => {
       const logDate = new Date(log.createdAt).toISOString().split('T')[0];
-      const matchesDate = !auditDateFilter || logDate === auditDateFilter;
-      const matchesType = auditTypeFilter === 'all' || log.type === auditTypeFilter;
+
+      const matchesDate =
+        !auditDateFilter || logDate === auditDateFilter;
+
+      const matchesType =
+        auditTypeFilter === 'all' || log.transactionType === auditTypeFilter;
+
       return matchesDate && matchesType;
     });
-  }, [auditDateFilter, auditTypeFilter]);
+  }, [budgetLogs, auditDateFilter, auditTypeFilter]);
+
 
   const auditPages = Math.ceil(filteredLogs.length / ROWS_PER_PAGE);
   const pagedLogs = filteredLogs.slice((auditPage - 1) * ROWS_PER_PAGE, auditPage * ROWS_PER_PAGE);
@@ -196,21 +240,59 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   // Restock helpers
   const addToCart = (item: InventoryItemListItem, qty: number) => {
     if (qty <= 0) return;
+
     setCart(prev => {
-      const ex = prev.find(c => c.itemId === item.itemId);
-      if (ex) return prev.map(c => c.itemId === item.itemId ? { ...c, quantity: c.quantity + qty } : c);
-      return [...prev, { itemId: item.itemId, itemName: item.itemName, unit: item.unit, unitCost: item.unitCost, quantity: qty }];
+      const existing = prev.find(c => c.itemId === item.itemId);
+
+      if (existing) {
+        return prev.map(c =>
+          c.itemId === item.itemId
+            ? {
+                ...c,
+                quantityToBuy: String(Number(c.quantityToBuy) + qty)
+              }
+            : c
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          itemId: item.itemId,
+          quantityToBuy: String(qty)
+        }
+      ];
     });
   };
 
+
   const doRestock = async () => {
     if (!cart.length || cartTotal > budget) return;
-    setExecuting(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setCart([]);
-    setExecuting(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+
+    try {
+      setExecuting(true);
+      setRestockError(null);
+
+      await restockCalculationApi.create({
+        items: cart
+      });
+
+      setCart([]);
+      setStockPage(1);
+      setAuditPage(1);
+
+      await Promise.all([
+        fetchInventoryItems(),
+        fetchInventoryBudget()
+      ]);
+
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err: any) {
+      setRestockError(err.message || 'Failed to execute restock.');
+    } finally {
+      setExecuting(false);
+    }
   };
 
   const tabs: { id: Tab; label: string }[] = [
@@ -231,10 +313,23 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
         <div>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Inventory Management</p>
           <div className="flex items-baseline gap-4">
-            <h2 className="text-2xl font-bold font-poppins text-gray-900">
-              ₱{budget.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </h2>
+            {isLoadingBudget ? (
+              <h2 className="text-lg font-bold font-poppins text-gray-400">
+                Loading budget...
+              </h2>
+            ) : (
+              <h2 className="text-2xl font-bold font-poppins text-gray-900">
+                ₱{budget.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </h2>
+            )}
+
             <span className="text-xs text-gray-400">available restock budget</span>
+
+            {budgetError && (
+              <span className="text-xs font-medium text-red-500">
+                {budgetError}
+              </span>
+            )}
             {lowCount > 0 && (
               <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
                 {lowCount} low stock
@@ -331,8 +426,8 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
               className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
             >
               <option value="all">All Transactions</option>
-              <option value="IN">Income (IN)</option>
-              <option value="OUT">Expense (OUT)</option>
+              <option value={INVENTORY_BUDGET_TRANSACTION_TYPES.IN}>Income (IN)</option>
+              <option value={INVENTORY_BUDGET_TRANSACTION_TYPES.OUT}>Expense (OUT)</option>
             </select>
           )}
 
@@ -555,7 +650,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                           </div>
                           {inCart ? (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium text-[#4a6741]">{inCart.quantity} {item.unit} added</span>
+                              <span className="text-xs font-medium text-[#4a6741]">{inCart.quantityToBuy} {item.unit} added</span>
                               <button title="Remove from cart" onClick={() => setCart(prev => prev.filter(c => c.itemId !== item.itemId))}
                                 className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
                             </div>
@@ -594,33 +689,69 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
                     <div className="space-y-2.5 mb-5 min-h-[100px]">
                       {cart.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-6">No items added yet</p>
-                      ) : cart.map(c => (
-                        <div key={c.itemId} className="flex justify-between text-sm">
-                          <div>
-                            <p className="text-gray-800">{c.itemName}</p>
-                            <p className="text-xs text-gray-400">{c.quantity} × ₱{c.unitCost.toFixed(2)}</p>
+                        <p className="text-xs text-gray-400 text-center py-6">
+                          No items added yet
+                        </p>
+                      ) : cart.map(c => {
+                        const inventoryItem = inventoryItems.find(
+                          item => item.itemId === c.itemId
+                        );
+
+                        if (!inventoryItem) return null;
+
+                        const quantity = Number(c.quantityToBuy);
+                        const lineTotal = inventoryItem.unitCost * quantity;
+
+                        return (
+                          <div key={c.itemId} className="flex justify-between text-sm">
+                            <div>
+                              <p className="text-gray-800">{inventoryItem.itemName}</p>
+                              <p className="text-xs text-gray-400">
+                                {c.quantityToBuy} × ₱{inventoryItem.unitCost.toFixed(2)}
+                              </p>
+                            </div>
+
+                            <span className="font-medium text-gray-900">
+                              ₱{lineTotal.toLocaleString()}
+                            </span>
                           </div>
-                          <span className="font-medium text-gray-900">₱{(c.unitCost * c.quantity).toLocaleString()}</span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     <div className="border-t border-gray-200 pt-3 space-y-1.5 mb-4">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Total</span>
-                        <span className="font-bold text-gray-900">₱{cartTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        <span className="text-gray-500">Available Budget</span>
+                        <span className="font-semibold text-[#4a6741]">
+                          {isLoadingBudget
+                            ? 'Loading...'
+                            : `₱${budget.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                        </span>
                       </div>
+
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Total Restock Cost</span>
+                        <span className="font-bold text-gray-900">
+                          ₱{cartTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Remaining</span>
+                        <span className="text-gray-400">Remaining After Restock</span>
                         <span className={cartTotal > budget ? 'text-red-500 font-medium' : 'text-emerald-600 font-medium'}>
                           ₱{(budget - cartTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
                       </div>
+
+                      {budgetError && (
+                        <p className="text-[11px] text-red-500 text-center mt-1.5">
+                          {budgetError}
+                        </p>
+                      )}
                     </div>
 
                     <button onClick={doRestock}
-                      disabled={!cart.length || cartTotal > budget || executing}
+                      disabled={!cart.length || cartTotal > budget || executing || isLoadingBudget || !!budgetError}
                       className="w-full py-2.5 bg-[#4a6741] hover:bg-[#3d5836] text-white text-sm font-semibold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
                       {executing ? <RefreshCw className="animate-spin" size={14} /> : <Calculator size={14} />}
                       Execute Restock
@@ -957,18 +1088,35 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {pagedLogs.map(log => {
-                      const isIn = log.type === 'IN';
+                    {isLoadingBudget && (
+                      <tr>
+                        <td colSpan={4}>
+                          <LoadingState label="Loading budget logs..." />
+                        </td>
+                      </tr>
+                    )}
+
+                    {!isLoadingBudget && budgetError && (
+                      <tr>
+                        <td colSpan={4} className="px-5 py-10 text-center text-red-500 text-sm">
+                          {budgetError}
+                        </td>
+                      </tr>
+                    )}
+                    {!isLoadingBudget && !budgetError && pagedLogs.map(log => {
+                      const isIn = log.transactionType === INVENTORY_BUDGET_TRANSACTION_TYPES.IN;
                       return (
                         <tr key={log.id} className="hover:bg-gray-50/60">
                           <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">
-                            {new Date(log.createdAt).toLocaleDateString([], { dateStyle: 'medium' })}
+                            {new Date(log.createdAt).toLocaleString([], {
+                                                                          dateStyle: 'medium'
+                                                                        })}
                           </td>
                           <td className="px-5 py-3">
                             <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md
                               ${isIn ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
                               {isIn ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                              {log.type}
+                              {log.transactionType}
                             </span>
                           </td>
                           <td className="px-5 py-3 text-gray-700">{log.description}</td>
@@ -978,7 +1126,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                         </tr>
                       );
                     })}
-                    {pagedLogs.length === 0 && (
+                    {!isLoadingBudget && !budgetError && pagedLogs.length === 0 && (
                       <tr><td colSpan={4} className="px-5 py-10 text-center text-gray-400 text-sm">No transactions found</td></tr>
                     )}
                   </tbody>
@@ -1043,3 +1191,4 @@ function LoadingState({ label }: { label: string }) {
     </div>
   );
 }
+

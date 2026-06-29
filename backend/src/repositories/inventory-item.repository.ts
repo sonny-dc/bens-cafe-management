@@ -232,6 +232,59 @@ export async function createInventoryItem(
     });
 }
 
+export async function getInventoryItemsByIdsForUpdateWithConnection(
+  itemIds: number[],
+  connection: PoolConnection
+): Promise<InventoryItem[]> {
+  if (itemIds.length === 0) {
+    return [];
+  }
+
+  const placeholders = itemIds.map(() => '?').join(', ');
+
+  const [rows] = await connection.query<InventoryItemRow[]>(
+    `
+    SELECT *
+    FROM inventory_items
+    WHERE item_id IN (${placeholders})
+    FOR UPDATE
+    `,
+    itemIds
+  );
+
+  return rows.map(mapInventoryItemRow);
+}
+
+export async function updateInventoryItemStockWithConnection(
+  input: {
+    itemId: number;
+    stockQuantity: string;
+    status: InventoryItemStatus;
+  },
+  connection: PoolConnection
+): Promise<InventoryItem | null> {
+  const [result] = await connection.execute<ResultSetHeader>(
+    `
+    UPDATE inventory_items
+    SET
+      stock_quantity = ?,
+      status = ?
+    WHERE item_id = ?
+    `,
+    [
+      input.stockQuantity,
+      input.status,
+      input.itemId
+    ]
+  );
+
+  if (result.affectedRows === 0) {
+    return null;
+  }
+
+  return getInventoryItemByIdWithConnection(input.itemId, connection);
+}
+
 /**
  * ROUTE: PATCH /api/inventory-items/:itemId
  */

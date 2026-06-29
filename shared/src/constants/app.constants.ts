@@ -31,6 +31,12 @@ export const INVENTORY_ITEM_STATUS = {
     OUT_OF_STOCK: 'out_of_stock'
 } as const;
 
+export const INVENTORY_ADJUSTMENT_TYPES = {
+    ADD: 'add',
+    DEDUCT: 'deduct',
+    CORRECTION: 'correction'
+} as const;
+
 export const REQUEST_STATUS = {
     PENDING: 'pending',
     ACKNOWLEDGED: 'acknowledged'
@@ -84,6 +90,16 @@ export const REQUEST_TYPES = {
     PARAMS: 'params'
 } as const;
 
+export const INVENTORY_BUDGET_TRANSACTION_TYPES = {
+  IN: 'in',
+  OUT: 'out'
+} as const;
+
+export const INVENTORY_BUDGET_SOURCE_TYPES = {
+  SALES_ENTRY: 'sales_entry',
+  RESTOCK_CALCULATION: 'restock_calculation'
+} as const;
+
 // ===============================
 // Database Constants
 // ===============================
@@ -125,3 +141,6 @@ export type MessageType = typeof MESSAGE_TYPES[keyof typeof MESSAGE_TYPES];
 export type MessageStatus = typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];
 export type RequestType = typeof REQUEST_TYPES[keyof typeof REQUEST_TYPES];
 export type InventoryItemCategory = typeof INVENTORY_ITEM_CATEGORIES[keyof typeof INVENTORY_ITEM_CATEGORIES];
+export type InventoryBudgetTransactionType = typeof INVENTORY_BUDGET_TRANSACTION_TYPES[keyof typeof INVENTORY_BUDGET_TRANSACTION_TYPES];
+export type InventoryBudgetSourceType = typeof INVENTORY_BUDGET_SOURCE_TYPES[keyof typeof INVENTORY_BUDGET_SOURCE_TYPES];
+export type InventoryAdjustmentType = typeof INVENTORY_ADJUSTMENT_TYPES[keyof typeof INVENTORY_ADJUSTMENT_TYPES];
