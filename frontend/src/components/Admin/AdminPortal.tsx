@@ -5,6 +5,7 @@ import { SalesEntry } from './SalesEntry';
 import { AdminStaffBoard } from './AdminStaffBoard';
 import { StaffRegistry } from './StaffRegistry';
 import { AdminInventory } from './AdminInventory';
+import { AdminReports } from './AdminReports';
 
 type Tab = 'dashboard' | 'sales' | 'staff_board' | 'inventory' | 'reports' | 'staff_registry';
 
@@ -124,14 +125,15 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className={activeTab === 'staff_board' || activeTab === 'inventory' ? "max-w-7xl mx-auto" : "max-w-4xl mx-auto"}
+                className={activeTab === 'staff_board' || activeTab === 'inventory' || activeTab === 'reports' ? "max-w-7xl mx-auto" : "max-w-4xl mx-auto"}
               >
                 {activeTab === 'sales' && <SalesEntry />}
                 {activeTab === 'staff_board' && <AdminStaffBoard />}
                 {activeTab === 'staff_registry' && <StaffRegistry />}
                 {activeTab === 'inventory' && <AdminInventory onSubTitleChange={setInventorySubTitle} />}
+                {activeTab === 'reports' && <AdminReports />}
                 
-                {activeTab !== 'sales' && activeTab !== 'staff_board' && activeTab !== 'staff_registry' && activeTab !== 'inventory' && (
+                {activeTab !== 'sales' && activeTab !== 'staff_board' && activeTab !== 'staff_registry' && activeTab !== 'inventory' && activeTab !== 'reports' && (
                   <div className="flex flex-col items-center justify-center text-center h-[50vh] text-gray-400">
                     <p className="text-lg font-medium">{tabs.find(t => t.id === activeTab)?.label}</p>
                     <p className="text-sm">Coming soon</p>
