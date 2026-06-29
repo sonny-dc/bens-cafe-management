@@ -511,7 +511,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                               {isOut ? 'Out' : isLow ? 'Low' : 'OK'}
                             </span>
                           </td>
-                          <td className={`px-5 py-3 text-right font-medium ${isOut || isLow ? 'text-red-600' : 'text-gray-900'}`}>
+                          <td className={`px-5 py-3 text-right font-medium ${isOut ? 'text-red-600' : 'text-gray-900'}`}>
                             {item.stockQty} <span className="text-gray-400 font-normal">{item.unit}</span>
                           </td>
                           <td className="px-5 py-3 text-right text-gray-500">₱{item.unitCost.toFixed(2)}</td>

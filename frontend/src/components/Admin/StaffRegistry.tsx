@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, Plus, Edit2, Trash2, X, ShieldCheck, CircleDot } from 'lucide-react';
+import { Users, Search, Plus, Edit2, X, ShieldCheck, CircleDot } from 'lucide-react';
 import { employeeApi } from '../../api/employeeApi';
 import  { type EmployeeProfile, type UpdateEmployeeInput } from 'shared/models';
 import { EMPLOYMENT_STATUS, type EmploymentStatus } from 'shared/constants';
@@ -14,7 +14,6 @@ export function StaffRegistry() {
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<EmployeeProfile | null>(null);
-  const [deletingEmployee, setDeletingEmployee] = useState<EmployeeProfile | null>(null);
 
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,20 +117,6 @@ export function StaffRegistry() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!deletingEmployee) return;
-    try {
-      setIsSubmitting(true);
-      await employeeApi.delete(deletingEmployee.employeeId);
-      await fetchEmployees();
-      setDeletingEmployee(null);
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete employee');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const filteredEmployees = employees.filter(emp => {
     const searchStr = searchTerm.toLowerCase();
     return (emp.fullName?.toLowerCase() || '').includes(searchStr) || 
@@ -181,7 +166,6 @@ export function StaffRegistry() {
             <thead>
               <tr className="bg-gray-50/80 border-b border-gray-100">
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Employee</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Code</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Hourly Rate</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
@@ -191,7 +175,7 @@ export function StaffRegistry() {
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="w-6 h-6 border-[3px] border-[#4a6741] border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm text-gray-400 font-medium">Loading staff registry...</p>
@@ -200,7 +184,7 @@ export function StaffRegistry() {
                 </tr>
               ) : filteredEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                       <Users size={24} className="text-gray-400" />
                     </div>
@@ -223,11 +207,6 @@ export function StaffRegistry() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200 font-mono">
-                        {emp.employeeCode}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-gray-900">{emp.jobRole}</span>
                       </div>
@@ -247,7 +226,7 @@ export function StaffRegistry() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => setEditingEmployee(emp)}
                           className="p-2 text-gray-400 hover:text-[#4a6741] hover:bg-[#4a6741]/10 rounded-lg transition-colors"
@@ -255,14 +234,6 @@ export function StaffRegistry() {
                           aria-label={`Edit ${emp.fullName}'s details`}
                         >
                           <Edit2 size={16} />
-                        </button>
-                        <button 
-                          onClick={() => setDeletingEmployee(emp)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Employee"
-                          aria-label={`Delete ${emp.fullName}`}
-                        >
-                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -457,45 +428,6 @@ export function StaffRegistry() {
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── DELETE CONFIRMATION MODAL ── */}
-      <AnimatePresence>
-        {deletingEmployee && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-          >
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-[20px] shadow-xl w-full max-w-[320px] p-6"
-            >
-              <h3 className="text-lg font-bold text-gray-900 mb-1.5 tracking-tight">Delete Employee?</h3>
-              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                Are you sure you want to completely remove <strong>{deletingEmployee.fullName}</strong>? This action cannot be undone.
-              </p>
-              
-              <div className="flex flex-col gap-2">
-                <button 
-                  onClick={handleDelete}
-                  disabled={isSubmitting}
-                  className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Yes, Delete'}
-                </button>
-                <button 
-                  onClick={() => setDeletingEmployee(null)}
-                  disabled={isSubmitting}
-                  className="w-full py-2.5 bg-transparent hover:bg-gray-50 text-gray-600 text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-              </div>
             </motion.div>
           </motion.div>
         )}
