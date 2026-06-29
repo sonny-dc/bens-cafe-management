@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PenLine, Send, AlertTriangle, Info, MessageSquare, CheckCircle2, AlertCircle } from 'lucide-react';
 import { notesApi, type Note, type MessageType } from '../../api/notesApi';
 
-const EMPLOYEE_ID = 1; // Hardcoded for now
-
 import { MESSAGE_TYPES } from 'shared/constants';
 
 const CATEGORIES: {
@@ -60,33 +58,53 @@ export function NotesManager() {
   const loadNotes = async () => {
     try {
       setIsLoading(true);
-      setNotes(await notesApi.getNotesByEmployee(EMPLOYEE_ID));
-    } catch {
-      // fail silently, show empty state
+      setError(null);
+
+      const data = await notesApi.getMyNotes();
+
+      setNotes(
+        data.sort((a, b) => {
+          const dateA = new Date(a.postedAt || a.createdAt).getTime();
+          const dateB = new Date(b.postedAt || b.createdAt).getTime();
+
+          return dateB - dateA;
+        })
+      );
+    } catch (err: any) {
+      setError(err.message || 'Could not load your notes.');
+      setNotes([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageText.trim()) return;
-    try {
-      setIsSending(true);
-      setError(null);
-      const newNote = await notesApi.createNote({ employeeId: EMPLOYEE_ID, messageType, subject, messageText });
-      setNotes(prev => [newNote, ...prev]);
-      setSubject('');
-      setMessageText('');
-      setMessageType(MESSAGE_TYPES.GENERAL);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3500);
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
-    } finally {
-      setIsSending(false);
-    }
-  };
+  e.preventDefault();
+
+  if (!messageText.trim()) return;
+
+  try {
+    setIsSending(true);
+    setError(null);
+
+    const newNote = await notesApi.createNote({
+        messageType,
+        subject: subject.trim() ? subject.trim() : null,
+        messageText: messageText.trim()
+      });
+
+        setNotes(prev => [newNote, ...prev]);
+        setSubject('');
+        setMessageText('');
+        setMessageType(MESSAGE_TYPES.GENERAL);
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3500);
+      } catch (err: any) {
+        setError(err.message || 'Something went wrong. Please try again.');
+      } finally {
+        setIsSending(false);
+      }
+    };
 
 
   return (

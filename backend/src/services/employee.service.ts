@@ -69,6 +69,16 @@ export async function getEmployeeById(
 }
 
 /**
+ * Gets one employee profile by userId.
+ * This is useful for getting the employee profile of the currently logged-in user.
+ */
+export async function getEmployeeProfileByUserId(
+    userId: number
+): Promise<EmployeeProfile | null> {
+    return employeeRepository.getEmployeeProfileByUserId(userId);
+}
+
+/**
  * Best for updating multiple fields at once, but can also be used for updating just one field.
  */
 export async function updateEmployee(

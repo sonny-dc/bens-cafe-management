@@ -93,6 +93,49 @@ export async function getEmployeeById(
     }
 }
 
+export async function getMyEmployeeProfile(
+    req: Request,
+    res: Response
+): Promise<void> {
+    try {
+        const userId = req.session.user?.userId;
+
+        if (!userId) {
+            res.status(401).json({
+                success: false,
+                message: "Authentication required."
+            });
+            return;
+        }
+
+        const employee = await employeeService.getEmployeeProfileByUserId(userId);
+
+        if (!employee) {
+            res.status(404).json({
+                success: false,
+                message: "Employee profile not found."
+            });
+            return;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Employee profile retrieved successfully.",
+            data: employee
+        });
+    } catch (error) {
+        const errorMessage =
+            error instanceof Error
+                ? error.message
+                : "An error occurred while retrieving your employee profile.";
+
+        res.status(500).json({
+            success: false,
+            message: errorMessage
+        });
+    }
+}
+
 /**
  * POST /api/employees
  */

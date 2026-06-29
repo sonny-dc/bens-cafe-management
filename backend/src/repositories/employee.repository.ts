@@ -270,6 +270,44 @@ export async function getEmployeeByUserId(
     });
 }
 
+export async function getEmployeeProfileByUserId(
+    userId: number
+): Promise<EmployeeProfile | null> {
+    return withConnection(async (connection) => {
+        const [rows] = await connection.query<EmployeeProfileRow[]>(
+            `
+            SELECT
+                ep.employee_id,
+                ep.user_id,
+                u.username,
+                u.full_name,
+                ep.employee_code,
+                ep.job_role,
+                ep.default_shift_hours,
+                ep.hourly_rate,
+                ep.daily_pay,
+                ep.employment_status,
+                ep.created_at,
+                ep.updated_at
+            FROM employee_profiles ep
+            JOIN users u
+                ON ep.user_id = u.user_id
+            WHERE ep.user_id = ?
+            LIMIT 1
+            `,
+            [userId]
+        );
+
+        const row = rows[0];
+
+        if (row === undefined) {
+            return null;
+        }
+
+        return mapEmployeeProfileRow(row);
+    });
+}
+
 /**
  * ROUTE: PATCH /api/employees/:employeeId
  *

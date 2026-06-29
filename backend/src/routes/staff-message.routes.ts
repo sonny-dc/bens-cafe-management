@@ -8,7 +8,7 @@ import {
 } from '../validators/index.js';
 import { REQUEST_TYPES } from '../config/constants.js';
 import { validate } from '../middleware/validation.middleware.js';
-import { requireAdmin, requireEmployee, requireAuth } from '../middleware/auth.middleware.js';
+import { requireAdmin, requireEmployee } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -22,8 +22,15 @@ router.post(
 
 // GET
 router.get(
+    '/my',
+    requireEmployee,
+    staffMessageController.getMyStaffMessages
+);
+
+// GET
+router.get(
     '/',
-    requireAuth,
+    requireAdmin,
     staffMessageController.getAllStaffMessages
 );
 

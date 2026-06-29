@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Clock, MessageSquare, ShoppingCart } from 'lucide-react';
 import { ShiftManager } from './ShiftManager';
 import { NotesManager } from './NotesManager';
 import { InventoryManager } from './InventoryManager';
+import { type EmployeeProfile } from 'shared/models';
+import { employeeApi } from '../../api/employeeApi';
 
 type Tab = 'shift' | 'notes' | 'inventory';
 
@@ -19,6 +21,29 @@ interface StaffPortalProps {
 
 export function StaffPortal({ onLogout }: StaffPortalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('shift');
+  const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profile = await employeeApi.getMyProfile();
+        setEmployeeProfile(profile);
+      } catch {
+        setEmployeeProfile(null);
+      }
+    };
+    loadProfile();
+  }, []);
+  const fullName = employeeProfile?.fullName?.trim() || 'Staff';
+  const firstName = fullName.split(/\s+/)[0] || 'Staff';
+
+  const initials = fullName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(name => name[0]?.toUpperCase() || '')
+    .join('') || 'ST';
+
+    const jobRole = employeeProfile?.jobRole;
 
   return (
     <div className="min-h-screen bg-[#f5f5f3] font-sans text-gray-800">
@@ -45,11 +70,15 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-[#4a6741] text-white text-xs font-bold flex items-center justify-center">
-                MS
+                {initials}
               </div>
               <div className="hidden sm:block leading-none">
-                <p className="text-sm font-semibold text-gray-800">Maria Santos</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Head Barista</p>
+                <p className="text-sm font-semibold text-gray-800">{firstName}</p>
+                {jobRole && (
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    {jobRole}
+                  </p>
+                )}
               </div>
             </div>
             <button onClick={onLogout} className="ml-1 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors px-2 py-1.5 rounded-lg hover:bg-gray-100">
@@ -70,7 +99,7 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
           transition={{ delay: 0.08, duration: 0.4 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold font-poppins text-gray-900 mb-1">Good morning, Maria</h1>
+          <h1 className="text-3xl font-bold font-poppins text-gray-900 mb-1">Good morning, {firstName}</h1>
           <p className="text-gray-500">Here's your workspace for today.</p>
         </motion.div>
 

@@ -26,6 +26,13 @@ export interface CreateStaffMessageInput {
     messageText: string;
 }
 
+export interface CreateStaffMessageInputForUser {
+    messageType: MessageType;
+    subject: string | null;
+    messageText: string;
+}
+
+
 export interface UpdateStaffMessageStatusInput {
     messageId: number;
     status: MessageStatus;
