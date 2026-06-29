@@ -14,79 +14,78 @@ export function Login({ onLogin }: LoginProps) {
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
+    e.preventDefault();
+    setError('');
 
-  if (!username || !password) {
-    setError('Please enter both username and password.');
-    return;
-  }
-
-  setIsLoading(true);
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        username,
-        password
-      })
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      setError(result.message || 'Invalid username or password.');
-      return;
-    }
-    const userRole = result.data.user.role;
-    if (
-      userRole !== USER_ROLES.ADMIN && 
-      userRole !== USER_ROLES.EMPLOYEE
-    ) {
-      setError('Invalid user role.');
+    if (!username || !password) {
+      setError('Please enter both username and password.');
       return;
     }
 
-    onLogin(userRole);
-  } catch (error) {
-    console.error(error);
-    setError('Invalid username or password.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          username,
+          password
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.message || 'Invalid username or password.');
+        return;
+      }
+      const userRole = result.data.user.role;
+      if (
+        userRole !== USER_ROLES.ADMIN &&
+        userRole !== USER_ROLES.EMPLOYEE
+      ) {
+        setError('Invalid user role.');
+        return;
+      }
+
+      onLogin(userRole);
+    } catch (error) {
+      console.error(error);
+      setError('Invalid username or password.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex bg-white font-sans">
-      
+
       {/* ── Left Side: Branding (Hidden on mobile) ── */}
       <div className="hidden md:flex md:w-1/2 relative bg-[#2a3c24] flex-col justify-center items-center overflow-hidden">
         {/* Subtle background pattern/gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#3d5535] to-[#1e2b19] opacity-90" />
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-20" />
-        
-        <motion.div 
+        <div className="absolute inset-0 bg-[url('/bens-login-bg.png')] bg-cover bg-center mix-blend-overlay opacity-20" />
+
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
           className="relative z-10 flex flex-col items-center"
         >
-          <div className="w-64 h-64 flex items-center justify-center drop-shadow-2xl">
-            <img src="/bens-logo.png" alt="Ben's Cafe Logo" className="w-full h-full object-contain filter invert opacity-90" />
+          <div className="w-96 h-96 flex items-center justify-center drop-shadow-2xl">
+            <img src="/bens-logo-hd.svg" alt="Ben's Cafe Logo" className="w-full h-full object-contain brightness-0 invert opacity-90" />
           </div>
         </motion.div>
       </div>
 
       {/* ── Right Side: Login Form ── */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-24 relative">
-        
+
         <div className="w-full max-w-md">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -102,7 +101,7 @@ export function Login({ onLogin }: LoginProps) {
             <p className="text-gray-500 mb-10 text-sm">Please enter your details to sign in to your shift.</p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              
+
               {/* Username */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
@@ -162,15 +161,6 @@ export function Login({ onLogin }: LoginProps) {
               </button>
 
             </form>
-
-            <div className="mt-8 pt-8 border-t border-gray-100">
-              <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
-                <p className="text-xs font-medium text-blue-800 mb-1">Developer Note:</p>
-                <p className="text-[11px] text-blue-600/80 leading-relaxed">
-                  use username: admin, password: admin123 to log in as an admin, or username: msantos, password: password123 to log in as an employee.
-                </p>
-              </div>
-            </div>
 
           </motion.div>
         </div>
