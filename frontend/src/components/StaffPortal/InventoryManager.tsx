@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Send, Package, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
-import { inventoryApi, type InventoryItem } from '../../api/inventoryApi';
+import { inventoryRequestApi } from '../../api/inventoryRequestApi';
+import { inventoryItemApi } from '../../api/inventoryItemApi';
 import { REQUEST_STATUS } from 'shared/constants';
-import type { StaffInventoryRequest } from 'shared/models';
+import type { StaffInventoryRequest, InventoryItemOption } from 'shared/models';
+
 
 export function InventoryManager() {
-  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [items, setItems] = useState<InventoryItemOption[]>([]);
   const [requests, setRequests] = useState<StaffInventoryRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -26,9 +28,10 @@ export function InventoryManager() {
   const loadData = async () => {
     try {
       setIsLoading(true);
+      setError(null); // Clear any previous error before loading data
       const [fetchedItems, fetchedRequests] = await Promise.all([
-        inventoryApi.getInventoryItems(),
-        inventoryApi.getMyRequests()
+        inventoryItemApi.getOptions(),
+        inventoryRequestApi.getMyRequests()
       ]);
       setItems(fetchedItems);
       setRequests(fetchedRequests);
@@ -41,6 +44,7 @@ export function InventoryManager() {
 
   const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
+    setError(null); // Clear any previous error when selecting an item
     setSelectedItemId(val === '' ? '' : Number(val));
     
     // Auto-fill unit based on item
@@ -62,7 +66,7 @@ export function InventoryManager() {
       setIsSending(true);
       setError(null);
       
-      const newReq = await inventoryApi.createRequest({
+      const newReq = await inventoryRequestApi.createRequest({
           itemId: selectedItemId,
           requestedQuantity: quantity,
           requestedUnit: unit,
@@ -73,7 +77,7 @@ export function InventoryManager() {
 
       const newReqWithItemName: StaffInventoryRequest = {
         ...newReq,
-        itemName: selectedItem?.itemName || `Item #${newReq.itemId}`
+        itemName: selectedItem?.itemName || `Item #${newReq.itemId ?? 'N/A'}`
       };
 
       setRequests(prev => [newReqWithItemName, ...prev]);
@@ -116,7 +120,7 @@ export function InventoryManager() {
             >
               <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-500" />
               <div>
-                <p className="font-semibold text-red-700 mb-0.5">Could not send request</p>
+                <p className="font-semibold text-red-700 mb-0.5">Inventory Request Error</p>
                 <p className="text-red-600">{error}</p>
               </div>
             </motion.div>
@@ -154,7 +158,7 @@ export function InventoryManager() {
               <option value="" disabled>Select an item...</option>
               {items.map(item => (
                 <option key={item.itemId} value={item.itemId}>
-                  {item.itemName} ({item.stockQuantity} {item.unit}s left)
+                  {item.itemName} ({item.stockQuantity} {item.unit} left)
                 </option>
               ))}
             </select>
@@ -169,7 +173,12 @@ export function InventoryManager() {
                 min="0.01"
                 step="0.01"
                 value={quantity}
-                onChange={e => setQuantity(e.target.value)}
+                onChange={
+                  e => {
+                    setQuantity(e.target.value);
+                    setError(null);
+                  }
+                }
                 placeholder="e.g. 2"
                 required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black"
@@ -180,7 +189,10 @@ export function InventoryManager() {
               <input
                 type="text"
                 value={unit}
-                onChange={e => setUnit(e.target.value)}
+                onChange={e => {
+                  setUnit(e.target.value);
+                  setError(null);
+                }}
                 placeholder="e.g. Cartons"
                 required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black"
@@ -193,7 +205,10 @@ export function InventoryManager() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Reason</label>
             <textarea
               value={reason}
-              onChange={e => setReason(e.target.value)}
+              onChange={e => {
+                setReason(e.target.value);
+                setError(null);
+              }}
               placeholder="e.g. We ran out during the morning rush..."
               required
               rows={3}
@@ -272,7 +287,7 @@ export function InventoryManager() {
                     </div>
                     
                     <p className="text-sm font-bold text-gray-900 mb-0.5">
-                      {req.itemName || `Item #${req.itemId}`} <span className="text-gray-500 font-normal">x {req.requestedQuantity} {req.requestedUnit}</span>
+                      {req.itemName || `Item #${req.itemId ?? 'N/A'}`} <span className="text-gray-500 font-normal">x {req.requestedQuantity} {req.requestedUnit}</span>
                     </p>
                     <p className="text-xs text-gray-600 italic">"{req.reason}"</p>
                   </motion.div>

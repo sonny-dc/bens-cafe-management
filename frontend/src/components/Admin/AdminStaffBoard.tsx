@@ -8,7 +8,7 @@ import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { type ShiftSession, type InventoryRequestListItem, type StaffWeeklyPerformance  } from 'shared/models';
 import { type Note, notesApi } from '../../api/notesApi';
 import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type RequestStatus, SHIFT_STATUS } from 'shared/constants';
-import { inventoryApi } from '../../api/inventoryApi';
+import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { apiFetch } from '../../api/apiFetch';
 import { formatDateToYYYYMMDD, getStoreWeekRange, DEFAULT_CLOSING_DAY, WEEKDAY_LABELS } from '../../utils/storeWeek.utils';
 
@@ -20,6 +20,15 @@ const getNoteStyle = (type: MessageType) => {
     default: return { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700', icon: Info };
   }
 };
+
+function LoadingState({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-8 gap-3">
+      <div className="w-6 h-6 border-[3px] border-[#4a6741] border-t-transparent rounded-full animate-spin" />
+      <p className="text-xs text-gray-400 font-medium">{label}</p>
+    </div>
+  );
+}
 
 export function AdminStaffBoard() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,7 +49,7 @@ export function AdminStaffBoard() {
     getStoreWeekRange(new Date(), DEFAULT_CLOSING_DAY)
   );
   
-  const [isLoadingShifts, setIsLoadingShifts] = useState(false);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
 
   useEffect(() => {
@@ -51,7 +60,7 @@ export function AdminStaffBoard() {
 
   const fetchDashboardData = async () => {
     try {
-      setIsLoadingShifts(true);
+      setIsLoadingDashboard(true);
       // 1. Fetch History Summary
       const selectedWeek = getStoreWeekRange(new Date(), closingDay);
       setCurrentWeekRange(selectedWeek);
@@ -88,13 +97,13 @@ export function AdminStaffBoard() {
       setStaffNotes(notes.filter((note) => note.messageStatus === MESSAGE_STATUS.NEW));
 
       // 4. Fetch Inventory Requests
-      const pendingInventoryRequests = await inventoryApi.getPendingRequestsSimplified();
+      const pendingInventoryRequests = await inventoryRequestApi.getPendingRequestsSimplified();
       setInventoryRequests(pendingInventoryRequests);
 
     } catch (err) {
       console.error(err);
     } finally {
-      setIsLoadingShifts(false);
+      setIsLoadingDashboard(false);
     }
   };
 
@@ -114,7 +123,7 @@ export function AdminStaffBoard() {
     requestStatus: RequestStatus
   ) => {
     try {
-      await inventoryApi.updateRequestStatus(requestId, requestStatus);
+      await inventoryRequestApi.updateRequestStatus(requestId, requestStatus);
 
       setInventoryRequests(prev =>
         prev.filter(request => request.requestId !== requestId)
@@ -282,7 +291,9 @@ export function AdminStaffBoard() {
             </div>
             
             <div className="space-y-3">
-              {activeShifts.length === 0 ? (
+              {isLoadingDashboard ? (
+                <LoadingState label="Loading active shifts..." />
+              ) : activeShifts.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">No staff currently clocked in.</p>
               ) : (
                 activeShifts.map(staff => {
@@ -328,7 +339,9 @@ export function AdminStaffBoard() {
             </div>
             
             <div className="space-y-4">
-              {staffPerformance.length === 0 ? (
+              {isLoadingDashboard ? (
+                <LoadingState label="Loading staff performance..." />
+              ) : staffPerformance.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">
                   No staff performance records for this week.
                 </p>
@@ -417,7 +430,9 @@ export function AdminStaffBoard() {
             </div>
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-              {staffNotes.length === 0 ? (
+              {isLoadingDashboard ? (
+                <LoadingState label="Loading staff notes..." />
+              ) : staffNotes.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-8">No new messages from staff.</p>
               ) : (
                 staffNotes.map(note => {
@@ -460,7 +475,9 @@ export function AdminStaffBoard() {
             </div>
             
             <div className="space-y-3">
-              {inventoryRequests.length === 0 ? (
+              {isLoadingDashboard ? (
+                <LoadingState label="Loading inventory requests..." />
+              ) : inventoryRequests.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">No pending inventory requests.</p>
               ) : (
                 inventoryRequests.map(req => (
@@ -537,11 +554,8 @@ export function AdminStaffBoard() {
 
                 {/* Modal Body - Scrollable */}
                 <div className="p-6 bg-gray-50/50 overflow-y-auto">
-                  {isLoadingShifts ? (
-                    <div className="flex flex-col items-center justify-center py-10 gap-3">
-                      <div className="w-6 h-6 border-[3px] border-[#4a6741] border-t-transparent rounded-full animate-spin" />
-                      <p className="text-xs text-gray-400">Loading history...</p>
-                    </div>
+                  {isLoadingDashboard ? (
+                    <LoadingState label="Loading employee history..." />
                   ) : employeeHistory.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center">
                       <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center mb-3">

@@ -17,6 +17,7 @@ import {
   staffMessageRoutes,
   salesEntryRoutes,
   inventoryRequestRoutes,
+  inventoryItemRoutes,
   authRoutes
 } from './routes/index.js';
 
@@ -83,6 +84,7 @@ app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
 app.use("/api/sales-entries", salesEntryRoutes);
 app.use("/api/inventory-requests", inventoryRequestRoutes);
+app.use("/api/inventory-items", inventoryItemRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

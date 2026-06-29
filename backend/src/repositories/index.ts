@@ -10,3 +10,4 @@ export * as expenseRepository from "./expense.repository.js";
 export * as payrollEntryRepository from "./payroll-entry.repository.js";
 export * as salesEntryRepository from "./sales-entry.repository.js";
 export * as inventoryRequestRepository from "./inventory-request.repository.js";
+export * as inventoryItemRepository from "./inventory-item.repository.js";

@@ -13,7 +13,6 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS payroll_entries;
 DROP TABLE IF EXISTS expenses;
-DROP TABLE IF EXISTS expense_categories;
 DROP TABLE IF EXISTS sales_entries;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS report_email_logs;
@@ -25,7 +24,8 @@ DROP TABLE IF EXISTS shift_sessions;
 DROP TABLE IF EXISTS staff_messages;
 DROP TABLE IF EXISTS inventory_requests;
 DROP TABLE IF EXISTS inventory_items;
-DROP TABLE IF EXISTS inventory_categories;
+DROP TABLE IF EXISTS inventory_budget_logs;
+DROP TABLE IF EXISTS inventory_budget_accounts;
 DROP TABLE IF EXISTS employee_profiles;
 DROP TABLE IF EXISTS users;
 
@@ -71,17 +71,10 @@ CREATE TABLE employee_profiles (
 -- INVENTORY MODULE
 -- ==========================================================
 
-CREATE TABLE inventory_categories (
-  category_id INT AUTO_INCREMENT PRIMARY KEY,
-  category_name VARCHAR(50) NOT NULL UNIQUE,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
 CREATE TABLE inventory_items (
   item_id INT AUTO_INCREMENT PRIMARY KEY,
-  category_id INT NOT NULL,
   item_name VARCHAR(100) NOT NULL,
+  category ENUM('beverage_ingredients', 'food_ingredients', 'packaging', 'cleaning_supplies', 'other') NOT NULL,
   unit VARCHAR(20) NOT NULL,
   stock_quantity DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   low_threshold DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -90,11 +83,6 @@ CREATE TABLE inventory_items (
   user_id INT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-
-  CONSTRAINT fk_inventory_items_category
-    FOREIGN KEY (category_id) REFERENCES inventory_categories(category_id)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT,
 
   CONSTRAINT fk_inventory_items_user
     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -109,7 +97,7 @@ CREATE TABLE inventory_items (
 CREATE TABLE inventory_requests (
   request_id INT AUTO_INCREMENT PRIMARY KEY,
   employee_id INT NOT NULL,
-  item_id INT NOT NULL,
+  item_id INT NULL,
   requested_quantity DECIMAL(10,2) NOT NULL,
   requested_unit VARCHAR(20) NOT NULL,
   reason VARCHAR(255) NOT NULL,
@@ -128,7 +116,7 @@ CREATE TABLE inventory_requests (
   CONSTRAINT fk_inventory_requests_item
     FOREIGN KEY (item_id) REFERENCES inventory_items(item_id)
     ON UPDATE CASCADE
-    ON DELETE RESTRICT,
+    ON DELETE SET NULL,
 
   CONSTRAINT fk_inventory_requests_user
     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -140,7 +128,7 @@ CREATE TABLE inventory_requests (
 
 CREATE TABLE inventory_adjustments (
   adjustment_id INT AUTO_INCREMENT PRIMARY KEY,
-  item_id INT NOT NULL,
+  item_id INT NULL,
   user_id INT NULL,
   adjustment_type ENUM('add', 'deduct', 'correction') NOT NULL,
   quantity_changed DECIMAL(10,2) NOT NULL,
@@ -152,7 +140,7 @@ CREATE TABLE inventory_adjustments (
   CONSTRAINT fk_inventory_adjustments_item
     FOREIGN KEY (item_id) REFERENCES inventory_items(item_id)
     ON UPDATE CASCADE
-    ON DELETE RESTRICT,
+    ON DELETE SET NULL,
 
   CONSTRAINT fk_inventory_adjustments_user
     FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -162,6 +150,21 @@ CREATE TABLE inventory_adjustments (
   CONSTRAINT chk_inventory_adjustments_quantity_changed CHECK (quantity_changed > 0),
   CONSTRAINT chk_inventory_adjustments_old_quantity CHECK (old_quantity >= 0),
   CONSTRAINT chk_inventory_adjustments_new_quantity CHECK (new_quantity >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE inventory_budget_accounts (
+  budget_account_id TINYINT PRIMARY KEY DEFAULT 1,
+
+  current_balance DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT chk_inventory_budget_accounts_singleton
+    CHECK (budget_account_id = 1),
+
+  CONSTRAINT chk_inventory_budget_accounts_balance
+    CHECK (current_balance >= 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE restock_calculations (
@@ -178,10 +181,14 @@ CREATE TABLE restock_calculations (
   CONSTRAINT chk_restock_calculations_total_cost CHECK (total_estimated_cost >= 0)
 ) ENGINE=InnoDB;
 
+-- For the inventory budget account, we will initialize it with a default balance of 0.00.
+INSERT INTO inventory_budget_accounts (budget_account_id, current_balance)
+VALUES (1, 0.00);
+
 CREATE TABLE restock_calculation_items (
   calculation_item_id INT AUTO_INCREMENT PRIMARY KEY,
   calculation_id INT NOT NULL,
-  item_id INT NOT NULL,
+  item_id INT NULL,
   quantity_to_buy DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   unit_cost_snapshot DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   estimated_cost DECIMAL(12,2) GENERATED ALWAYS AS (quantity_to_buy * unit_cost_snapshot) STORED,
@@ -194,7 +201,7 @@ CREATE TABLE restock_calculation_items (
   CONSTRAINT fk_restock_items_inventory_item
     FOREIGN KEY (item_id) REFERENCES inventory_items(item_id)
     ON UPDATE CASCADE
-    ON DELETE RESTRICT,
+    ON DELETE SET NULL,
 
   CONSTRAINT chk_restock_items_quantity CHECK (quantity_to_buy >= 0),
   CONSTRAINT chk_restock_items_unit_cost CHECK (unit_cost_snapshot >= 0)
@@ -317,7 +324,7 @@ CREATE TABLE payroll_entries (
     ON UPDATE CASCADE
     ON DELETE RESTRICT,
 
-  CONSTRAINT chk_payroll_entries_gross_pay CHECK (gross_pay >= 0);
+  CONSTRAINT chk_payroll_entries_gross_pay CHECK (gross_pay >= 0)
 
 ) ENGINE=InnoDB;
 
@@ -377,4 +384,85 @@ CREATE TABLE audit_logs (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
     ON UPDATE CASCADE
     ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE inventory_budget_logs (
+  budget_log_id INT AUTO_INCREMENT PRIMARY KEY,
+
+  budget_account_id TINYINT NOT NULL DEFAULT 1,
+
+  transaction_type ENUM('in', 'out') NOT NULL,
+
+  amount DECIMAL(12,2) NOT NULL,
+
+  source_type ENUM('sales_entry', 'restock_calculation') NOT NULL,
+
+  sales_entry_id INT NULL,
+  restock_calculation_id INT NULL,
+
+  balance_before DECIMAL(12,2) NOT NULL,
+  balance_after DECIMAL(12,2) NOT NULL,
+
+  user_id INT NULL,
+
+  posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_inventory_budget_logs_account
+    FOREIGN KEY (budget_account_id) REFERENCES inventory_budget_accounts(budget_account_id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+
+  CONSTRAINT fk_inventory_budget_logs_sales_entry
+    FOREIGN KEY (sales_entry_id) REFERENCES sales_entries(sales_entry_id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT,
+
+  CONSTRAINT fk_inventory_budget_logs_restock_calculation
+    FOREIGN KEY (restock_calculation_id) REFERENCES restock_calculations(calculation_id)
+    ON UPDATE RESTRICT
+    ON DELETE RESTRICT,
+
+  CONSTRAINT fk_inventory_budget_logs_user
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
+
+  CONSTRAINT chk_inventory_budget_logs_amount
+    CHECK (amount > 0),
+
+  CONSTRAINT chk_inventory_budget_logs_balance_before
+    CHECK (balance_before >= 0),
+
+  CONSTRAINT chk_inventory_budget_logs_balance_after
+    CHECK (balance_after >= 0),
+
+    CONSTRAINT chk_inventory_budget_logs_source
+    CHECK (
+      (
+        transaction_type = 'in'
+        AND source_type = 'sales_entry'
+        AND sales_entry_id IS NOT NULL
+        AND restock_calculation_id IS NULL
+      )
+      OR
+      (
+        transaction_type = 'out'
+        AND source_type = 'restock_calculation'
+        AND restock_calculation_id IS NOT NULL
+        AND sales_entry_id IS NULL
+      )
+    ),
+
+  CONSTRAINT chk_inventory_budget_logs_balance_math
+    CHECK (
+      (
+        transaction_type = 'in'
+        AND balance_after = balance_before + amount
+      )
+      OR
+      (
+        transaction_type = 'out'
+        AND balance_after = balance_before - amount
+      )
+    )
 ) ENGINE=InnoDB;

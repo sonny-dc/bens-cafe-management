@@ -11,6 +11,7 @@ import {
 } from 'shared/constants';
 
 import { apiFetch } from './apiFetch';
+import { inventoryItemApi } from './inventoryItemApi';
 
 type CreateInventoryRequestPayload = CreateInventoryRequestInput;
 
@@ -19,27 +20,8 @@ type ApiResponse<T> = {
   message: string;
   data?: T;
 };
+export const inventoryRequestApi = {
 
-export interface InventoryItem {
-  itemId: number;
-  itemName: string;
-  unit: string;
-  stockQuantity: string;
-}
-
-
-export const inventoryApi = {
-  // Fetch available items to populate the dropdown
-  async getInventoryItems(): Promise<InventoryItem[]> {
-    // In a real app, this would be: await fetch('/api/inventory/items')
-    return [
-      { itemId: 1, itemName: 'Oat Milk', unit: 'Carton', stockQuantity: '10' },
-      { itemId: 2, itemName: 'Whole Milk', unit: 'Gallon', stockQuantity: '5' },
-      { itemId: 3, itemName: 'Hot Paper Cups 12oz', unit: 'Sleeve', stockQuantity: '2' },
-      { itemId: 4, itemName: 'Espresso Roast Beans', unit: 'Bag', stockQuantity: '4' }
-    ];
-  },
-  
   // Fetch all full inventory requests
   async getAllRequests(): Promise<InventoryRequest[]> {
     const res = await apiFetch('/inventory-requests');
@@ -116,7 +98,7 @@ export const inventoryApi = {
   async getRequestsByEmployee(employeeId: number): Promise<StaffInventoryRequest[]> {
     const [requests, items] = await Promise.all([
       this.getAllRequests(),
-      this.getInventoryItems()
+      inventoryItemApi.getOptions()
     ]);
 
     return requests

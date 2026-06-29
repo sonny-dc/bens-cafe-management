@@ -25,7 +25,7 @@ export const SHIFT_STATUS = {
     ARCHIVED: 'archived'
 } as const;
 
-export const INVENTORY_STATUS = {
+export const INVENTORY_ITEM_STATUS = {
     IN_STOCK: 'in_stock',
     LOW_STOCK: 'low_stock',
     OUT_OF_STOCK: 'out_of_stock'
@@ -45,6 +45,22 @@ export const EXPENSE_CATEGORIES = {
     TRANSPORTATION: 'transportation',
     MISCELLANEOUS: 'miscellaneous',
 } as const;
+
+export const INVENTORY_ITEM_CATEGORIES = {
+    BEVERAGE_INGREDIENTS: 'beverage_ingredients',
+    FOOD_INGREDIENTS: 'food_ingredients',
+    PACKAGING: 'packaging',
+    CLEANING_SUPPLIES: 'cleaning_supplies',
+    OTHER: 'other'
+} as const;
+
+export const INVENTORY_ITEM_CATEGORY_LABELS: Record<InventoryItemCategory, string> = {
+  beverage_ingredients: 'Beverage Ingredients',
+  food_ingredients: 'Food Ingredients',
+  packaging: 'Packaging',
+  cleaning_supplies: 'Cleaning Supplies',
+  other: 'Other'
+};
 
 export const MESSAGE_TYPES = {
     GENERAL: 'general',
@@ -102,10 +118,10 @@ export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 export type AccountStatus = typeof ACCOUNT_STATUS[keyof typeof ACCOUNT_STATUS];
 export type EmploymentStatus = typeof EMPLOYMENT_STATUS[keyof typeof EMPLOYMENT_STATUS];
 export type ShiftStatus = typeof SHIFT_STATUS[keyof typeof SHIFT_STATUS];
-export type InventoryStatus = typeof INVENTORY_STATUS[keyof typeof INVENTORY_STATUS];
+export type InventoryItemStatus = typeof INVENTORY_ITEM_STATUS[keyof typeof INVENTORY_ITEM_STATUS];
 export type RequestStatus = typeof REQUEST_STATUS[keyof typeof REQUEST_STATUS];
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[keyof typeof EXPENSE_CATEGORIES];
 export type MessageType = typeof MESSAGE_TYPES[keyof typeof MESSAGE_TYPES];
 export type MessageStatus = typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];
 export type RequestType = typeof REQUEST_TYPES[keyof typeof REQUEST_TYPES];
-
+export type InventoryItemCategory = typeof INVENTORY_ITEM_CATEGORIES[keyof typeof INVENTORY_ITEM_CATEGORIES];

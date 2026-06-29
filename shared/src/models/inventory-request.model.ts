@@ -3,7 +3,7 @@ import type { RequestStatus } from '../constants/index.js'
 export interface InventoryRequest {
   requestId: number;
   employeeId: number;
-  itemId: number;
+  itemId: number | null;
   requestedQuantity: string;
   requestedUnit: string;
   reason: string;

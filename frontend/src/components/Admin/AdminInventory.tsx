@@ -3,8 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertTriangle, CheckCircle2, Calculator,
   ArrowUpRight, ArrowDownRight, RefreshCw, Plus,
-  Trash2, Search, ChevronLeft, ChevronRight, X, Calendar, Edit2
+  Trash2, Search, ChevronLeft, ChevronRight, X, Calendar, Edit2, ChevronDown
 } from 'lucide-react';
+import { inventoryItemApi } from '../../api/inventoryItemApi';
+import {
+  INVENTORY_ITEM_CATEGORIES,
+  INVENTORY_ITEM_CATEGORY_LABELS,
+  type InventoryItemCategory
+} from 'shared/constants';
+import type { InventoryItemListItem } from 'shared/models';
+import { ApiError } from '../../api/apiError';
+
 
 // ─── Types ───
 interface BudgetAuditLog {
@@ -22,39 +31,6 @@ interface RestockCartItem {
   unitCost: number;
   quantity: number;
 }
-
-export type InventoryItem = {
-  itemId: number;
-  itemName: string;
-  category: string;
-  unit: string;
-  stockQty: number;
-  threshold: number;
-  unitCost: number;
-};
-
-// ─── Mock data ───
-const MOCK_ITEMS: InventoryItem[] = [
-  // Beverage Ingredients
-  { itemId: 1, itemName: 'Coffee Beans (Arabica)', category: 'Beverage Ingredients', unit: 'kg', stockQty: 12, threshold: 15, unitCost: 850 },
-  { itemId: 2, itemName: 'Whole Milk', category: 'Beverage Ingredients', unit: 'L', stockQty: 45, threshold: 20, unitCost: 95 },
-  { itemId: 3, itemName: 'Oat Milk', category: 'Beverage Ingredients', unit: 'L', stockQty: 3, threshold: 10, unitCost: 180 },
-  { itemId: 4, itemName: 'Vanilla Syrup', category: 'Beverage Ingredients', unit: 'bottle', stockQty: 8, threshold: 10, unitCost: 450 },
-  { itemId: 5, itemName: 'Caramel Sauce', category: 'Beverage Ingredients', unit: 'bottle', stockQty: 6, threshold: 8, unitCost: 380 },
-  { itemId: 6, itemName: 'Matcha Powder', category: 'Beverage Ingredients', unit: 'kg', stockQty: 2, threshold: 3, unitCost: 1200 },
-  { itemId: 7, itemName: 'Chocolate Powder', category: 'Beverage Ingredients', unit: 'kg', stockQty: 4, threshold: 5, unitCost: 320 },
-  // Food Ingredients
-  { itemId: 8, itemName: 'Rice', category: 'Food Ingredients', unit: 'kg', stockQty: 25, threshold: 10, unitCost: 55 },
-  { itemId: 9, itemName: 'All-Purpose Flour', category: 'Food Ingredients', unit: 'kg', stockQty: 0, threshold: 5, unitCost: 65 },
-  { itemId: 10, itemName: 'Eggs', category: 'Food Ingredients', unit: 'tray', stockQty: 3, threshold: 5, unitCost: 240 },
-  { itemId: 11, itemName: 'Brown Sugar', category: 'Food Ingredients', unit: 'kg', stockQty: 0, threshold: 5, unitCost: 120 },
-  // Packaging
-  { itemId: 12, itemName: 'Paper Cups (12oz)', category: 'Packaging', unit: 'pcs', stockQty: 50, threshold: 500, unitCost: 2.5 },
-  { itemId: 13, itemName: 'Plastic Lids', category: 'Packaging', unit: 'pcs', stockQty: 200, threshold: 300, unitCost: 1.8 },
-  { itemId: 14, itemName: 'Straws', category: 'Packaging', unit: 'pack', stockQty: 80, threshold: 30, unitCost: 25 },
-  { itemId: 15, itemName: 'Takeout Boxes', category: 'Packaging', unit: 'pcs', stockQty: 40, threshold: 100, unitCost: 8 },
-  { itemId: 16, itemName: 'Napkins', category: 'Packaging', unit: 'pack', stockQty: 120, threshold: 50, unitCost: 45 },
-];
 
 const MOCK_LOGS: BudgetAuditLog[] = [
   { id: 1, amount: 15000, type: 'IN', description: 'Allotted Budget (Sales - Expenses - Payroll)', createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
@@ -75,9 +51,23 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   const [auditPage, setAuditPage] = useState(1);
 
   // Data State
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(MOCK_ITEMS);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItemListItem[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [editingItem, setEditingItem] = useState<InventoryItemListItem | null>(null);
+  const [isSavingItem, setIsSavingItem] = useState(false);
+
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const getFieldError = (field: string) => fieldErrors[field]?.[0];
+
+  const [deletingItem, setDeletingItem] = useState<InventoryItemListItem | null>(null);
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [restockError, setRestockError] = useState<string | null>(null);
+
 
   // Filters
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -92,29 +82,60 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   const [restockSearch, setRestockSearch] = useState('');
   const [restockCategoryFilter, setRestockCategoryFilter] = useState('all');
 
+  const fetchInventoryItems = async () => {
+    try {
+      setIsLoadingItems(true);
+      setInventoryError(null);
+
+      const data = await inventoryItemApi.getList();
+      setInventoryItems(data);
+    } catch (err: any) {
+      setInventoryError(err.message || 'Failed to load inventory items.');
+    } finally {
+      setIsLoadingItems(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventoryItems();
+  }, []);
+
   const budget = MOCK_LOGS.reduce((s, l) => l.type === 'IN' ? s + l.amount : s - l.amount, 0);
   const cartTotal = cart.reduce((s, c) => s + c.unitCost * c.quantity, 0);
   const lowCount = inventoryItems.filter(i => i.stockQty <= i.threshold).length;
 
   // Unique categories for filter
-  const categories = useMemo(() => [...new Set(inventoryItems.map(i => i.category))], [inventoryItems]);
+  const categories = Object.values(INVENTORY_ITEM_CATEGORIES) as InventoryItemCategory[];
 
   // Filtered + paginated stock
   const filteredStock = useMemo(() => {
     return inventoryItems.filter(item => {
       const q = search.toLowerCase();
-      const matchesSearch = !q || item.itemName.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
-      const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
+
+      const categoryLabel =
+        INVENTORY_ITEM_CATEGORY_LABELS[item.category]?.toLowerCase() || item.category;
+
+      const matchesSearch =
+        !q ||
+        item.itemName.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q) ||
+        categoryLabel.includes(q);
+
+      const matchesCategory =
+        categoryFilter === 'all' || item.category === categoryFilter;
+
       const isOut = item.stockQty === 0;
       const isLow = !isOut && item.stockQty <= item.threshold;
+
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'ok' && !isOut && !isLow) ||
         (statusFilter === 'low' && isLow) ||
         (statusFilter === 'out' && isOut);
+
       return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [search, categoryFilter, statusFilter]);
+  }, [inventoryItems, search, categoryFilter, statusFilter]);
 
   const stockPages = Math.ceil(filteredStock.length / ROWS_PER_PAGE);
   const pagedStock = filteredStock.slice((stockPage - 1) * ROWS_PER_PAGE, stockPage * ROWS_PER_PAGE);
@@ -139,6 +160,28 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
     setStockPage(1);
     setAuditPage(1);
   };
+  
+  const handleDeleteItem = async () => {
+    if (!deletingItem) return;
+
+    try {
+      setIsDeletingItem(true);
+      setDeleteError(null);
+
+      await inventoryItemApi.delete(deletingItem.itemId);
+
+      setCart(prev => prev.filter(c => c.itemId !== deletingItem.itemId));
+      setStockPage(1);
+
+      await fetchInventoryItems();
+
+      setDeletingItem(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete item.');
+    } finally {
+      setIsDeletingItem(false);
+    }
+  };
 
   const resetFilters = () => {
     setSearch('');
@@ -151,7 +194,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   };
 
   // Restock helpers
-  const addToCart = (item: InventoryItem, qty: number) => {
+  const addToCart = (item: InventoryItemListItem, qty: number) => {
     if (qty <= 0) return;
     setCart(prev => {
       const ex = prev.find(c => c.itemId === item.itemId);
@@ -253,15 +296,21 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
           {tab === 'stock' && (
             <>
               <select
+                title='Filter by category'
                 value={categoryFilter}
                 onChange={e => { setCategoryFilter(e.target.value); setStockPage(1); }}
                 className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
               >
                 <option value="all">All Categories</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                {categories.map(category => (
+                  <option key={category} value={category}>
+                    {INVENTORY_ITEM_CATEGORY_LABELS[category]}
+                  </option>
+                ))}
               </select>
 
               <select
+                title='Filter by status'
                 value={statusFilter}
                 onChange={e => { setStatusFilter(e.target.value); setStockPage(1); }}
                 className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
@@ -276,6 +325,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
           {tab === 'audit' && (
             <select
+              title='Filter by type'
               value={auditTypeFilter}
               onChange={e => { setAuditTypeFilter(e.target.value); setAuditPage(1); }}
               className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
@@ -297,7 +347,12 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
           {tab === 'stock' && (
             <button
-              onClick={() => { setEditingItem(null); setShowAddModal(true); }}
+              onClick={() => {
+               setEditingItem(null);
+               setFormError(null);
+               setFieldErrors({});
+               setShowAddModal(true); 
+              }}
               className="ml-auto flex items-center gap-2 bg-[#4a6741] text-white px-4 h-[38px] rounded-lg text-sm font-medium hover:bg-[#3d5536] transition-colors"
             >
               <Plus size={16} /> Add Item
@@ -332,13 +387,28 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {pagedStock.map(item => {
+                    {isLoadingItems && (
+                      <tr>
+                        <td colSpan={6}>
+                          <LoadingState label="Loading inventory items..." />
+                        </td>
+                      </tr>
+                    )}
+
+                    {!isLoadingItems && inventoryError && (
+                      <tr>
+                        <td colSpan={6} className="px-5 py-10 text-center text-red-500 text-sm">
+                          {inventoryError}
+                        </td>
+                      </tr>
+                    )}
+                    {!isLoadingItems && !inventoryError && pagedStock.map(item => {
                       const isOut = item.stockQty === 0;
                       const isLow = !isOut && item.stockQty <= item.threshold;
                       return (
                         <tr key={item.itemId} className="hover:bg-gray-50/60">
                           <td className="px-5 py-3 font-medium text-gray-900">{item.itemName}</td>
-                          <td className="px-5 py-3 text-gray-500">{item.category}</td>
+                          <td className="px-5 py-3 text-gray-500">{INVENTORY_ITEM_CATEGORY_LABELS[item.category]}</td>
                           <td className="px-5 py-3">
                             <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md
                               ${isOut ? 'bg-red-50 text-red-600' : isLow ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}`}>
@@ -353,18 +423,19 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                           <td className="px-5 py-3 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => { setEditingItem(item); setShowAddModal(true); }}
+                                onClick={() => {
+                                  setEditingItem(item); 
+                                  setFormError(null); 
+                                  setFieldErrors({}); 
+                                  setShowAddModal(true); 
+                                }}
                                 className="p-1.5 text-gray-400 hover:text-[#4a6741] hover:bg-[#4a6741]/10 rounded-lg transition-colors"
                                 title="Edit"
                               >
                                 <Edit2 size={15} />
                               </button>
                               <button
-                                onClick={() => {
-                                  if (confirm('Are you sure you want to delete this item?')) {
-                                    setInventoryItems(prev => prev.filter(i => i.itemId !== item.itemId));
-                                  }
-                                }}
+                                onClick={() => {setDeletingItem(item); setDeleteError(null);}}
                                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Delete"
                               >
@@ -375,7 +446,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                         </tr>
                       );
                     })}
-                    {pagedStock.length === 0 && (
+                    {!isLoadingItems && !inventoryError && pagedStock.length === 0 && (
                       <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400 text-sm">No items found</td></tr>
                     )}
                   </tbody>
@@ -383,8 +454,13 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
               </div>
 
               {/* Pagination */}
-              {filteredStock.length > 0 && stockPages > 1 && (
-                <Pagination current={stockPage} total={stockPages} onChange={setStockPage} count={filteredStock.length} />
+              {!isLoadingItems && !inventoryError && filteredStock.length > 0 && stockPages > 1 && (
+                <Pagination
+                  current={stockPage}
+                  total={stockPages}
+                  onChange={setStockPage}
+                  count={filteredStock.length}
+                />
               )}
             </div>
           )}
@@ -408,18 +484,23 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       <input
                         type="text"
                         value={restockSearch}
-                        onChange={e => setRestockSearch(e.target.value)}
+                        onChange={e => {setRestockSearch(e.target.value); setRestockError(null);}}
                         placeholder="Search items..."
                         className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#4a6741] text-black placeholder:text-gray-300 transition-colors"
                       />
                     </div>
                     <select
+                      title='Filter by category'
                       value={restockCategoryFilter}
-                      onChange={e => setRestockCategoryFilter(e.target.value)}
+                      onChange={e => {setRestockCategoryFilter(e.target.value); setRestockError(null);}}
                       className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
                     >
                       <option value="all">All Categories</option>
-                      {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                      {categories.map(category => (
+                        <option key={category} value={category}>
+                          {INVENTORY_ITEM_CATEGORY_LABELS[category]}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -433,11 +514,28 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                   </AnimatePresence>
 
                   {/* Scrollable item list */}
+                  {restockError && (
+                    <div className="mb-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {restockError}
+                    </div>
+                  )}
                   <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
-                    {restockFiltered.length === 0 && (
-                      <p className="text-sm text-gray-400 text-center py-10">No items match your search</p>
+                    {isLoadingItems && (
+                      <LoadingState label="Loading inventory items..." />
                     )}
-                    {restockFiltered.map(item => {
+
+                    {!isLoadingItems && inventoryError && (
+                      <p className="text-sm text-red-500 text-center py-10">
+                        {inventoryError}
+                      </p>
+                    )}
+
+                    {!isLoadingItems && !inventoryError && restockFiltered.length === 0 && (
+                      <p className="text-sm text-gray-400 text-center py-10">
+                        No items match your search
+                      </p>
+                    )}
+                    {!isLoadingItems && !inventoryError && restockFiltered.map(item => {
                       const inCart = cart.find(c => c.itemId === item.itemId);
                       const isOut = item.stockQty === 0;
                       const isLow = !isOut && item.stockQty <= item.threshold;
@@ -458,24 +556,27 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                           {inCart ? (
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-medium text-[#4a6741]">{inCart.quantity} {item.unit} added</span>
-                              <button onClick={() => setCart(prev => prev.filter(c => c.itemId !== item.itemId))}
+                              <button title="Remove from cart" onClick={() => setCart(prev => prev.filter(c => c.itemId !== item.itemId))}
                                 className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
                             </div>
                           ) : (
-                            <form onSubmit={e => {
+                            <form noValidate onSubmit={e => {
                               e.preventDefault();
                               const fd = new FormData(e.target as HTMLFormElement);
                               const parsedQty = parseFloat((fd.get('qty') as string).replace(/,/g, ''));
                               if (isNaN(parsedQty) || parsedQty <= 0) {
-                                alert('Please enter a valid numeric quantity greater than 0.');
+                                setRestockError('Please enter a valid numeric quantity greater than 0.');
                                 return;
                               }
+
+                              setRestockError(null);
                               addToCart(item, parsedQty);
                               (e.target as HTMLFormElement).reset();
                             }} className="flex items-center gap-2">
                               <input name="qty" type="text" placeholder="Qty" required
+                                title="Enter quantity"
                                 className="w-16 px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#4a6741] text-black placeholder:text-gray-400" />
-                              <button type="submit" className="p-1.5 text-[#4a6741] hover:bg-[#4a6741]/10 rounded-lg transition-colors">
+                              <button type="submit" title="Add to cart" className="p-1.5 text-[#4a6741] hover:bg-[#4a6741]/10 rounded-lg transition-colors">
                                 <Plus size={16} />
                               </button>
                             </form>
@@ -540,7 +641,13 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                  onClick={() => { setShowAddModal(false); setEditingItem(null); }}
+                  onClick={() => {
+                    if (isSavingItem) return;
+                    setShowAddModal(false);
+                    setEditingItem(null);
+                    setFormError(null);
+                    setFieldErrors({});
+                  }}
                 />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -551,89 +658,161 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h3 className="font-semibold text-gray-900">{editingItem ? 'Edit Item' : 'Add New Item'}</h3>
                     <button
-                      onClick={() => { setShowAddModal(false); setEditingItem(null); }}
-                      className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                      title="Close"
+                      disabled={isSavingItem}
+                      onClick={() => {
+                        if (isSavingItem) return;
+                        setShowAddModal(false);
+                        setEditingItem(null);
+                        setFormError(null);
+                        setFieldErrors({});
+                      }}
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <X size={18} />
                     </button>
                   </div>
 
                   <form
+                    noValidate
                     className="p-6 space-y-4"
-                    onSubmit={e => {
+                    onSubmit={async e => {
                       e.preventDefault();
+
+                      setFormError(null);
+                      setFieldErrors({});
+
                       const fd = new FormData(e.currentTarget);
-                      const cat = fd.get('category') as string;
-                      const newCat = fd.get('newCategory') as string;
-                      const finalCategory = cat === 'New Category' ? newCat : cat;
 
-                      const stockQty = parseFloat((fd.get('stock') as string).replace(/,/g, ''));
-                      const threshold = parseFloat((fd.get('threshold') as string).replace(/,/g, ''));
-                      const unitCost = parseFloat((fd.get('cost') as string).replace(/,/g, ''));
+                      const itemName = String(fd.get('name') || '').trim();
+                      const category = fd.get('category') as InventoryItemCategory;
+                      const unit = String(fd.get('unit') || '').trim();
 
-                      if (isNaN(stockQty) || isNaN(threshold) || isNaN(unitCost)) {
-                        alert('Please enter valid numbers for Initial Stock, Low Stock Alert At, and Unit Cost.');
+                      const stockQty = parseFloat(String(fd.get('stock') || '').replace(/,/g, ''));
+                      const threshold = parseFloat(String(fd.get('threshold') || '').replace(/,/g, ''));
+                      const unitCost = parseFloat(String(fd.get('cost') || '').replace(/,/g, ''));
+
+                      const inputs = { itemName, unit, stockQty, threshold, unitCost };
+
+                      const areAllValuesEmpty = Object.values(inputs).every(value => !String(value || '').trim());
+                      
+                      if (areAllValuesEmpty) {
+                        setFormError('Please fill in all required fields.');
                         return;
                       }
 
-                      if (editingItem) {
-                        setInventoryItems(prev => prev.map(item => item.itemId === editingItem.itemId ? {
-                          ...item,
-                          itemName: fd.get('name') as string,
-                          category: finalCategory,
-                          unit: fd.get('unit') as string,
-                          stockQty,
-                          threshold,
-                          unitCost
-                        } : item));
-                      } else {
-                        const newItem: InventoryItem = {
-                          itemId: Date.now(),
-                          itemName: fd.get('name') as string,
-                          category: finalCategory,
-                          unit: fd.get('unit') as string,
-                          stockQty,
-                          threshold,
-                          unitCost,
-                        };
-                        setInventoryItems(prev => [...prev, newItem]);
+                      if (!itemName || !unit) {
+                        setFormError('Please enter item name and unit.');
+                        return;
                       }
-                      setShowAddModal(false);
-                      setEditingItem(null);
+
+                      if (isNaN(stockQty) || isNaN(threshold) || isNaN(unitCost)) {
+                        setFormError('Please enter valid numbers for Initial Stock, Low Stock Alert At, and Unit Cost.');
+                        return;
+                      }
+
+                      if (stockQty < 0 || threshold < 0 || unitCost < 0) {
+                        setFormError('Stock, threshold, and unit cost must not be negative.');
+                        return;
+                      }
+
+                      const payload = {
+                        itemName,
+                        category,
+                        unit,
+                        stockQuantity: String(stockQty),
+                        lowThreshold: String(threshold),
+                        unitCost: String(unitCost)
+                      };
+
+                      try {
+                        setIsSavingItem(true);
+                        setFormError(null);
+                        setFieldErrors({});
+
+                        if (editingItem) {
+                          await inventoryItemApi.update(editingItem.itemId, payload);
+                        } else {
+                          await inventoryItemApi.create(payload);
+                        }
+
+                        setStockPage(1);
+                        await fetchInventoryItems();
+                        setCart([]);
+
+                        setShowAddModal(false);
+                        setEditingItem(null);
+                      } catch (err: any) {
+                        if (err instanceof ApiError) {
+                          setFieldErrors(err.errors?.fieldErrors || {});
+
+                          const firstFormError = err.errors?.formErrors?.[0];
+                          setFormError(firstFormError || err.message || 'Failed to save inventory item.');
+                          return;
+                        }
+                        setFormError(err.message || 'Failed to save inventory item.');
+                      } finally {
+                        setIsSavingItem(false);
+                      }
                     }}
                   >
+                    {formError && (
+                      <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                        {formError}
+                      </div>
+                    )}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Item Name</label>
-                      <input name="name" required type="text" placeholder="e.g. Almond Milk" defaultValue={editingItem?.itemName}
+                      <input name="name" type="text" placeholder="e.g. Almond Milk" defaultValue={editingItem?.itemName}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all text-gray-900 placeholder:text-gray-400" />
+                        {getFieldError('itemName') && (
+                          <p className="mt-1 text-xs font-medium text-red-600">
+                            {getFieldError('itemName')}
+                          </p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                        <select name="category" required defaultValue={editingItem?.category}
-                          onChange={e => {
-                            const newCatInput = e.currentTarget.parentElement?.querySelector('.new-cat-input') as HTMLInputElement;
-                            if (newCatInput) {
-                              newCatInput.style.display = e.currentTarget.value === 'New Category' ? 'block' : 'none';
-                              if (e.currentTarget.value === 'New Category') newCatInput.required = true;
-                              else newCatInput.required = false;
-                            }
-                          }}
-                          className="w-full h-[38px] px-3 pr-8 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all bg-white appearance-none text-gray-900">
-                          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                          {!categories.includes(editingItem?.category || '') && editingItem && (
-                            <option value={editingItem.category}>{editingItem.category}</option>
-                          )}
-                          <option value="New Category">Add new category...</option>
-                        </select>
-                        <input name="newCategory" type="text" placeholder="Category name"
-                          className="new-cat-input mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all hidden text-gray-900 placeholder:text-gray-400" />
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Category
+                        </label>
+
+                        <div className="relative">
+                          <select
+                            title="Category"
+                            name="category"
+                            defaultValue={editingItem?.category || INVENTORY_ITEM_CATEGORIES.BEVERAGE_INGREDIENTS}
+                            className="w-full h-[38px] px-3 pr-9 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all bg-white appearance-none text-gray-900 cursor-pointer"
+                          >
+                            {categories.map(category => (
+                              <option key={category} value={category}>
+                                {INVENTORY_ITEM_CATEGORY_LABELS[category]}
+                              </option>
+                            ))}
+                          </select>
+
+                          <ChevronDown
+                            size={16}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                          />
+                        </div>
+
+                        {getFieldError('category') && (
+                          <p className="mt-1 text-xs font-medium text-red-600">
+                            {getFieldError('category')}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Unit</label>
                         <input name="unit" required type="text" placeholder="e.g. L, kg, pcs" defaultValue={editingItem?.unit}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all text-gray-900 placeholder:text-gray-400" />
+                          {getFieldError('unit') && (
+                            <p className="mt-1 text-xs font-medium text-red-600">
+                              {getFieldError('unit')}
+                            </p>
+                          )}
                       </div>
                     </div>
 
@@ -642,32 +821,125 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                         <label className="block text-xs font-medium text-gray-700 mb-1">Initial Stock</label>
                         <input name="stock" required type="text" placeholder="0" defaultValue={editingItem?.stockQty}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all text-gray-900 placeholder:text-gray-400" />
+                        {getFieldError('stockQuantity') && (
+                          <p className="mt-1 text-xs font-medium text-red-600">
+                            {getFieldError('stockQuantity')}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Low Stock Alert At</label>
                         <input name="threshold" required type="text" placeholder="0" defaultValue={editingItem?.threshold}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all text-gray-900 placeholder:text-gray-400" />
+                          {getFieldError('lowThreshold') && (
+                            <p className="mt-1 text-xs font-medium text-red-600">
+                              {getFieldError('lowThreshold')}
+                            </p>
+                          )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Unit Cost (₱)</label>
                         <input name="cost" required type="text" placeholder="0.00" defaultValue={editingItem?.unitCost}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all text-gray-900 placeholder:text-gray-400" />
+                        {getFieldError('unitCost') && (
+                          <p className="mt-1 text-xs font-medium text-red-600">
+                            {getFieldError('unitCost')}
+                          </p>
+                        )}
                       </div>
                     </div>
 
                     <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-6">
-                      <button type="button" onClick={() => { setShowAddModal(false); setEditingItem(null); }}
-                        className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                      <button 
+                        type="button" 
+                        disabled={isSavingItem} 
+                        onClick={() => {
+                          if (isSavingItem) return;
+                          setShowAddModal(false);
+                          setEditingItem(null);
+                          setFormError(null);
+                          setFieldErrors({});
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         Cancel
                       </button>
-                      <button type="submit"
-                        className="px-4 py-2 text-sm font-medium text-white bg-[#4a6741] hover:bg-[#3d5536] rounded-lg transition-colors">
-                        {editingItem ? 'Save Changes' : 'Add Item'}
+                      <button
+                        type="submit"
+                        disabled={isSavingItem}
+                        className="px-4 py-2 text-sm font-medium text-white bg-[#4a6741] hover:bg-[#3d5536] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSavingItem ? 'Saving...' : editingItem ? 'Save Changes' : 'Add Item'}
                       </button>
                     </div>
                   </form>
                 </motion.div>
               </div>
+            )}
+          </AnimatePresence>
+
+          {/* ═══ DELETE ITEM CONFIRMATION MODAL ═══ */}
+          <AnimatePresence>
+            {deletingItem && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                  if (isDeletingItem) return;
+                  setDeleteError(null);
+                  setDeletingItem(null);
+                }}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  onClick={e => e.stopPropagation()}
+                  className="bg-white rounded-[20px] shadow-xl w-full max-w-[340px] p-6"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
+                    <Trash2 size={20} />
+                  </div>
+
+                  <h3 className="text-lg font-bold text-gray-900 mb-1.5 tracking-tight">
+                    Delete inventory item?
+                  </h3>
+
+                  <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                    Are you sure you want to delete{' '}
+                    <strong className="text-gray-800">{deletingItem.itemName}</strong>?
+                    Related historical records will remain, but their item reference may be cleared.
+                  </p>
+                  {deleteError && (
+                    <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                      {deleteError}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={handleDeleteItem}
+                      disabled={isDeletingItem}
+                      className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isDeletingItem ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        'Yes, Delete'
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {setDeletingItem(null); setDeleteError(null);}}
+                      disabled={isDeletingItem}
+                      className="w-full py-2.5 bg-transparent hover:bg-gray-50 text-gray-600 text-sm font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
             )}
           </AnimatePresence>
 
@@ -732,6 +1004,7 @@ function Pagination({ current, total, onChange, count }: { current: number; tota
       <p className="text-xs text-gray-400">{count} total</p>
       <div className="flex items-center gap-1">
         <button
+          title="Previous page"
           onClick={() => onChange(Math.max(1, current - 1))}
           disabled={current === 1}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -749,6 +1022,7 @@ function Pagination({ current, total, onChange, count }: { current: number; tota
           </button>
         ))}
         <button
+          title="Next page"
           onClick={() => onChange(Math.min(total, current + 1))}
           disabled={current === total}
           className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -756,6 +1030,16 @@ function Pagination({ current, total, onChange, count }: { current: number; tota
           <ChevronRight size={16} />
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Loading State Component ───
+function LoadingState({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-10 gap-3">
+      <div className="w-6 h-6 border-[3px] border-[#4a6741] border-t-transparent rounded-full animate-spin" />
+      <p className="text-xs text-gray-400 font-medium">{label}</p>
     </div>
   );
 }
