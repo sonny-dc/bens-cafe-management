@@ -16,6 +16,7 @@ type RestockCalculationRow = RowDataPacket & {
   calculation_id: number;
   user_id: number | null;
   total_estimated_cost: string;
+  posted_at: Date;
   created_at: Date;
 };
 
@@ -26,6 +27,7 @@ function mapRestockCalculationRow(
     calculationId: row.calculation_id,
     userId: row.user_id,
     totalEstimatedCost: row.total_estimated_cost,
+    postedAt: row.posted_at,
     createdAt: row.created_at
   };
 }
@@ -40,6 +42,7 @@ async function getRestockCalculationByIdWithConnection(
       calculation_id,
       user_id,
       total_estimated_cost,
+      posted_at,
       created_at
     FROM restock_calculations
     WHERE calculation_id = ?
@@ -68,9 +71,10 @@ export async function getAllRestockCalculations(): Promise<RestockCalculation[]>
         calculation_id,
         user_id,
         total_estimated_cost,
+        posted_at,
         created_at
       FROM restock_calculations
-      ORDER BY created_at DESC
+      ORDER BY posted_at DESC
       `
     );
 
@@ -104,13 +108,15 @@ export async function createRestockCalculationWithConnection(
     `
     INSERT INTO restock_calculations (
       user_id,
-      total_estimated_cost
+      total_estimated_cost,
+      posted_at
     )
-    VALUES (?, ?)
+    VALUES (?, ?, ?)
     `,
     [
       input.userId,
-      input.totalEstimatedCost
+      input.totalEstimatedCost,
+      input.postedAt
     ]
   );
 

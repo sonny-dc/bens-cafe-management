@@ -176,13 +176,13 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
       amount: Number(log.amount),
       transactionType: log.transactionType,
       description: getBudgetLogDescription(log),
-      createdAt: String(log.postedAt)
+      postedAt: String(log.postedAt)
     }));
 
     const sorted = mappedLogs.sort((a, b) => b.id - a.id);
 
     return sorted.filter(log => {
-      const logDate = new Date(log.createdAt).toISOString().split('T')[0];
+      const logDate = new Date(log.postedAt).toISOString().split('T')[0];
 
       const matchesDate =
         !auditDateFilter || logDate === auditDateFilter;
@@ -1108,8 +1108,9 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       return (
                         <tr key={log.id} className="hover:bg-gray-50/60">
                           <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">
-                            {new Date(log.createdAt).toLocaleString([], {
-                                                                          dateStyle: 'medium'
+                            {new Date(log.postedAt).toLocaleString([], {
+                                                                          dateStyle: 'medium',
+                                                                          timeStyle: 'short'
                                                                         })}
                           </td>
                           <td className="px-5 py-3">

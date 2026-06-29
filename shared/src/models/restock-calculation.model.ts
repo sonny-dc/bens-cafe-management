@@ -2,12 +2,14 @@ export interface RestockCalculation {
   calculationId: number;
   userId: number | null;
   totalEstimatedCost: string;
+  postedAt: Date;
   createdAt: Date;
 }
 
 export interface CreateRestockCalculationRepositoryInput {
   userId: number | null;
   totalEstimatedCost: string;
+  postedAt: string;
 }
 
 export interface UpdateRestockCalculationRepositoryInput {

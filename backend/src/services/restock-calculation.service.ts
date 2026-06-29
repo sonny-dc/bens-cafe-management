@@ -11,6 +11,7 @@ import {
 } from '../config/constants.js';
 
 import { withTransaction } from '../config/database.js';
+import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 
 import {
   restockCalculationRepository,
@@ -71,6 +72,7 @@ export async function executeRestockCalculation(
   restockCalculationItems: RestockCalculationItemWithInventoryDetails[];
 }> {
   return withTransaction(async connection => {
+    const postedAt = getCurrentAppDateTime();
     const normalizedItems = normalizeRestockItems(input);
     const itemIds = normalizedItems.map(item => item.itemId);
 
@@ -122,7 +124,8 @@ export async function executeRestockCalculation(
       await restockCalculationRepository.createRestockCalculationWithConnection(
         {
           userId,
-          totalEstimatedCost: totalEstimatedCostString
+          totalEstimatedCost: totalEstimatedCostString,
+          postedAt
         },
         connection
       );
@@ -194,7 +197,8 @@ export async function executeRestockCalculation(
         restockCalculationId: restockCalculation.calculationId,
         balanceBefore: toDecimalString(balanceBefore),
         balanceAfter: toDecimalString(balanceAfter),
-        userId
+        userId: userId,
+        postedAt: postedAt
       },
       connection
     );

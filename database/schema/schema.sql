@@ -171,6 +171,7 @@ CREATE TABLE restock_calculations (
   calculation_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NULL,
   total_estimated_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   CONSTRAINT fk_restock_calculations_user
