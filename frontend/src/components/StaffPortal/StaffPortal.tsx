@@ -59,9 +59,9 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
           {/* Brand */}
           <div className="flex items-center gap-3">
             <img
-              src="/bens-logo.png"
+              src="/bens-logo-plain.svg"
               alt="Ben's Cafe logo"
-              className="h-10 w-10 object-contain"
+              className="h-16 w-16 object-contain -mt-2"
             />
             <span className="font-semibold text-[15px] tracking-tight font-poppins text-gray-900">Ben's Cafe</span>
           </div>

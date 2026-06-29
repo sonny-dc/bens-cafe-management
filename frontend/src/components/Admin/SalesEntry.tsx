@@ -53,11 +53,13 @@ export function SalesEntry() {
   const totalPayroll = payroll.filter(e => e.isChecked).reduce((sum, e) => sum + e.dailyRate, 0);
 
   const [expenses, setExpenses] = useState<Expense[]>([
-    { id: 1, name: 'Supplies / Packaging', amount: '' },
-    { id: 2, name: 'Utilities (daily est.)', amount: '' },
-    { id: 3, name: 'Ingredients / Restocking', amount: '' },
-    { id: 4, name: 'Miscellaneous', amount: '' },
+    { id: 1, name: 'Utilities (daily est.)', amount: '' },
+    { id: 2, name: 'Miscellaneous', amount: '' },
   ]);
+
+  const [isCustomExpenseModalOpen, setIsCustomExpenseModalOpen] = useState(false);
+  const [customExpenseName, setCustomExpenseName] = useState('');
+  const [customExpenseAmount, setCustomExpenseAmount] = useState('');
 
   const updateExpense = (id: number, amount: string) => {
     setExpenses(prev => prev.map(exp => exp.id === id ? { ...exp, amount } : exp));
@@ -91,7 +93,7 @@ export function SalesEntry() {
           description: exp.name,
           amount: exp.amount,
           userId: null,
-          expenseCategory: exp.name.includes('Supplies') ? EXPENSE_CATEGORIES.SUPPLIES : EXPENSE_CATEGORIES.MISCELLANEOUS,
+          expenseCategory: exp.name.includes('Utilities') ? EXPENSE_CATEGORIES.UTILITIES : EXPENSE_CATEGORIES.MISCELLANEOUS,
           postedAt: new Date().toISOString()
         }))
       });
@@ -244,7 +246,7 @@ export function SalesEntry() {
                     </div>
                   ))}
                   
-                  <button type="button" className="w-full py-4 border border-dashed border-[#d2c2ad] text-[#8e7a63] rounded-xl text-sm font-medium hover:bg-[#fcfaf8] transition-colors flex items-center justify-center gap-2">
+                  <button type="button" onClick={() => setIsCustomExpenseModalOpen(true)} className="w-full py-4 border border-dashed border-[#d2c2ad] text-[#8e7a63] rounded-xl text-sm font-medium hover:bg-[#fcfaf8] transition-colors flex items-center justify-center gap-2">
                     <Plus size={16} /> Add Custom Expense
                   </button>
                 </div>
@@ -341,6 +343,79 @@ export function SalesEntry() {
         </div>
 
       </form>
+
+      {/* Custom Expense Modal */}
+      {isCustomExpenseModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden border border-gray-100"
+          >
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900 font-poppins">Add Custom Expense</h3>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Expense Name</label>
+                <input 
+                  type="text"
+                  value={customExpenseName}
+                  onChange={e => setCustomExpenseName(e.target.value)}
+                  placeholder="e.g. Transportation, Extra Supplies"
+                  className="w-full px-4 py-3 bg-[#fcfaf8] border border-[#e8dccb] rounded-xl focus:bg-white focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all placeholder-gray-400 text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">Amount</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">₱</span>
+                  <input 
+                    type="number" step="0.01" min="0" 
+                    value={customExpenseAmount}
+                    onChange={e => setCustomExpenseAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full pl-9 pr-4 py-3 bg-[#fcfaf8] border border-[#e8dccb] rounded-xl focus:bg-white focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all placeholder-gray-400 text-gray-900"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 pt-2 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCustomExpenseModalOpen(false);
+                  setCustomExpenseName('');
+                  setCustomExpenseAmount('');
+                }}
+                className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!customExpenseName.trim() || !customExpenseAmount}
+                onClick={() => {
+                  setExpenses(prev => [...prev, {
+                    id: Date.now(),
+                    name: customExpenseName,
+                    amount: customExpenseAmount
+                  }]);
+                  setIsCustomExpenseModalOpen(false);
+                  setCustomExpenseName('');
+                  setCustomExpenseAmount('');
+                }}
+                className="px-5 py-2.5 text-sm font-medium text-white bg-[#4a6741] hover:bg-[#3d5535] rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add Expense
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

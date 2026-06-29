@@ -5,6 +5,7 @@ import { SalesEntry } from './SalesEntry';
 import { AdminStaffBoard } from './AdminStaffBoard';
 import { StaffRegistry } from './StaffRegistry';
 import { AdminInventory } from './AdminInventory';
+import { AdminReports } from './AdminReports';
 
 type Tab = 'dashboard' | 'sales' | 'staff_board' | 'inventory' | 'reports' | 'staff_registry';
 
@@ -32,11 +33,15 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
       <aside className="w-64 bg-[#f2f4f6] flex flex-col justify-between shrink-0 h-screen sticky top-0">
         <div>
           {/* Header */}
-          <div className="p-6 flex items-center gap-3">
-            <img src="/bens-logo.png" alt="Ben's Cafe Logo" className="w-10 object-contain" />
-            <div className="leading-tight">
+          <div className="p-5 flex items-center gap-1">
+            <img
+              src="/bens-logo-plain.svg"
+              alt="Ben's Cafe logo"
+              className="h-16 w-16 object-contain scale-[1.15] -ml-2"
+            />
+            <div className="leading-tight overflow-hidden">
               <h1 className="font-bold text-gray-900 text-[15px] font-poppins">Ben's Cafe</h1>
-              <p className="text-[11px] text-[#789e81] font-medium uppercase tracking-wider">Management System</p>
+              <p className="text-[10px] text-[#789e81] font-medium uppercase tracking-wide whitespace-nowrap">Management System</p>
             </div>
           </div>
 
@@ -120,14 +125,15 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className={activeTab === 'staff_board' || activeTab === 'inventory' ? "max-w-7xl mx-auto" : "max-w-4xl mx-auto"}
+                className={activeTab === 'staff_board' || activeTab === 'inventory' || activeTab === 'reports' ? "max-w-7xl mx-auto" : "max-w-4xl mx-auto"}
               >
                 {activeTab === 'sales' && <SalesEntry />}
                 {activeTab === 'staff_board' && <AdminStaffBoard />}
                 {activeTab === 'staff_registry' && <StaffRegistry />}
                 {activeTab === 'inventory' && <AdminInventory onSubTitleChange={setInventorySubTitle} />}
+                {activeTab === 'reports' && <AdminReports />}
                 
-                {activeTab !== 'sales' && activeTab !== 'staff_board' && activeTab !== 'staff_registry' && activeTab !== 'inventory' && (
+                {activeTab !== 'sales' && activeTab !== 'staff_board' && activeTab !== 'staff_registry' && activeTab !== 'inventory' && activeTab !== 'reports' && (
                   <div className="flex flex-col items-center justify-center text-center h-[50vh] text-gray-400">
                     <p className="text-lg font-medium">{tabs.find(t => t.id === activeTab)?.label}</p>
                     <p className="text-sm">Coming soon</p>
