@@ -5,7 +5,6 @@ import {
   Package,
   MessageSquare,
   Timer,
-  ArrowRight,
   Clock,
   User,
   AlertCircle,
@@ -16,7 +15,7 @@ import { shiftApi } from '../../api/shiftApi';
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { notesApi } from '../../api/notesApi';
 import { inventoryBudgetAccountApi } from '../../api/inventoryBudgetAccountApi';
-import type { SalesEntry, Shift, InventoryRequestListItem, StaffMessage, ActiveShiftItem } from 'shared/models';
+import type { SalesEntry, InventoryRequestListItem, StaffMessage, ActiveShiftItem } from 'shared/models';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });

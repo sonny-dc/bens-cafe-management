@@ -12,4 +12,4 @@ export * as inventoryItemService from './inventory-item.service.js';
 export * as restockCalculationService from './restock-calculation.service.js';
 export * as inventoryBudgetAccountService from './inventory-budget-account.service.js';
 export * as inventoryBudgetLogService from './inventory-budget-log.service.js';
-
+export * as expenseService from './expense.service.js';

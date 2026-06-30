@@ -45,3 +45,16 @@ export interface UpdateEmployeeInput {
     hourlyRate?: string;
     employmentStatus?: EmploymentStatus;
 }
+
+/**
+ * Used for sales entry input to represent an 
+ * employee's payroll information for a specific 
+ * sales entry.
+ */
+export interface EmployeePayroll {
+  id: number;
+  name: string;
+  role: string;
+  dailyRate: number;
+  isChecked: boolean;
+}

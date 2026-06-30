@@ -270,6 +270,7 @@ CREATE TABLE sales_entries (
   online_card_sales DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   physical_cash_count DECIMAL(12,2) NULL DEFAULT NULL,
   total_revenue DECIMAL(12,2) GENERATED ALWAYS AS (cash_sales + online_card_sales) STORED,
+  net_profit DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   user_id INT NULL,
   posted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

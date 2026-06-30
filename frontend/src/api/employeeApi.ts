@@ -1,9 +1,9 @@
-import type { EmployeeProfile, RegisterEmployeeInput, UpdateEmployeeInput } from 'shared/models';
+import type { Employee, EmployeeProfile, RegisterEmployeeInput, UpdateEmployeeInput } from 'shared/models';
 import { apiFetch } from './apiFetch';
 import { getApiError } from './apiError';
 
 export const employeeApi = {
-  async getAllEmployees() {
+  async getAllEmployees(): Promise<Employee[]> {
     const res = await apiFetch('/employees');
     if (!res.ok) {
       throw await getApiError(res, 'Failed to fetch employees');
@@ -11,7 +11,7 @@ export const employeeApi = {
     const json = await res.json();
     return json.data;
   },
-  async getEmployeeProfiles() {
+  async getEmployeeProfiles(): Promise<EmployeeProfile[]> {
     const res = await apiFetch('/employees/profiles');
     if (!res.ok) {
       throw await getApiError(res, 'Failed to fetch employee profiles');

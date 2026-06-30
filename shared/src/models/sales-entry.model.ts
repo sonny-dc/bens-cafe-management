@@ -7,10 +7,10 @@ export interface SalesEntry {
     onlineCardSales: string;
     physicalCashCount: string | null;
     totalRevenue: string;
+    netProfit: string;
     userId: number | null;
     postedAt: Date;
     createdAt: Date;
-    netProfit?: number;
 }
 
 export interface CreateSalesEntryInput {
@@ -26,7 +26,6 @@ export interface CreateSalesEntryTransactionInput {
     onlineCardSales: string;
     physicalCashCount: string | null;
     userId: number | null;
-    postedAt: string;
     payrollEntries: CreatePayrollEntryInput[];
     expenses: CreateExpenseInput[];
 }

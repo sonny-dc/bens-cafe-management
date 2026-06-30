@@ -440,6 +440,7 @@ export function AdminReports() {
               </span>
               <div className="flex items-center gap-2">
                 <button
+                  title='Previous Page'
                   onClick={() => setSalesPage(p => Math.max(1, p - 1))}
                   disabled={salesPage === 1}
                   className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -447,6 +448,7 @@ export function AdminReports() {
                   <ChevronLeft size={16} />
                 </button>
                 <button
+                  title='Next Page'
                   onClick={() => setSalesPage(p => Math.min(totalSalesPages, p + 1))}
                   disabled={salesPage === totalSalesPages}
                   className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -637,6 +639,7 @@ export function AdminReports() {
                 </span>
                 <div className="flex items-center gap-2">
                   <button
+                    title='Previous Page'
                     onClick={() => setShiftsPage(p => Math.max(1, p - 1))}
                     disabled={shiftsPage === 1}
                     className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -644,6 +647,7 @@ export function AdminReports() {
                     <ChevronLeft size={16} />
                   </button>
                   <button
+                    title='Next Page'
                     onClick={() => setShiftsPage(p => Math.min(totalShiftsPages, p + 1))}
                     disabled={shiftsPage === totalShiftsPages}
                     className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -768,6 +772,7 @@ export function AdminReports() {
               </span>
               <div className="flex items-center gap-2">
                 <button
+                  title='Previous Page'
                   onClick={() => setExpensesPage(p => Math.max(1, p - 1))}
                   disabled={expensesPage === 1}
                   className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -775,6 +780,7 @@ export function AdminReports() {
                   <ChevronLeft size={16} />
                 </button>
                 <button
+                  title='Next Page'
                   onClick={() => setExpensesPage(p => Math.min(totalExpensesPages, p + 1))}
                   disabled={expensesPage === totalExpensesPages}
                   className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"

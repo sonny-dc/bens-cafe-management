@@ -87,6 +87,12 @@ export async function createSalesEntryTransaction(
         );
 
         const netProfit = totalRevenue - (totalPayroll + totalExpenses);
+
+        const updatedSalesEntry = await salesEntryRepository.updateNetProfitWithConnection(
+            salesEntry.salesEntryId,
+            netProfit.toFixed(2),
+            connection
+        );
         const restockingAllotment = netProfit > 0 ? netProfit * 0.5 : 0;
 
         if (restockingAllotment > 0) {
@@ -128,7 +134,7 @@ export async function createSalesEntryTransaction(
         }
         
         return {
-            salesEntry,
+            salesEntry: updatedSalesEntry,
             payrollEntries,
             expenses
         };

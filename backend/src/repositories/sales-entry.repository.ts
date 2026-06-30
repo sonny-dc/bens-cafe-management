@@ -17,6 +17,7 @@ type SalesEntryRow = RowDataPacket & {
     online_card_sales: string;
     physical_cash_count: string | null;
     total_revenue: string;
+    net_profit: string;
     user_id: number | null;
     posted_at: Date;
     created_at: Date;
@@ -30,6 +31,7 @@ function mapSalesEntryRow(row: SalesEntryRow): SalesEntry {
         onlineCardSales: row.online_card_sales,
         physicalCashCount: row.physical_cash_count,
         totalRevenue: row.total_revenue,
+        netProfit: row.net_profit,
         userId: row.user_id,
         postedAt: row.posted_at,
         createdAt: row.created_at
@@ -129,3 +131,27 @@ export async function createSalesEntryWithConnection(
     
 }
 
+export async function updateNetProfitWithConnection(
+    salesEntryId: number,
+    netProfit: string,
+    connection: PoolConnection
+): Promise<SalesEntry> {
+    await connection.execute<ResultSetHeader>(
+        `
+        UPDATE sales_entries
+        SET net_profit = ?
+        WHERE sales_entry_id = ?
+        `
+        ,
+        [netProfit, salesEntryId]
+    ); 
+    const updatedSalesEntry = await getSalesEntryByIdWithConnection(
+        salesEntryId,
+        connection
+    );
+
+    if (updatedSalesEntry === null) {
+        throw new Error("Failed to retrieve the updated sales entry.");
+    }
+    return updatedSalesEntry;
+}

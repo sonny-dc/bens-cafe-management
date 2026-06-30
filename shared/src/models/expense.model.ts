@@ -11,7 +11,7 @@ export interface Expense {
     createdAt: Date;
 }
 
-export interface CreateExpenseInput {
+export interface CreateExpenseRepositoryInput {
     salesEntryId: number;
     description: string | null;
     amount: string;
@@ -23,4 +23,26 @@ export interface CreateExpenseInput {
      * creating an expense entry.
      */
     postedAt: string;
+}
+
+/**
+ * Used inside the sales entry transaction request body.
+ * Backend will add salesEntryId, userId, and postedAt.
+*/
+export interface CreateExpenseInput {
+    description: string | null;
+    amount: string;
+    expenseCategory: ExpenseCategory;
+}
+
+/**
+ * Used for representing an expense item in the sales entry form.
+ * Contains frontend-only fields like id and isCustom.
+ */
+export interface ExpenseFormItem {
+  formItemId: number;
+  expenseCategory: ExpenseCategory;
+  amount: string;
+  description: string | null;
+  isCustom: boolean;
 }

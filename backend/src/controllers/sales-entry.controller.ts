@@ -10,13 +10,7 @@ export async function getAllSalesEntries(
 ): Promise<void> {
     try {
         const salesEntries = await salesEntryService.getAllSalesEntries();
-        if (salesEntries.length === 0) {
-            res.status(404).json({
-                success: false,
-                message: 'No sales entries found.'
-            });
-            return;
-        }
+        
         res.status(200).json({
             success: true,
             message: 'Sales entries retrieved successfully.',
@@ -67,7 +61,8 @@ export async function createSalesEntry(
     res: Response
 ): Promise<void> {
     try {
-        const newSalesEntry = await salesEntryService.createSalesEntryTransaction(req.body);
+        const userId = req.session?.user?.userId;
+        const newSalesEntry = await salesEntryService.createSalesEntryTransaction({...req.body, userId: userId});
         if (!newSalesEntry) {
             res.status(400).json({
             success: false,

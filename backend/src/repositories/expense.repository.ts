@@ -6,7 +6,7 @@ import type {
 
 import type { 
     Expense, 
-    CreateExpenseInput 
+    CreateExpenseRepositoryInput 
 } from '../models/index.js';
 import type { ExpenseCategory } from '../config/constants.js';
 
@@ -65,7 +65,7 @@ export async function getAllExpenses(): Promise<Expense[]> {
         const [rows] = await connection.query<ExpenseRow[]>(
             `
             SELECT * FROM expenses
-            ORDER BY created_at ASC
+            ORDER BY posted_at ASC
             `
         );
         return rows.map(mapExpenseRow);
@@ -87,7 +87,7 @@ export async function getExpenseById(
  * ROUTE: POST /api/expenses/
  */
 export async function createExpenseWithConnection(
-    input: CreateExpenseInput,
+    input: CreateExpenseRepositoryInput,
     connection: PoolConnection
 ): Promise<Expense> {
     const [result] = await connection.execute<ResultSetHeader>(
