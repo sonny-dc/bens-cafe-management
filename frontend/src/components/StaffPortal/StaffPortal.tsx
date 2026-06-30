@@ -57,13 +57,16 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
       >
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Brand */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <img
               src="/bens-logo-plain.svg"
               alt="Ben's Cafe logo"
-              className="h-16 w-16 object-contain -mt-2"
+              className="h-14 w-14 object-contain scale-[1.15] -ml-2"
             />
-            <span className="font-semibold text-[15px] tracking-tight font-poppins text-gray-900">Ben's Cafe</span>
+            <div className="leading-tight overflow-hidden">
+              <h1 className="font-bold text-gray-900 text-[15px] font-poppins">Ben's Cafe</h1>
+              <p className="text-[10px] text-[#789e81] font-medium uppercase tracking-wide whitespace-nowrap">Management System</p>
+            </div>
           </div>
 
           {/* Right side */}
