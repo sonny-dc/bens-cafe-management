@@ -8,6 +8,7 @@ export async function login(
 ): Promise<void> {
     try {
         const user = await authService.loginUser(req.body);
+
         if (!user) {
             res.status(401).json({
                 success: false,
@@ -17,27 +18,45 @@ export async function login(
         }
 
         req.session.user = user;
-        res.status(200).json({
-            success: true,
-            message: 'Login successful.',
-            data: {
-                user: {
-                    userId: user.userId,
-                    username: user.username,
-                    fullName: user.fullName,
-                    role: user.role,
-                    employeeId: user.employeeId
-                }
+
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to save login session.'
+                });
+                return;
             }
+
+            res.status(200).json({
+                success: true,
+                message: 'Login successful.',
+                data: {
+                    user: {
+                        userId: user.userId,
+                        username: user.username,
+                        fullName: user.fullName,
+                        role: user.role,
+                        employeeId: user.employeeId
+                    }
+                }
+            });
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while logging in.';
+        const errorMessage =
+            error instanceof Error
+                ? error.message
+                : 'An unexpected error occurred while logging in.';
+
         res.status(403).json({
             success: false,
             message: errorMessage
         });
     }
 }
+
 
 export async function logout(
     req: Request,
@@ -51,7 +70,12 @@ export async function logout(
             });
             return;
         }
-        res.clearCookie(SESSION_COOKIE_NAME);
+
+        res.clearCookie(SESSION_COOKIE_NAME, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+        });
 
         res.status(200).json({
             success: true,
