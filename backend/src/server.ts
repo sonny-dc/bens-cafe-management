@@ -16,6 +16,7 @@ import {
   shiftRoutes, 
   staffMessageRoutes,
   salesEntryRoutes,
+  expenseRoutes,
   inventoryRequestRoutes,
   inventoryItemRoutes,
   restockCalculationRoutes,
@@ -86,6 +87,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/shifts", shiftRoutes);
 app.use("/api/staff-messages", staffMessageRoutes);
 app.use("/api/sales-entries", salesEntryRoutes);
+app.use("/api/expenses", expenseRoutes);
 app.use("/api/inventory-requests", inventoryRequestRoutes);
 app.use("/api/inventory-items", inventoryItemRoutes);
 app.use("/api/restock-calculations", restockCalculationRoutes);

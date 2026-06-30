@@ -3,24 +3,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, Plus } from 'lucide-react';
 import { salesApi } from '../../api/salesApi';
 import { employeeApi } from '../../api/employeeApi';
-import type { Employee } from 'shared/models';
-import { EMPLOYMENT_STATUS, EXPENSE_CATEGORIES } from 'shared/constants';
+import type { EmployeeProfile, EmployeePayroll, ExpenseFormItem } from 'shared/models';
+import { EMPLOYMENT_STATUS, EXPENSE_CATEGORIES, type ExpenseCategory } from 'shared/constants';
 
 type Step = 1 | 2 | 3 | 4;
 
-interface EmployeePayroll {
-  id: number;
-  name: string;
-  role: string;
-  dailyRate: number;
-  isChecked: boolean;
+const expenseCategoryOptions = Object.values(EXPENSE_CATEGORIES);
+
+function toTitleCaseFromEnum(value: string): string {
+  return value
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
-interface Expense {
-  id: number;
-  name: string;
-  amount: string;
-}
+const defaultExpenseFormItems: ExpenseFormItem[] = [
+    {
+      formItemId: 1,
+      expenseCategory: EXPENSE_CATEGORIES.UTILITIES,
+      amount: '',
+      description: null,
+      isCustom: false
+    },
+    {
+      formItemId: 2,
+      expenseCategory: EXPENSE_CATEGORIES.MISCELLANEOUS,
+      amount: '',
+      description: null,
+      isCustom: false
+    }
+  ];
 
 export function SalesEntry() {
   const [step, setStep] = useState<Step>(1);
@@ -36,10 +48,10 @@ export function SalesEntry() {
   const [payroll, setPayroll] = useState<EmployeePayroll[]>([]);
 
   useEffect(() => {
-    employeeApi.getAllEmployees().then(data => {
-      setPayroll(data.filter((e: Employee) => e.employmentStatus === EMPLOYMENT_STATUS.ACTIVE).map((e: Employee) => ({
+    employeeApi.getEmployeeProfiles().then(data => {
+      setPayroll(data.filter((e: EmployeeProfile) => e.employmentStatus === EMPLOYMENT_STATUS.ACTIVE).map((e: EmployeeProfile) => ({
         id: e.employeeId,
-        name: `Staff ${e.employeeCode}`,
+        name: e.fullName,
         role: e.jobRole,
         dailyRate: Number(e.dailyPay),
         isChecked: false
@@ -51,18 +63,21 @@ export function SalesEntry() {
     setPayroll(prev => prev.map(emp => emp.id === id ? { ...emp, isChecked: !emp.isChecked } : emp));
   };
   const totalPayroll = payroll.filter(e => e.isChecked).reduce((sum, e) => sum + e.dailyRate, 0);
-
-  const [expenses, setExpenses] = useState<Expense[]>([
-    { id: 1, name: 'Utilities (daily est.)', amount: '' },
-    { id: 2, name: 'Miscellaneous', amount: '' },
-  ]);
+  const [expenses, setExpenses] = useState<ExpenseFormItem[]>(defaultExpenseFormItems);
 
   const [isCustomExpenseModalOpen, setIsCustomExpenseModalOpen] = useState(false);
-  const [customExpenseName, setCustomExpenseName] = useState('');
+  const [customExpenseCategory, setCustomExpenseCategory] = useState<ExpenseCategory>(
+    EXPENSE_CATEGORIES.MISCELLANEOUS
+  );
+  const [customExpenseDescription, setCustomExpenseDescription] = useState('');
   const [customExpenseAmount, setCustomExpenseAmount] = useState('');
 
-  const updateExpense = (id: number, amount: string) => {
-    setExpenses(prev => prev.map(exp => exp.id === id ? { ...exp, amount } : exp));
+  const updateExpense = (formItemId: number, amount: string) => {
+    setExpenses(prev =>
+      prev.map(exp =>
+        exp.formItemId === formItemId ? { ...exp, amount } : exp
+      )
+    );
   };
   const totalExpenses = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
 
@@ -81,21 +96,17 @@ export function SalesEntry() {
         onlineCardSales: String(parsedCard),
         physicalCashCount: physicalCash ? String(physicalCash) : null,
         userId: null,
-        postedAt: new Date().toISOString(),
         payrollEntries: payroll.filter(p => p.isChecked).map(p => ({
-          salesEntryId: 0,
           employeeId: p.id,
           grossPay: String(p.dailyRate),
-          postedAt: new Date().toISOString()
         })),
-        expenses: expenses.filter(exp => exp.amount).map(exp => ({
-          salesEntryId: 0,
-          description: exp.name,
-          amount: exp.amount,
-          userId: null,
-          expenseCategory: exp.name.includes('Utilities') ? EXPENSE_CATEGORIES.UTILITIES : EXPENSE_CATEGORIES.MISCELLANEOUS,
-          postedAt: new Date().toISOString()
-        }))
+        expenses: expenses
+          .filter(exp => exp.amount)
+          .map(exp => ({
+            description: exp.description,
+            amount: Number(exp.amount).toFixed(2),
+            expenseCategory: exp.expenseCategory
+          }))
       });
       setIsSuccess(true);
       setTimeout(() => {
@@ -103,7 +114,7 @@ export function SalesEntry() {
         setStep(1);
         setCashSales(''); setCardSales(''); setPhysicalCash('');
         setPayroll(prev => prev.map(p => ({ ...p, isChecked: false })));
-        setExpenses(prev => prev.map(exp => ({ ...exp, amount: '' })));
+        setExpenses(defaultExpenseFormItems);
       }, 2000);
     } catch (err) {
       console.error(err);
@@ -236,12 +247,43 @@ export function SalesEntry() {
 
                 <div className="space-y-3">
                   {expenses.map(exp => (
-                    <div key={exp.id} className="flex items-center justify-between p-3.5 bg-white rounded-xl border border-[#e8dccb]">
-                      <span className="text-sm font-semibold text-gray-800">{exp.name}</span>
-                      <div className="relative w-32">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none text-sm">₱</span>
-                        <input type="number" step="0.01" min="0" value={exp.amount} onChange={e => updateExpense(exp.id, e.target.value)} placeholder="0.00"
-                          className="w-full pl-7 pr-3 py-2 bg-[#fcfaf8] border border-gray-200 rounded-lg focus:bg-white focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all text-sm font-medium placeholder-gray-500 text-gray-900" />
+                    <div
+                      key={exp.formItemId}
+                      className="flex items-center justify-between gap-4 p-3.5 bg-white rounded-xl border border-[#e8dccb]"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-gray-800">
+                            {toTitleCaseFromEnum(exp.expenseCategory)}
+                          </span>
+
+                          {exp.isCustom && (
+                            <span className="text-[10px] font-bold text-[#8e7a63] bg-[#fef9f2] border border-[#f5e3cd] px-2 py-0.5 rounded-md">
+                              Custom
+                            </span>
+                          )}
+                        </div>
+
+                        {exp.description && (
+                          <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">
+                            {exp.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="relative w-32 shrink-0">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none text-sm">
+                          ₱
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={exp.amount}
+                          onChange={e => updateExpense(exp.formItemId, e.target.value)}
+                          placeholder="0.00"
+                          className="w-full pl-7 pr-3 py-2 bg-[#fcfaf8] border border-gray-200 rounded-lg focus:bg-white focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all text-sm font-medium placeholder-gray-500 text-gray-900"
+                        />
                       </div>
                     </div>
                   ))}
@@ -359,21 +401,51 @@ export function SalesEntry() {
             
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Expense Name</label>
-                <input 
-                  type="text"
-                  value={customExpenseName}
-                  onChange={e => setCustomExpenseName(e.target.value)}
-                  placeholder="e.g. Transportation, Extra Supplies"
-                  className="w-full px-4 py-3 bg-[#fcfaf8] border border-[#e8dccb] rounded-xl focus:bg-white focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all placeholder-gray-400 text-gray-900"
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Expense Category
+                </label>
+
+                <select
+                  title="Expense Category"
+                  value={customExpenseCategory}
+                  onChange={e => setCustomExpenseCategory(e.target.value as ExpenseCategory)}
+                  className="w-full px-4 py-3 bg-[#fcfaf8] border border-[#e8dccb] rounded-xl focus:bg-white focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all text-gray-900"
+                >
+                  {expenseCategoryOptions.map(category => (
+                    <option key={category} value={category}>
+                      {toTitleCaseFromEnum(category)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Description
+                </label>
+
+                <textarea
+                  value={customExpenseDescription}
+                  onChange={e => setCustomExpenseDescription(e.target.value)}
+                  placeholder="Optional details, e.g. supply pickup fare, extra mop, boosted post..."
+                  rows={3}
+                  maxLength={255}
+                  className="w-full px-4 py-3 bg-[#fcfaf8] border border-[#e8dccb] rounded-xl focus:bg-white focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all placeholder-gray-400 text-gray-900 resize-none"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">Amount</label>
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Amount
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">₱</span>
-                  <input 
-                    type="number" step="0.01" min="0" 
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">
+                    ₱
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
                     value={customExpenseAmount}
                     onChange={e => setCustomExpenseAmount(e.target.value)}
                     placeholder="0.00"
@@ -388,7 +460,8 @@ export function SalesEntry() {
                 type="button"
                 onClick={() => {
                   setIsCustomExpenseModalOpen(false);
-                  setCustomExpenseName('');
+                  setCustomExpenseCategory(EXPENSE_CATEGORIES.MISCELLANEOUS);
+                  setCustomExpenseDescription('');
                   setCustomExpenseAmount('');
                 }}
                 className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
@@ -397,15 +470,22 @@ export function SalesEntry() {
               </button>
               <button
                 type="button"
-                disabled={!customExpenseName.trim() || !customExpenseAmount}
+                disabled={!customExpenseAmount}
                 onClick={() => {
-                  setExpenses(prev => [...prev, {
-                    id: Date.now(),
-                    name: customExpenseName,
-                    amount: customExpenseAmount
-                  }]);
+                  setExpenses(prev => [
+                    ...prev,
+                    {
+                      formItemId: Date.now(),
+                      expenseCategory: customExpenseCategory,
+                      amount: customExpenseAmount,
+                      description: customExpenseDescription.trim() || null,
+                      isCustom: true
+                    }
+                  ]);
+
                   setIsCustomExpenseModalOpen(false);
-                  setCustomExpenseName('');
+                  setCustomExpenseCategory(EXPENSE_CATEGORIES.MISCELLANEOUS);
+                  setCustomExpenseDescription('');
                   setCustomExpenseAmount('');
                 }}
                 className="px-5 py-2.5 text-sm font-medium text-white bg-[#4a6741] hover:bg-[#3d5535] rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

@@ -8,13 +8,14 @@ import inventoryItemRoutes from './inventory-item.routes.js';
 import restockCalculationRoutes from './restock-calculation.routes.js';
 import inventoryBudgetAccountRoutes from './inventory-budget-account.routes.js';
 import inventoryBudgetLogRoutes from './inventory-budget-log.routes.js';
-
+import expenseRoutes from './expense.routes.js';
 
 export { 
     employeeRoutes, 
     shiftRoutes, 
     staffMessageRoutes, 
-    salesEntryRoutes, 
+    salesEntryRoutes,
+    expenseRoutes,
     inventoryRequestRoutes,
     inventoryItemRoutes,
     restockCalculationRoutes,

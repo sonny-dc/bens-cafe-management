@@ -6,6 +6,7 @@ import { AdminStaffBoard } from './AdminStaffBoard';
 import { StaffRegistry } from './StaffRegistry';
 import { AdminInventory } from './AdminInventory';
 import { AdminReports } from './AdminReports';
+import { AdminDashboard } from './AdminDashboard';
 
 type Tab = 'dashboard' | 'sales' | 'staff_board' | 'inventory' | 'reports' | 'staff_registry';
 
@@ -23,7 +24,7 @@ interface AdminPortalProps {
 }
 
 export function AdminPortal({ onLogout }: AdminPortalProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('sales');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [inventorySubTitle, setInventorySubTitle] = useState('Stock Overview');
 
   return (
@@ -125,15 +126,16 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className={activeTab === 'staff_board' || activeTab === 'inventory' || activeTab === 'reports' ? "max-w-7xl mx-auto" : "max-w-4xl mx-auto"}
+                className={activeTab === 'staff_board' || activeTab === 'inventory' || activeTab === 'reports' || activeTab === 'dashboard' ? "max-w-7xl mx-auto" : "max-w-4xl mx-auto"}
               >
+                {activeTab === 'dashboard' && <AdminDashboard />}
                 {activeTab === 'sales' && <SalesEntry />}
                 {activeTab === 'staff_board' && <AdminStaffBoard />}
                 {activeTab === 'staff_registry' && <StaffRegistry />}
                 {activeTab === 'inventory' && <AdminInventory onSubTitleChange={setInventorySubTitle} />}
                 {activeTab === 'reports' && <AdminReports />}
                 
-                {activeTab !== 'sales' && activeTab !== 'staff_board' && activeTab !== 'staff_registry' && activeTab !== 'inventory' && activeTab !== 'reports' && (
+                {activeTab !== 'dashboard' && activeTab !== 'sales' && activeTab !== 'staff_board' && activeTab !== 'staff_registry' && activeTab !== 'inventory' && activeTab !== 'reports' && (
                   <div className="flex flex-col items-center justify-center text-center h-[50vh] text-gray-400">
                     <p className="text-lg font-medium">{tabs.find(t => t.id === activeTab)?.label}</p>
                     <p className="text-sm">Coming soon</p>

@@ -7,7 +7,7 @@ export interface PayrollEntry {
     createdAt: Date;
 }
 
-export interface CreatePayrollEntryInput {
+export interface CreatePayrollEntryRepositoryInput {
     salesEntryId: number;
     employeeId: number;
     grossPay: string;
@@ -16,4 +16,9 @@ export interface CreatePayrollEntryInput {
      * current local date and time when creating a payroll entry.
      */
     postedAt: string;
+}
+
+export interface CreatePayrollEntryInput {
+    employeeId: number;
+    grossPay: string;
 }

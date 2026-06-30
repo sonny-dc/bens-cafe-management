@@ -1,5 +1,5 @@
-import { 
-    type CreatePayrollEntryInput,
+import {
+    type CreatePayrollEntryRepositoryInput,
     type PayrollEntry 
 } from "../models/index.js";
 
@@ -79,7 +79,7 @@ export async function getPayrollEntryById(
  * ROUTE: POST /api/payroll-entries/
  */
 export async function createPayrollEntryWithConnection(
-    input: CreatePayrollEntryInput,
+    input: CreatePayrollEntryRepositoryInput,
     connection: PoolConnection
 ): Promise<PayrollEntry> {
     const [result] = await connection.execute<ResultSetHeader>(

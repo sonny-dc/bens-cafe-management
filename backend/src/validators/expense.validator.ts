@@ -1,6 +1,6 @@
 // validators/expense.validator.ts
 import { z } from 'zod';
-import { decimalString, nullablePositiveInt, positiveInt } from './common.validator.js';
+import { decimalString, positiveInt } from './common.validator.js';
 
 import { EXPENSE_CATEGORIES } from '../config/constants.js';
 
@@ -20,8 +20,6 @@ export const createExpenseSchema = z.object({
         .transform((value) => value || null),
 
     amount: decimalString,
-
-    userId: nullablePositiveInt,
 
     expenseCategory: expenseCategorySchema
 });

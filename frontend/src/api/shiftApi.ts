@@ -1,7 +1,7 @@
 import { apiFetch } from './apiFetch';
-import type { Shift } from 'shared/models';
+import type { Shift, ActiveShiftItem } from 'shared/models';
 
-export type { Shift };
+export type { Shift, ActiveShiftItem };
 
 export const shiftApi = {
   async getMyActiveShift(): Promise<Shift | null> {
@@ -53,6 +53,22 @@ export const shiftApi = {
         errorData.message ||
         errorData.error ||
         'Failed to end shift'
+      );
+    }
+
+    const json = await response.json();
+    return json.data;
+  },
+
+  async getAllActiveShifts(): Promise<ActiveShiftItem[]> {
+    const response = await apiFetch('/shifts/active/all');
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message ||
+        errorData.error ||
+        'Failed to fetch all active shifts'
       );
     }
 

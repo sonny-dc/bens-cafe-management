@@ -18,7 +18,6 @@ export const createSalesEntryTransactionSchema = z.object({
     cashSales: decimalString,
     onlineCardSales: decimalString,
     physicalCashCount: nullableDecimalString,
-    userId: nullablePositiveInt,
 
     payrollEntries: z.array(createPayrollEntrySchema).min(1, 'At least one payroll entry is required'),
     expenses: z.array(createExpenseSchema).optional().default([])
