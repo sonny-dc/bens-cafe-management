@@ -4,10 +4,9 @@
   "description": "",
   "main": "src/server.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm run build && node dist/server.js",
+    "start": "node dist/server.js",
     "build": "tsc",
-    "dev": "node --watch --loader ts-node/esm src/server.ts"
+    "dev": "tsx watch src/server.ts"
   },
   "keywords": [],
   "author": "",
@@ -35,6 +34,7 @@
     "@types/luxon": "^3.7.2",
     "@types/node": "^25.9.3",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
