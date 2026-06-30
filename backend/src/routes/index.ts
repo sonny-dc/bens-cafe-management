@@ -9,6 +9,7 @@ import restockCalculationRoutes from './restock-calculation.routes.js';
 import inventoryBudgetAccountRoutes from './inventory-budget-account.routes.js';
 import inventoryBudgetLogRoutes from './inventory-budget-log.routes.js';
 import expenseRoutes from './expense.routes.js';
+import xmlExportRoutes from './xml-export.routes.js';
 
 export { 
     employeeRoutes, 
@@ -21,5 +22,6 @@ export {
     restockCalculationRoutes,
     inventoryBudgetAccountRoutes,
     inventoryBudgetLogRoutes,
-    authRoutes
+    authRoutes,
+    xmlExportRoutes
 };
