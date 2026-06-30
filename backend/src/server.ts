@@ -37,7 +37,6 @@ dotenv.config({ path: envPath });
 // Validate required environment variables
 if (!process.env.PORT) {
   console.error('ERROR: PORT is not defined in .env file');
-  process.exit(1);
 }
 
 if (!process.env.SESSION_SECRET) {
