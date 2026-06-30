@@ -38,7 +38,7 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
             <img
               src="/bens-logo-plain.svg"
               alt="Ben's Cafe logo"
-              className="h-16 w-16 object-contain scale-[1.15] -ml-2"
+              className="h-14 w-14 object-contain scale-[1.15] -ml-2"
             />
             <div className="leading-tight overflow-hidden">
               <h1 className="font-bold text-gray-900 text-[15px] font-poppins">Ben's Cafe</h1>
