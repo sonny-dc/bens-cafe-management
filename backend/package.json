@@ -23,6 +23,7 @@
     "luxon": "^3.7.2",
     "mysql2": "^3.22.5",
     "shared": "file:../shared",
+    "xmlbuilder2": "^4.0.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

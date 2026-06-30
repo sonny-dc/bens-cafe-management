@@ -18,6 +18,7 @@ import { salesApi } from '../../api/salesApi';
 import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { expenseApi } from '../../api/expenseApi';
 import type { SalesEntry, ShiftSummaryItem, Expense } from 'shared/models';
+import { CsvExportButton } from './CsvExportButton';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -797,6 +798,9 @@ export function AdminReports() {
           )}
         </motion.div>
       )}
+
+      {/* CSV Export Feature */}
+      <CsvExportButton />
     </div>
   );
 }

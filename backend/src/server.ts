@@ -22,7 +22,8 @@ import {
   restockCalculationRoutes,
   inventoryBudgetAccountRoutes,
   inventoryBudgetLogRoutes,
-  authRoutes
+  authRoutes,
+  xmlExportRoutes
 } from './routes/index.js';
 
 const app = express();
@@ -94,6 +95,7 @@ app.use("/api/inventory-items", inventoryItemRoutes);
 app.use("/api/restock-calculations", restockCalculationRoutes);
 app.use("/api/inventory-budget-accounts", inventoryBudgetAccountRoutes);
 app.use("/api/inventory-budget-logs", inventoryBudgetLogRoutes);
+app.use("/api/export-xml", xmlExportRoutes);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
