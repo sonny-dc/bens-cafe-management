@@ -16,12 +16,13 @@ import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { notesApi } from '../../api/notesApi';
 import { inventoryBudgetAccountApi } from '../../api/inventoryBudgetAccountApi';
 import type { SalesEntry, InventoryRequestListItem, StaffMessage, ActiveShiftItem } from 'shared/models';
+import { parseSQLDate } from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function formatDurationLive(startTimeStr: string): string {
-  const start = new Date(startTimeStr).getTime();
+  const start = parseSQLDate(startTimeStr).getTime();
   const now = Date.now();
   const diff = now - start;
   const totalMinutes = Math.floor(diff / 60000);
@@ -32,7 +33,7 @@ function formatDurationLive(startTimeStr: string): string {
 }
 
 function isToday(dateStr: string | Date): boolean {
-  const date = new Date(dateStr);
+  const date = parseSQLDate(dateStr);
   const today = new Date();
   return date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
@@ -202,7 +203,7 @@ export function AdminDashboard() {
                         <p className="text-sm font-bold text-gray-900 font-poppins">{shift.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
                           <Clock size={12} />
-                          Started {new Date(shift.clockInTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                          Started {parseSQLDate(shift.clockInTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
@@ -271,7 +272,7 @@ export function AdminDashboard() {
                   <span className="text-xs font-bold text-gray-900">{note.employeeName || `ID: ${note.employeeId}`}</span>
                 </div>
                 <span className="text-[10px] text-gray-400 font-medium">
-                  {new Date(note.postedAt).toLocaleDateString()}
+                  {parseSQLDate(note.postedAt).toLocaleDateString()}
                 </span>
               </div>
               <p className="text-sm font-bold text-gray-900 mb-1 font-poppins">{note.subject || note.messageType}</p>

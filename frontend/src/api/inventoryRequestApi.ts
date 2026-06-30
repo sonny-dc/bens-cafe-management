@@ -12,6 +12,7 @@ import {
 
 import { apiFetch } from './apiFetch';
 import { inventoryItemApi } from './inventoryItemApi';
+import { parseSQLDate } from '../utils/datetime.utils';
 
 type CreateInventoryRequestPayload = CreateInventoryRequestInput;
 
@@ -113,7 +114,7 @@ export const inventoryRequestApi = {
       })
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          parseSQLDate(b.createdAt).getTime() - parseSQLDate(a.createdAt).getTime()
       );
   },
 

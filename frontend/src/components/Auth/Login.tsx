@@ -124,7 +124,6 @@ export function Login({ onLogin }: LoginProps) {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-semibold text-gray-700">Password</label>
-                  <button type="button" className="text-[13px] font-semibold text-[#4a6741] hover:text-[#3d5535]">Forgot password?</button>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

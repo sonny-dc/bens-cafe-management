@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PenLine, Send, AlertTriangle, Info, MessageSquare, CheckCircle2, AlertCircle } from 'lucide-react';
 import { notesApi, type Note, type MessageType } from '../../api/notesApi';
+import { parseSQLDate } from '../../utils/datetime.utils';
 
 import { MESSAGE_TYPES } from 'shared/constants';
 
@@ -64,8 +65,8 @@ export function NotesManager() {
 
       setNotes(
         data.sort((a, b) => {
-          const dateA = new Date(a.postedAt || a.createdAt).getTime();
-          const dateB = new Date(b.postedAt || b.createdAt).getTime();
+          const dateA = parseSQLDate(a.postedAt || a.createdAt).getTime();
+          const dateB = parseSQLDate(b.postedAt || b.createdAt).getTime();
 
           return dateB - dateA;
         })
@@ -269,8 +270,8 @@ export function NotesManager() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {note.messageStatus === 'new' && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
-                        <span className="text-[11px] opacity-70">
-                          {new Date(note.postedAt || note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <span className="text-[10px] text-gray-500 font-medium">
+                          {parseSQLDate(note.postedAt || note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </div>

@@ -19,6 +19,7 @@ import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { expenseApi } from '../../api/expenseApi';
 import type { SalesEntry, ShiftSummaryItem, Expense } from 'shared/models';
 import { CsvExportButton } from './CsvExportButton';
+import { parseSQLDate } from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -39,7 +40,7 @@ function getWeekRange() {
 
 function formatDuration(startStr: string, endStr: string | null): string {
   if (!endStr) return '—';
-  const ms = new Date(endStr).getTime() - new Date(startStr).getTime();
+  const ms = parseSQLDate(endStr).getTime() - parseSQLDate(startStr).getTime();
   const totalMinutes = Math.round(ms / 60000);
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
@@ -48,7 +49,7 @@ function formatDuration(startStr: string, endStr: string | null): string {
 }
 
 function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString(undefined, {
+  return parseSQLDate(dateStr).toLocaleTimeString(undefined, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
@@ -120,12 +121,12 @@ export function AdminReports() {
 
   const filteredSales = useMemo(() => {
     const sorted = [...salesEntries].sort(
-      (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
+      (a, b) => parseSQLDate(b.postedAt).getTime() - parseSQLDate(a.postedAt).getTime()
     );
     if (dateFilter === 'all_time') return sorted;
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return sorted.filter(entry => new Date(entry.postedAt) >= sevenDaysAgo);
+    return sorted.filter(entry => parseSQLDate(entry.postedAt) >= sevenDaysAgo);
   }, [salesEntries, dateFilter]);
 
   // Reset pagination when filter or tab changes
@@ -181,7 +182,7 @@ export function AdminReports() {
 
   const completedShifts = shifts.filter(s => s.status === 'completed');
   const sortedShifts = [...shifts].sort(
-    (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    (a, b) => parseSQLDate(b.startTime).getTime() - parseSQLDate(a.startTime).getTime()
   );
 
   const paginatedSales = useMemo(() => {
@@ -200,12 +201,12 @@ export function AdminReports() {
 
   const sortedExpenses = useMemo(() => {
     const sorted = [...expenses].sort(
-      (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
+      (a, b) => parseSQLDate(b.postedAt).getTime() - parseSQLDate(a.postedAt).getTime()
     );
     if (dateFilter === 'all_time') return sorted;
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return sorted.filter(entry => new Date(entry.postedAt) >= sevenDaysAgo);
+    return sorted.filter(entry => parseSQLDate(entry.postedAt) >= sevenDaysAgo);
   }, [expenses, dateFilter]);
 
   const paginatedExpenses = useMemo(() => {
@@ -397,14 +398,14 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {new Date(entry.postedAt).toLocaleDateString(undefined, {
+                              {parseSQLDate(entry.postedAt).toLocaleDateString(undefined, {
                                 weekday: 'short',
                                 month: 'short',
                                 day: 'numeric',
                               })}
                             </p>
                             <p className="text-[11px] text-gray-400">
-                              {new Date(entry.postedAt).toLocaleDateString(undefined, {
+                              {parseSQLDate(entry.postedAt).toLocaleDateString(undefined, {
                                 year: 'numeric',
                               })}
                             </p>
@@ -575,7 +576,7 @@ export function AdminReports() {
                         >
                           <td className="px-6 py-3.5">
                             <p className="text-sm font-bold text-gray-900 font-poppins">
-                              {new Date(shift.shiftDate).toLocaleDateString(undefined, {
+                              {parseSQLDate(shift.shiftDate).toLocaleDateString(undefined, {
                                 weekday: 'short',
                                 month: 'short',
                                 day: 'numeric',
@@ -800,7 +801,7 @@ export function AdminReports() {
       )}
 
       {/* CSV Export Feature */}
-      <CsvExportButton />
+      {reportTab === 'sales' && <CsvExportButton />}
     </div>
   );
 }

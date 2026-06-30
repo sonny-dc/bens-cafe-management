@@ -22,10 +22,10 @@ export const CsvExportButton: React.FC = () => {
             <button
                 onClick={handleExport}
                 disabled={isExporting}
-                className="flex items-center gap-2 px-4 py-2 bg-[#2563eb] text-white rounded-lg shadow hover:bg-[#1d4ed8] transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-[#4a6741] text-white rounded-lg shadow hover:bg-[#3a5233] transition-colors disabled:opacity-50 font-medium text-sm"
             >
                 <FileSpreadsheet size={18} />
-                {isExporting ? 'Generating CSV...' : 'Export Sales as CSV'}
+                {isExporting ? 'Generating CSV...' : 'Export as CSV'}
             </button>
         </div>
     );

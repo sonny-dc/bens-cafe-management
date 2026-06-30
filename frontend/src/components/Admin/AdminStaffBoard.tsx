@@ -11,6 +11,7 @@ import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type R
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { apiFetch } from '../../api/apiFetch';
 import { formatDateToYYYYMMDD, getStoreWeekRange, DEFAULT_CLOSING_DAY, WEEKDAY_LABELS } from '../../utils/storeWeek.utils';
+import { parseSQLDate } from '../../utils/datetime.utils';
 
 // --- HELPERS ---
 const getNoteStyle = (type: MessageType) => {
@@ -29,14 +30,12 @@ function LoadingState({ label }: { label: string }) {
     </div>
   );
 }
-
 export function AdminStaffBoard() {
-  const [searchTerm, setSearchTerm] = useState('');
+  // API State
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
   const [expandedWeekId, setExpandedWeekId] = useState<string | null>(null);
   const [confirmArchiveData, setConfirmArchiveData] = useState<any>(null);
-  
-  // API State
+
   const [allShifts, setAllShifts] = useState<ShiftSummaryItem[]>([]);
   const [activeShifts, setActiveShifts] = useState<any[]>([]);
   const [staffNotes, setStaffNotes] = useState<Note[]>([]);
@@ -142,7 +141,7 @@ export function AdminStaffBoard() {
     const grouped: Record<string, any> = {};
 
     empShifts.forEach(shift => {
-      const dateObj = new Date(shift.shiftDate);
+      const dateObj = parseSQLDate(shift.shiftDate);
       dateObj.setHours(0, 0, 0, 0);
 
       const day = dateObj.getDay();
@@ -193,9 +192,9 @@ export function AdminStaffBoard() {
     const rows = [
       ["Date", "Start Time", "End Time", "Opening Cash", "Closing Cash", "Cash Variance"],
       ...weekData.shifts.map((s: ShiftSummaryItem) => [
-        new Date(s.shiftDate).toLocaleDateString(),
-        new Date(s.startTime).toLocaleTimeString(),
-        s.endTime ? new Date(s.endTime).toLocaleTimeString() : 'N/A',
+        parseSQLDate(s.shiftDate).toLocaleDateString(),
+        parseSQLDate(s.startTime).toLocaleTimeString(),
+        s.endTime ? parseSQLDate(s.endTime).toLocaleTimeString() : 'N/A',
         s.openingCash,
         s.closingCash,
         (s as any).cashVariance || 0
@@ -243,20 +242,8 @@ export function AdminStaffBoard() {
   return (
     <div className="space-y-6">
       
-      {/* Search & Filter Header */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="relative w-full sm:w-96">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search size={16} className="text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search staff members, notes, or requests..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all"
-          />
-        </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-end items-center bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
         <div className="flex gap-2">
            <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-bold border border-green-100">
              {activeShifts.length} Staff On Duty
@@ -298,7 +285,7 @@ export function AdminStaffBoard() {
                 <p className="text-sm text-gray-500 text-center py-4">No staff currently clocked in.</p>
               ) : (
                 activeShifts.map(staff => {
-                  const hoursElapsed = ((new Date().getTime() - new Date(staff.clockInTime).getTime()) / (1000 * 60 * 60)).toFixed(1);
+                  const hoursElapsed = ((new Date().getTime() - parseSQLDate(staff.clockInTime).getTime()) / (1000 * 60 * 60)).toFixed(1);
                   return (
                     <div key={staff.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
@@ -312,7 +299,7 @@ export function AdminStaffBoard() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs font-bold text-gray-900">{hoursElapsed} hrs</p>
-                        <p className="text-[10px] text-gray-400">In at {new Date(staff.clockInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        <p className="text-[10px] text-gray-400">In at {parseSQLDate(staff.clockInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                       </div>
                     </div>
                   );
@@ -446,7 +433,7 @@ export function AdminStaffBoard() {
                           <Icon size={14} className={style.text} />
                           <span className="text-xs font-bold uppercase tracking-wider text-gray-900">{note.employeeName}</span>
                         </div>
-                        <span className="text-[10px] text-gray-500 font-medium">{new Date(note.postedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">{parseSQLDate(note.postedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                       </div>
                       <p className="text-sm font-bold text-gray-900 mb-1">{note.subject}</p>
                       <p className="text-xs text-gray-700 leading-relaxed">{note.messageText}</p>
@@ -610,9 +597,9 @@ export function AdminStaffBoard() {
                                         <div key={shift.shiftId} className="flex flex-col p-3 rounded-lg bg-white border border-gray-100 shadow-sm hover:border-[#4a6741]/20 transition-colors">
                                           <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-50">
                                             <span className="text-sm font-bold text-gray-800">
-                                              {new Date(shift.shiftDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+                                              {parseSQLDate(shift.shiftDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
                                               <span className="text-xs font-normal text-gray-400 ml-1">
-                                                {new Date(shift.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                                                {parseSQLDate(shift.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                                               </span>
                                             </span>
                                           </div>

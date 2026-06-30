@@ -4,6 +4,7 @@ import { ShoppingCart, Send, Package, AlertCircle, CheckCircle2, Clock } from 'l
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { inventoryItemApi } from '../../api/inventoryItemApi';
 import { REQUEST_STATUS } from 'shared/constants';
+import { parseSQLDate } from '../../utils/datetime.utils';
 import type { StaffInventoryRequest, InventoryItemOption } from 'shared/models';
 
 
@@ -282,7 +283,7 @@ export function InventoryManager() {
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-gray-400">
                         <Clock size={11} />
-                        {new Date(req.postedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {parseSQLDate(req.postedAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                     
