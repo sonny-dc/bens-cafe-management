@@ -6,6 +6,7 @@ import type {
 
 import type {
     Shift,
+    ShiftSummaryItem,
     StaffWeeklyPerformance,
     StartShiftRepositoryInput,
     EndShiftRepositoryInput
@@ -43,6 +44,28 @@ type StaffWeeklyPerformanceRow = RowDataPacket & {
   completed_shifts: number;
 };
 
+type ShiftSummaryRow = RowDataPacket & {
+    shift_id: number;
+    employee_id: number;
+    employee_code: string;
+    full_name: string;
+    job_role: string;
+
+    shift_date: string;
+    start_time: string;
+    scheduled_end_time: string | null;
+    end_time: string | null;
+
+    opening_cash: string;
+    closing_cash: string;
+    recorded_cash_sales: string | null;
+    cash_variance: string | null;
+
+    shift_status: ShiftStatus;
+    created_at: Date;
+    updated_at: Date | null;
+};
+
 // Helper Functions
 function mapShiftRow(row: ShiftSessionRow): Shift {
     return {
@@ -56,6 +79,30 @@ function mapShiftRow(row: ShiftSessionRow): Shift {
         closingCash: row.closing_cash,
         recordedCashSales: row.recorded_cash_sales,
         cashVariance: row.cash_variance,
+        status: row.shift_status,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
+}
+
+function mapShiftSummaryRow(row: ShiftSummaryRow): ShiftSummaryItem {
+    return {
+        shiftId: row.shift_id,
+        employeeId: row.employee_id,
+        employeeCode: row.employee_code,
+        fullName: row.full_name,
+        jobRole: row.job_role,
+
+        shiftDate: row.shift_date,
+        startTime: row.start_time,
+        scheduledEndTime: row.scheduled_end_time,
+        endTime: row.end_time,
+
+        openingCash: row.opening_cash,
+        closingCash: row.closing_cash,
+        recordedCashSales: row.recorded_cash_sales,
+        cashVariance: row.cash_variance,
+
         status: row.shift_status,
         createdAt: row.created_at,
         updatedAt: row.updated_at
@@ -218,18 +265,48 @@ export async function endShift(
     });
 }
 
-export async function getShiftSummary(startDate: string, endDate: string): Promise<Shift[]> {
+export async function getShiftSummary(
+    startDate: string,
+    endDate: string
+): Promise<ShiftSummaryItem[]> {
     return withConnection(async (connection) => {
-        const [rows] = await connection.query<ShiftSessionRow[]>(
+        const [rows] = await connection.query<ShiftSummaryRow[]>(
             `
-            SELECT * FROM shift_sessions
-            WHERE shift_date >= ? AND shift_date <= ?
-            AND shift_status != ?
-            ORDER BY shift_date DESC, start_time DESC
+            SELECT
+                s.shift_id,
+                s.employee_id,
+
+                e.employee_code,
+                u.full_name,
+                e.job_role,
+
+                DATE_FORMAT(s.shift_date, '%Y-%m-%d') AS shift_date,
+                s.start_time,
+                s.scheduled_end_time,
+                s.end_time,
+
+                s.opening_cash,
+                s.closing_cash,
+                s.recorded_cash_sales,
+                s.cash_variance,
+
+                s.shift_status,
+                s.created_at,
+                s.updated_at
+            FROM shift_sessions s
+            JOIN employee_profiles e
+                ON s.employee_id = e.employee_id
+            JOIN users u
+                ON e.user_id = u.user_id
+            WHERE s.shift_date >= ?
+              AND s.shift_date <= ?
+              AND s.shift_status != ?
+            ORDER BY s.shift_date DESC, s.start_time DESC
             `,
             [startDate, endDate, SHIFT_STATUS.ARCHIVED]
         );
-        return rows.map(mapShiftRow);
+
+        return rows.map(mapShiftSummaryRow);
     });
 }
 
@@ -273,16 +350,16 @@ export async function getStaffWeeklyPerformance(
   });
 }
 
-export async function archiveShiftsByDateRange(startDate: string, endDate: string): Promise<number> {
+export async function archiveShiftsByDateRange(employeeId: number, startDate: string, endDate: string): Promise<number> {
     return withTransaction(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
             `
             UPDATE shift_sessions
             SET shift_status = ?
-            WHERE shift_date >= ? AND shift_date <= ?
+            WHERE employee_id = ? AND shift_date >= ? AND shift_date <= ?
             AND shift_status = ?
             `,
-            [SHIFT_STATUS.ARCHIVED, startDate, endDate, SHIFT_STATUS.COMPLETED]
+            [SHIFT_STATUS.ARCHIVED, employeeId, startDate, endDate, SHIFT_STATUS.COMPLETED]
         );
         return result.affectedRows;
     });

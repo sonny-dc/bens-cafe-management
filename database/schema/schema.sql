@@ -246,7 +246,7 @@ CREATE TABLE shift_sessions (
   closing_cash DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   recorded_cash_sales DECIMAL(12,2) NULL DEFAULT NULL,
   cash_variance DECIMAL(12,2) GENERATED ALWAYS AS (closing_cash - (opening_cash + COALESCE(recorded_cash_sales, 0))) STORED,
-  shift_status ENUM('in_progress', 'completed') NOT NULL DEFAULT 'in_progress',
+  shift_status ENUM('in_progress', 'completed', 'archived') NOT NULL DEFAULT 'in_progress',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 

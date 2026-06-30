@@ -17,7 +17,21 @@ export const endShiftSchema = z.object({
     closingCash: nonNegativeDecimalString
 });
 
-const shiftDateRangeSchema = z
+export const archiveShiftsSchema = z
+  .object({
+    employeeId: positiveInt,
+    start: yyyyMmDdDate,
+    end: yyyyMmDdDate
+  })
+  .refine(
+    data => new Date(data.start) < new Date(data.end),
+    {
+      message: 'Start date must be before end date.',
+      path: ['end']
+    }
+  );
+
+export const shiftDateRangeSchema = z
     .object({
         start: yyyyMmDdDate,
         end: yyyyMmDdDate

@@ -17,7 +17,7 @@ import {
 import { salesApi } from '../../api/salesApi';
 import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { expenseApi } from '../../api/expenseApi';
-import type { SalesEntry, ShiftSession, Expense } from 'shared/models';
+import type { SalesEntry, ShiftSummaryItem, Expense } from 'shared/models';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -56,7 +56,7 @@ function formatTime(dateStr: string): string {
 
 export function AdminReports() {
   const [salesEntries, setSalesEntries] = useState<SalesEntry[]>([]);
-  const [shifts, setShifts] = useState<ShiftSession[]>([]);
+  const [shifts, setShifts] = useState<ShiftSummaryItem[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingShifts, setIsLoadingShifts] = useState(false);
@@ -586,9 +586,14 @@ export function AdminReports() {
                               <div className="text-[#3b2f2f] flex items-center justify-center shrink-0">
                                 <User size={16} />
                               </div>
-                              <span className="text-sm font-medium text-gray-700">
-                                ID #{shift.employeeId}
-                              </span>
+                              <div>
+                                <p className="text-sm font-medium text-gray-700">
+                                  {shift.fullName}
+                                </p>
+                                <p className="text-[11px] text-gray-400">
+                                  {shift.jobRole}
+                                </p>
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-3.5">

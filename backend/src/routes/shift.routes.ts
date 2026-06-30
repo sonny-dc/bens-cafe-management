@@ -1,6 +1,14 @@
 import { Router } from "express";
 import { shiftController } from "../controllers/index.js";
-import { startShiftSchema, endShiftSchema, shiftIdParamSchema, employeeIdParamSchema, getStaffWeeklyPerformanceQuerySchema } from "../validators/index.js";
+import {
+    startShiftSchema, 
+    endShiftSchema, 
+    shiftIdParamSchema, 
+    employeeIdParamSchema, 
+    getStaffWeeklyPerformanceQuerySchema, 
+    shiftDateRangeSchema, 
+    archiveShiftsSchema 
+} from "../validators/index.js";
 import { REQUEST_TYPES } from "../config/constants.js";
 import { validate } from "../middleware/validation.middleware.js";
 import { requireAdmin, requireEmployee } from "../middleware/auth.middleware.js";
@@ -51,12 +59,14 @@ router.get(
 router.get(
     '/summary', 
     requireAdmin,
+    validate(shiftDateRangeSchema, REQUEST_TYPES.QUERY),
     shiftController.getShiftSummary
 );
 
 router.patch(
     '/export-clear', 
     requireAdmin,
+    validate(archiveShiftsSchema, REQUEST_TYPES.BODY),
     shiftController.archiveShifts
 );
 

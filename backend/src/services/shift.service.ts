@@ -1,5 +1,11 @@
 import { shiftRepository } from '../repositories/index.js';
-import type { Shift, StaffWeeklyPerformance, StartShiftInput, EndShiftInput } from '../models/index.js';
+import type { 
+    Shift,
+    ShiftSummaryItem, 
+    StaffWeeklyPerformance, 
+    StartShiftInput, 
+    EndShiftInput 
+} from '../models/index.js';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 import { SHIFT_STATUS } from '../config/constants.js';
 
@@ -68,10 +74,10 @@ export async function getAllActiveShifts(): Promise<any[]> {
     return shiftRepository.getAllActiveShifts();
 }
 
-export async function getShiftSummary(startDate: string, endDate: string): Promise<Shift[]> {
-    if (!startDate || !endDate) {
-        throw new Error("Start date and end date are required.");
-    }
+export async function getShiftSummary(
+    startDate: string,
+    endDate: string
+): Promise<ShiftSummaryItem[]> {
     return shiftRepository.getShiftSummary(startDate, endDate);
 }
 
@@ -79,9 +85,9 @@ export async function getStaffWeeklyPerformance(startDate: string, endDate: stri
     return shiftRepository.getStaffWeeklyPerformance(startDate, endDate);
 }
 
-export async function archiveShifts(startDate: string, endDate: string): Promise<number> {
+export async function archiveShifts(employeeId: number, startDate: string, endDate: string): Promise<number> {
     if (!startDate || !endDate) {
         throw new Error("Start date and end date are required.");
     }
-    return shiftRepository.archiveShiftsByDateRange(startDate, endDate);
+    return shiftRepository.archiveShiftsByDateRange(employeeId, startDate, endDate);
 }

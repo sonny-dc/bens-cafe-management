@@ -212,27 +212,36 @@ export async function getShiftSummary(req: Request, res: Response): Promise<void
 
 export async function archiveShifts(req: Request, res: Response): Promise<void> {
     try {
-        const { start, end } = req.body;
+        const { employeeId, start, end } = req.body;
 
-        if (!start || !end) {
+        if (!employeeId || !start || !end) {
             res.status(400).json({
                 success: false,
-                message: "start and end body parameters are required (YYYY-MM-DD)."
+                message: "employeeId, start, and end body parameters are required."
             });
             return;
         }
 
-        const archivedCount = await shiftService.archiveShifts(String(start), String(end));
+        const archivedCount = await shiftService.archiveShifts(
+            Number(employeeId),
+            String(start),
+            String(end)
+        );
+
         res.status(200).json({
             success: true,
-            message: "Shifts archived successfully",
+            message: "Employee shifts archived successfully.",
             data: { count: archivedCount }
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while archiving shifts.";
-        res.status(500).json({ 
+        const errorMessage =
+            error instanceof Error
+                ? error.message
+                : "An error occurred while archiving shifts.";
+
+        res.status(500).json({
             success: false,
-            message: errorMessage 
+            message: errorMessage
         });
     }
 }

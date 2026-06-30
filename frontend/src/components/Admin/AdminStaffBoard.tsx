@@ -5,7 +5,7 @@ import {
   MessageSquare, AlertTriangle, Info, Package, CheckCircle2, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
 import { shiftSummaryApi } from '../../api/shiftSummaryApi';
-import { type ShiftSession, type InventoryRequestListItem, type StaffWeeklyPerformance  } from 'shared/models';
+import { type ShiftSummaryItem, type InventoryRequestListItem, type StaffWeeklyPerformance  } from 'shared/models';
 import { type Note, notesApi } from '../../api/notesApi';
 import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type RequestStatus, SHIFT_STATUS } from 'shared/constants';
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
@@ -37,7 +37,7 @@ export function AdminStaffBoard() {
   const [confirmArchiveData, setConfirmArchiveData] = useState<any>(null);
   
   // API State
-  const [allShifts, setAllShifts] = useState<ShiftSession[]>([]);
+  const [allShifts, setAllShifts] = useState<ShiftSummaryItem[]>([]);
   const [activeShifts, setActiveShifts] = useState<any[]>([]);
   const [staffNotes, setStaffNotes] = useState<Note[]>([]);
   const [inventoryRequests, setInventoryRequests] = useState<InventoryRequestListItem[]>([]);
@@ -173,6 +173,7 @@ export function AdminStaffBoard() {
       if (!grouped[weekId]) {
         grouped[weekId] = {
           id: weekId,
+          employeeId: empId,
           weekRange: weekLabel,
           startDate: formatDateToYYYYMMDD(weekStart),
           endDate: formatDateToYYYYMMDD(weekEnd),
@@ -191,7 +192,7 @@ export function AdminStaffBoard() {
   const handleExportCSV = (weekData: any) => {
     const rows = [
       ["Date", "Start Time", "End Time", "Opening Cash", "Closing Cash", "Cash Variance"],
-      ...weekData.shifts.map((s: ShiftSession) => [
+      ...weekData.shifts.map((s: ShiftSummaryItem) => [
         new Date(s.shiftDate).toLocaleDateString(),
         new Date(s.startTime).toLocaleTimeString(),
         s.endTime ? new Date(s.endTime).toLocaleTimeString() : 'N/A',
@@ -216,7 +217,7 @@ export function AdminStaffBoard() {
     if (!confirmArchiveData) return;
     try {
       setIsArchiving(true);
-      await shiftSummaryApi.archiveWeek(confirmArchiveData.startDate, confirmArchiveData.endDate);
+      await shiftSummaryApi.archiveWeek(confirmArchiveData.employeeId, confirmArchiveData.startDate, confirmArchiveData.endDate);
       await fetchDashboardData(); // Refresh everything
       setExpandedWeekId(null);
       setConfirmArchiveData(null);
@@ -605,7 +606,7 @@ export function AdminStaffBoard() {
                                   <div className="p-5 space-y-4">
                                     {/* Daily Shifts List */}
                                     <div className="space-y-2">
-                                      {weekData.shifts.map((shift: ShiftSession) => (
+                                      {weekData.shifts.map((shift: ShiftSummaryItem) => (
                                         <div key={shift.shiftId} className="flex flex-col p-3 rounded-lg bg-white border border-gray-100 shadow-sm hover:border-[#4a6741]/20 transition-colors">
                                           <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-50">
                                             <span className="text-sm font-bold text-gray-800">

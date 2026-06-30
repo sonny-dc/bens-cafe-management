@@ -24,6 +24,28 @@ export interface Shift {
     updatedAt: Date | null;
 }
 
+export interface ShiftSummaryItem {
+  shiftId: number;
+  employeeId: number;
+  employeeCode: string;
+  fullName: string;
+  jobRole: string;
+
+  shiftDate: string;
+  startTime: string;
+  scheduledEndTime: string | null;
+  endTime: string | null;
+
+  openingCash: string;
+  closingCash: string;
+  recordedCashSales: string | null;
+  cashVariance: string | null;
+
+  status: ShiftStatus;
+  createdAt: Date;
+  updatedAt: Date | null;
+}
+
 export interface ShiftSession {
   shiftId: number;
   employeeId: number;

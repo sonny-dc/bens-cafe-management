@@ -1,8 +1,8 @@
 import { apiFetch } from "./apiFetch";
-import type { ShiftSession, StaffWeeklyPerformance } from "shared/models";
+import type { StaffWeeklyPerformance, ShiftSummaryItem } from "shared/models";
 
 export const shiftSummaryApi = {
-  async getSummary(startDate: string, endDate: string): Promise<ShiftSession[]> {
+  async getSummary(startDate: string, endDate: string): Promise<ShiftSummaryItem[]> {
     try {
       const response = await apiFetch(`/shifts/summary?start=${startDate}&end=${endDate}`);
       if (!response.ok) {
@@ -34,19 +34,32 @@ export const shiftSummaryApi = {
     }
   },
 
-  async archiveWeek(startDate: string, endDate: string): Promise<{ count: number }> {
+  async archiveWeek(
+    employeeId: number,
+    startDate: string,
+    endDate: string
+  ): Promise<{ count: number }> {
     try {
-      const response = await apiFetch(`/shifts/export-clear`, {
+      const response = await apiFetch('/shifts/export-clear', {
         method: 'PATCH',
-        body: JSON.stringify({ start: startDate, end: endDate })
+        body: JSON.stringify({
+          employeeId,
+          start: startDate,
+          end: endDate
+        })
       });
-      
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to archive shifts');
+        const error = await response.json().catch(() => ({}));
+        throw new Error(
+          error.message ||
+          error.error ||
+          'Failed to archive shifts'
+        );
       }
+
       const json = await response.json();
-      return { count: json.count };
+      return json.data;
     } catch (err) {
       console.error(err);
       throw err;
