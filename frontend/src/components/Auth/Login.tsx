@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Coffee, Lock, User, ArrowRight } from 'lucide-react';
-import { type UserRole, USER_ROLES, API_BASE_URL } from 'shared/constants';
+import { type UserRole, USER_ROLES } from 'shared/constants';
+import { API_BASE_URL } from '../../config/api';
 
 interface LoginProps {
   onLogin: (role: UserRole) => void;

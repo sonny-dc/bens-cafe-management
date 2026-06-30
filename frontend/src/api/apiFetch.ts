@@ -1,4 +1,4 @@
-import { API_BASE_URL } from 'shared/constants';
+import { API_BASE_URL } from '../config/api';
 
 export async function apiFetch(
   endpoint: string,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { API_BASE_URL } from 'shared/constants';
+import { API_BASE_URL } from '../config/api';
 import { apiFetch } from '../api/apiFetch';
 
 export const AddNewEmployeeModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {

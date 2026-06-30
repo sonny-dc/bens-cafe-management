@@ -119,13 +119,6 @@ export const MYSQL_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 export const MYSQL_DATE_FORMAT = "yyyy-MM-dd";
 export const MYSQL_TIME_FORMAT = "HH:mm:ss";
 
-
-// ===============================
-// API Constants
-// ===============================
-export const API_BASE_URL = 'http://localhost:3000/api';
-
-
 // ===============================
 // Type Definitions
 // ===============================

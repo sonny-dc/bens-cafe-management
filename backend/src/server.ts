@@ -61,17 +61,19 @@ app.use(cors({
 
 
 // Session middleware
+app.set("trust proxy", 1);
+
 app.use(session({
   name: SESSION_COOKIE_NAME,
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET!,
   resave: false,
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
     httpOnly: true,
-    secure: false, // Set to true if using HTTPS
-    sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 8, // 8 hours
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 1000 * 60 * 60 * 8,
   },
 }));
 
