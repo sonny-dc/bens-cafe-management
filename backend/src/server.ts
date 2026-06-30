@@ -45,7 +45,7 @@ if (!process.env.SESSION_SECRET) {
   process.exit(1);
 }
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000; // Default to 3000 if not set
 
 // Middleware
 app.use(express.json());
