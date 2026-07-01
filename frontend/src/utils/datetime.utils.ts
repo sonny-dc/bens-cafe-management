@@ -2,6 +2,15 @@ const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
+type DateTimeParts = {
+  hasDate: boolean;
+  year: number | null;
+  month: number | null;
+  day: number | null;
+  hour: number;
+  minute: number;
+  second: number;
+};
 
 /**
  * Formats a datetime value by reading the clock time directly.
@@ -105,17 +114,18 @@ export function formatIsoDateTimeToDateTime(
 const SHIFT_HOURS = 8;
 
 export function getShiftProgressHours(startTimeValue: string | Date | null | undefined): string {
-  if (!startTimeValue) return '0.00';
+  return formatHoursToHM(getShiftProgressDecimal(startTimeValue));
+}
+
+export function getShiftProgressDecimal(
+  startTimeValue: string | Date | null | undefined
+): number {
+  if (!startTimeValue) return 0;
 
   const text = String(startTimeValue);
-
-  // Works with:
-  // "2026-07-01 13:49:57"
-  // "2026-07-01T13:49:57.000Z"
-  // "13:49:57"
   const match = /(\d{2}):(\d{2})(?::(\d{2}))?/.exec(text);
 
-  if (!match) return '0.00';
+  if (!match) return 0;
 
   const startHour = Number(match[1]);
   const startMinute = Number(match[2]);
@@ -126,7 +136,6 @@ export function getShiftProgressHours(startTimeValue: string | Date | null | und
   const start = new Date();
   start.setHours(startHour, startMinute, startSecond, 0);
 
-  // If shift started yesterday and crossed midnight
   if (start.getTime() > now.getTime()) {
     start.setDate(start.getDate() - 1);
   }
@@ -134,48 +143,107 @@ export function getShiftProgressHours(startTimeValue: string | Date | null | und
   const elapsedHours =
     (now.getTime() - start.getTime()) / (1000 * 60 * 60);
 
-  const safeElapsed = Math.max(0, Math.min(elapsedHours, SHIFT_HOURS));
-
-  return safeElapsed.toFixed(2);
+  return Math.max(0, Math.min(elapsedHours, SHIFT_HOURS));
 }
+
+function extractDateTimeParts(value: string | Date | null | undefined): DateTimeParts | null {
+  if (!value) return null;
+
+  const text = value instanceof Date
+    ? value.toISOString()
+    : String(value).trim();
+
+  const match = /(?:(\d{4})-(\d{2})-(\d{2})[T\s])?(\d{2}):(\d{2})(?::(\d{2}))?/.exec(text);
+
+  if (!match) return null;
+
+  return {
+    hasDate: Boolean(match[1]),
+    year: match[1] ? Number(match[1]) : null,
+    month: match[2] ? Number(match[2]) : null,
+    day: match[3] ? Number(match[3]) : null,
+    hour: Number(match[4]),
+    minute: Number(match[5]),
+    second: Number(match[6] || 0),
+  };
+}
+
+function createDateFromParts(parts: DateTimeParts, fallbackDate: Date): Date {
+  if (parts.hasDate && parts.year && parts.month && parts.day) {
+    return new Date(
+      parts.year,
+      parts.month - 1,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      parts.second,
+      0
+    );
+  }
+
+  return new Date(
+    fallbackDate.getFullYear(),
+    fallbackDate.getMonth(),
+    fallbackDate.getDate(),
+    parts.hour,
+    parts.minute,
+    parts.second,
+    0
+  );
+}
+
 
 export function getShiftRemainingHours(
   startTimeValue: string | Date | null | undefined
 ): string {
-  const elapsed = Number(getShiftProgressHours(startTimeValue));
+  const elapsed = getShiftProgressDecimal(startTimeValue);
   const remaining = Math.max(0, SHIFT_HOURS - elapsed);
 
-  return remaining.toFixed(2);
+  return formatHoursToHM(remaining);
 }
 
 export function formatShiftDurationDisplay(
-  startStr: string,
-  endStr: string | null
+  startTimeValue: string | Date | null | undefined,
+  endTimeValue: string | Date | null | undefined
 ): string {
-  if (!startStr) return '—';
+  const startParts = extractDateTimeParts(startTimeValue);
 
-  const start = new Date(startStr);
-  const end = endStr ? new Date(endStr) : new Date();
+  if (!startParts) return '—';
 
-  const diffMs = Math.max(0, end.getTime() - start.getTime());
-
-  const seconds = Math.floor(diffMs / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-
-  const remainingMinutes = minutes % 60;
-  const remainingSeconds = seconds % 60;
-
-  // Adaptive display
-  if (hours > 0) {
-    return remainingMinutes > 0
-      ? `${hours}h ${remainingMinutes}m`
-      : `${hours}h`;
+  // Active / no end time yet
+  if (!endTimeValue) {
+    return formatHoursToHM(getShiftProgressDecimal(startTimeValue));
   }
 
-  if (minutes > 0) {
-    return `${minutes}m`;
+  const endParts = extractDateTimeParts(endTimeValue);
+
+  if (!endParts) return '—';
+
+  const now = new Date();
+  const start = createDateFromParts(startParts, now);
+  const end = createDateFromParts(endParts, start);
+
+  // If only clock time was provided and end is earlier, assume shift crossed midnight.
+  if (!endParts.hasDate && end.getTime() < start.getTime()) {
+    end.setDate(end.getDate() + 1);
   }
 
-  return `${remainingSeconds}s`;
+  const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+  const safeDuration = Math.max(0, durationHours);
+
+  return formatHoursToHM(safeDuration);
+}
+
+export function formatHoursToHM(hours: number): string {
+  if (!isFinite(hours) || hours <= 0) return '0m';
+
+  const totalMinutes = Math.round(hours * 60);
+
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+
+  return `${h}h ${m}m`;
 }

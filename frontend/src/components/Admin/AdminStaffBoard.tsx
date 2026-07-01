@@ -11,7 +11,7 @@ import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type R
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { apiFetch } from '../../api/apiFetch';
 import { formatDateToYYYYMMDD, getStoreWeekRange, DEFAULT_CLOSING_DAY, WEEKDAY_LABELS } from '../../utils/storeWeek.utils';
-import { formatIsoDateTimeToTime, formatIsoDateTimeToDateTime, formatShiftDurationDisplay } from '../../utils/datetime.utils';
+import { getShiftProgressHours, formatIsoDateTimeToTime, formatIsoDateTimeToDateTime } from '../../utils/datetime.utils';
 
 // --- HELPERS ---
 const getNoteStyle = (type: MessageType) => {
@@ -50,15 +50,6 @@ export function AdminStaffBoard() {
   
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
-  const [, forceTick] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      forceTick(t => t + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
 
   useEffect(() => {
     setShowAllStaffPerformance(false);
@@ -294,7 +285,7 @@ export function AdminStaffBoard() {
                 <p className="text-sm text-gray-500 text-center py-4">No staff currently clocked in.</p>
               ) : (
                 activeShifts.map(staff => {
-                  const duration = formatShiftDurationDisplay(String(staff.startTime ?? staff.clockInTime), null);
+                  const hoursElapsed = getShiftProgressHours(staff.startTime ?? staff.clockInTime);
                   return (
                     <div key={staff.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
@@ -307,7 +298,7 @@ export function AdminStaffBoard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-bold text-gray-900">{duration}</p>
+                        <p className="text-xs font-bold text-gray-900">{hoursElapsed}</p>
                         <p className="text-[10px] text-gray-400">In at {formatIsoDateTimeToTime(String(staff.clockInTime))}</p>
                       </div>
                     </div>
