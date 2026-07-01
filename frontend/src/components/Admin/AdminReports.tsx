@@ -19,7 +19,7 @@ import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { expenseApi } from '../../api/expenseApi';
 import type { SalesEntry, ShiftSummaryItem, Expense } from 'shared/models';
 import { CsvExportButton } from './CsvExportButton';
-import { parseSQLDate } from '../../utils/datetime.utils';
+import { formatSQLDateInAppTimeZone, formatSQLTimeInAppTimeZone, parseSQLDate } from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -49,11 +49,7 @@ function formatDuration(startStr: string, endStr: string | null): string {
 }
 
 function formatTime(dateStr: string): string {
-  return parseSQLDate(dateStr).toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  return formatSQLTimeInAppTimeZone(dateStr);
 }
 
 export function AdminReports() {
@@ -398,16 +394,13 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {parseSQLDate(entry.postedAt).toLocaleDateString(undefined, {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {formatSQLDateInAppTimeZone(entry.postedAt)}
                             </p>
                             <p className="text-[11px] text-gray-400">
-                              {parseSQLDate(entry.postedAt).toLocaleDateString(undefined, {
+                              {new Intl.DateTimeFormat('en-PH', {
+                                timeZone: 'Asia/Manila',
                                 year: 'numeric',
-                              })}
+                              }).format(parseSQLDate(entry.postedAt))}
                             </p>
                           </div>
                         </div>
@@ -742,11 +735,7 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {new Date(expense.postedAt).toLocaleDateString(undefined, {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {formatSQLDateInAppTimeZone(expense.postedAt)}
                             </p>
                           </div>
                         </div>

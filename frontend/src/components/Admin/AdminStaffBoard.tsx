@@ -12,6 +12,7 @@ import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { apiFetch } from '../../api/apiFetch';
 import { formatDateToYYYYMMDD, getStoreWeekRange, DEFAULT_CLOSING_DAY, WEEKDAY_LABELS } from '../../utils/storeWeek.utils';
 import { parseSQLDate } from '../../utils/datetime.utils';
+import { formatSQLDateInAppTimeZone, formatSQLTimeInAppTimeZone } from '../../utils/datetime.utils';
 
 // --- HELPERS ---
 const getNoteStyle = (type: MessageType) => {
@@ -433,7 +434,7 @@ export function AdminStaffBoard() {
                           <Icon size={14} className={style.text} />
                           <span className="text-xs font-bold uppercase tracking-wider text-gray-900">{note.employeeName}</span>
                         </div>
-                        <span className="text-[10px] text-gray-500 font-medium">{parseSQLDate(note.postedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">{formatSQLTimeInAppTimeZone(note.postedAt)}</span>
                       </div>
                       <p className="text-sm font-bold text-gray-900 mb-1">{note.subject}</p>
                       <p className="text-xs text-gray-700 leading-relaxed">{note.messageText}</p>
@@ -597,9 +598,9 @@ export function AdminStaffBoard() {
                                         <div key={shift.shiftId} className="flex flex-col p-3 rounded-lg bg-white border border-gray-100 shadow-sm hover:border-[#4a6741]/20 transition-colors">
                                           <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-50">
                                             <span className="text-sm font-bold text-gray-800">
-                                              {parseSQLDate(shift.shiftDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+                                              {formatSQLDateInAppTimeZone(shift.shiftDate)}
                                               <span className="text-xs font-normal text-gray-400 ml-1">
-                                                {parseSQLDate(shift.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                                                {formatSQLTimeInAppTimeZone(shift.startTime)}
                                               </span>
                                             </span>
                                           </div>
