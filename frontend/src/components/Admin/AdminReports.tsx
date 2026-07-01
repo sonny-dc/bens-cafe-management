@@ -19,6 +19,7 @@ import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { expenseApi } from '../../api/expenseApi';
 import type { SalesEntry, ShiftSummaryItem, Expense } from 'shared/models';
 import { CsvExportButton } from './CsvExportButton';
+import { formatIsoDateTimeToTime } from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -40,10 +41,6 @@ function getWeekRange() {
 function formatDuration(_startStr: string, endStr: string | null): string {
   if (!endStr) return '—';
   return '—';
-}
-
-function formatTime(dateStr: string): string {
-  return String(dateStr);
 }
 
 export function AdminReports() {
@@ -386,10 +383,10 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {String(entry.postedAt)}
+                              {formatIsoDateTimeToTime(String(entry.postedAt))}
                             </p>
                             <p className="text-[11px] text-gray-400">
-                              {String(entry.postedAt)}
+                              {formatIsoDateTimeToTime(String(entry.postedAt))}
                             </p>
                           </div>
                         </div>
@@ -558,7 +555,7 @@ export function AdminReports() {
                         >
                           <td className="px-6 py-3.5">
                             <p className="text-sm font-bold text-gray-900 font-poppins">
-                              {String(shift.shiftDate)}
+                              {formatIsoDateTimeToTime(String(shift.shiftDate))}
                             </p>
                           </td>
                           <td className="px-6 py-3.5">
@@ -578,15 +575,15 @@ export function AdminReports() {
                           </td>
                           <td className="px-6 py-3.5">
                             <p className="text-sm text-gray-700 font-medium">
-                              {formatTime(shift.startTime)}
+                              {formatIsoDateTimeToTime(String(shift.startTime))}
                               {shift.endTime && (
-                                <span className="text-gray-400"> – {formatTime(shift.endTime)}</span>
+                                <span className="text-gray-400"> – {formatIsoDateTimeToTime(String(shift.endTime))}</span>
                               )}
                             </p>
                           </td>
                           <td className="px-6 py-3.5 text-right">
                             <span className="text-sm font-medium text-gray-700">
-                              {formatDuration(shift.startTime, shift.endTime)}
+                              {formatDuration(formatIsoDateTimeToTime(String(shift.startTime)), formatIsoDateTimeToTime(String(shift.endTime)))}
                             </span>
                           </td>
                           <td className="px-6 py-3.5 text-right">
@@ -720,7 +717,7 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {String(expense.postedAt)}
+                              {formatIsoDateTimeToTime(String(expense.postedAt))}
                             </p>
                           </div>
                         </div>

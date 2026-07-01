@@ -16,6 +16,7 @@ import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { notesApi } from '../../api/notesApi';
 import { inventoryBudgetAccountApi } from '../../api/inventoryBudgetAccountApi';
 import type { SalesEntry, InventoryRequestListItem, StaffMessage, ActiveShiftItem } from 'shared/models';
+import { formatIsoDateTimeToTime } from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -192,7 +193,7 @@ export function AdminDashboard() {
                         <p className="text-sm font-bold text-gray-900 font-poppins">{shift.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
                           <Clock size={12} />
-                          Started {shift.clockInTime}
+                          Started {formatIsoDateTimeToTime(String(shift.clockInTime))}
                         </p>
                       </div>
                     </div>
@@ -261,7 +262,7 @@ export function AdminDashboard() {
                   <span className="text-xs font-bold text-gray-900">{note.employeeName || `ID: ${note.employeeId}`}</span>
                 </div>
                 <span className="text-[10px] text-gray-400 font-medium">
-                  {String(note.postedAt)}
+                  {formatIsoDateTimeToTime(String(note.postedAt))}
                 </span>
               </div>
               <p className="text-sm font-bold text-gray-900 mb-1 font-poppins">{note.subject || note.messageType}</p>

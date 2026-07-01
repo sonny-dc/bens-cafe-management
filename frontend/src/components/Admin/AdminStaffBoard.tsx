@@ -11,6 +11,7 @@ import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type R
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { apiFetch } from '../../api/apiFetch';
 import { formatDateToYYYYMMDD, getStoreWeekRange, DEFAULT_CLOSING_DAY, WEEKDAY_LABELS } from '../../utils/storeWeek.utils';
+import { getShiftProgressHours, formatIsoDateTimeToTime } from '../../utils/datetime.utils';
 
 // --- HELPERS ---
 const getNoteStyle = (type: MessageType) => {
@@ -284,7 +285,7 @@ export function AdminStaffBoard() {
                 <p className="text-sm text-gray-500 text-center py-4">No staff currently clocked in.</p>
               ) : (
                 activeShifts.map(staff => {
-                  const hoursElapsed = ((new Date().getTime() - new Date(String(staff.clockInTime)).getTime()) / (1000 * 60 * 60)).toFixed(1);
+                  const hoursElapsed = getShiftProgressHours(staff.startTime ?? staff.clockInTime);
                   return (
                     <div key={staff.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
@@ -298,7 +299,7 @@ export function AdminStaffBoard() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs font-bold text-gray-900">{hoursElapsed} hrs</p>
-                        <p className="text-[10px] text-gray-400">In at {String(staff.clockInTime)}</p>
+                        <p className="text-[10px] text-gray-400">In at {formatIsoDateTimeToTime(String(staff.clockInTime))}</p>
                       </div>
                     </div>
                   );
@@ -432,7 +433,7 @@ export function AdminStaffBoard() {
                           <Icon size={14} className={style.text} />
                           <span className="text-xs font-bold uppercase tracking-wider text-gray-900">{note.employeeName}</span>
                         </div>
-                        <span className="text-[10px] text-gray-500 font-medium">{String(note.postedAt)}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">{formatIsoDateTimeToTime(String(note.postedAt))}</span>
                       </div>
                       <p className="text-sm font-bold text-gray-900 mb-1">{note.subject}</p>
                       <p className="text-xs text-gray-700 leading-relaxed">{note.messageText}</p>
@@ -598,7 +599,7 @@ export function AdminStaffBoard() {
                                             <span className="text-sm font-bold text-gray-800">
                                               {String(shift.shiftDate)}
                                               <span className="text-xs font-normal text-gray-400 ml-1">
-                                                {String(shift.startTime)}
+                                                {formatIsoDateTimeToTime(String(shift.startTime))}
                                               </span>
                                             </span>
                                           </div>
