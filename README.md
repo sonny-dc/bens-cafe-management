@@ -1,497 +1,319 @@
 # Ben's Café Management System
 
-> **Private Repository** — Team members only. All rights reserved.
+**Public Repository** — this project is open for inspection and contribution within the repo's normal workflow.
 
----
+This README is a map of the repository, not an installation guide. It shows where the current code lives, what each folder is responsible for, and where to start when you need to understand or change something.
 
-## 🎯 Quick Start
+## Repository Map
 
-**Backend Setup:**
+The workspace is organized into four main areas:
 
-```bash
-cd backend && npm install && npm run build && npm run dev
-```
+- `frontend/` for the Vite + React user interface
+- `backend/` for the Express + TypeScript API
+- `shared/` for cross-app models and constants
+- `database/` for the SQL schema used by the backend
 
-**Frontend Setup:**
+## How To Navigate
 
-```bash
-cd frontend && npm install && npm run dev
-```
+If you are trying to orient yourself quickly, start here:
 
-Visit `http://localhost:5173` (frontend) — Backend runs on `:3000`
+| Goal | Start here | Why |
+|---|---|---|
+| See the app boot sequence | `frontend/src/main.tsx` and `backend/src/server.ts` | These are the runtime entry points |
+| Understand the UI flow | `frontend/src/App.tsx` | This is the top-level app shell |
+| Find an API endpoint | `backend/src/routes/` | Routes define URL-to-controller mapping |
+| Find request handling | `backend/src/controllers/` | Controllers translate HTTP into app calls |
+| Find business logic | `backend/src/services/` | Services hold the rules and orchestration |
+| Find SQL access | `backend/src/repositories/` | Repositories talk to the database |
+| Find validation rules | `backend/src/validators/` | Validators define payload constraints |
+| Find shared contracts | `shared/src/models/` and `shared/src/constants/` | Used by both frontend and backend |
+| Find table structure | `database/schema/schema.sql` | Source of truth for the schema |
 
----
+## Flow Of Responsibility
 
-## 📌 Architecture & Team Guidelines
+The backend follows a consistent path:
 
-This project follows **strict layered architecture** — all team members must adhere to it:
+`HTTP request -> route -> controller -> service -> repository -> database`
 
-```txt
-HTTP Request → Route → Controller → Service → Repository → Database
-```
+Use that chain as the default mental model:
 
-### ✅ Layer Responsibilities
+- Routes decide which controller handles a URL.
+- Controllers parse request data, call services, and return responses.
+- Services contain business rules, calculations, and cross-cutting decisions.
+- Repositories only query and mutate database state.
+- Validators keep bad input out before it reaches the service layer.
 
-| Layer | Responsibility | Examples |
-|-------|----------------|----------|
-| **Models** | Data shape only | `User`, `InventoryItem` (TypeScript interfaces) |
-| **Repositories** | SQL queries only | `getUserById()`, `updateStock()` |
-| **Services** | ALL business logic | Validation, calculations, constraints |
-| **Controllers** | Request/response handling | Parse input, call service, send JSON |
-| **Routes** | URL to Controller mapping | `GET /api/users/:id` → `getUserById` controller |
+The frontend mirrors that same separation in a UI-friendly way:
 
-### 🚫 Common Mistakes (Don't Do This)
+- `App.tsx` defines the app shell and routing structure.
+- `components/` contains feature-specific screens and reusable UI parts.
+- `api/` wraps backend communication.
+- `utils/` holds local helpers for formatting and transformation.
 
-- ❌ Logic in controllers → **Move to services**
-- ❌ SQL in services/controllers → **Move to repositories**
-- ❌ Hardcoded status strings → **Use enums from `/config/constants.ts`**
-- ❌ Skip layers → **Follow the flow strictly**
-
-### 📐 Code Standards
-
-- **Files:** `filename.dirname.ts` format (`user.service.ts`, `inventory.repository.ts`)
-- **Code:** camelCase (`getUserById`, `totalRevenue`)
-- **Classes/Types:** PascalCase (`UserService`, `InventoryItem`)
-- **Constants:** UPPER_SNAKE_CASE (`MAX_RETRIES`, `DB_TIMEOUT`)
-- **Money fields:** Use `string` type to preserve decimal precision
-
-### 🤝 Team Collaboration
-
-- **Before committing:** Pull latest, test locally, clean up console logs
-- **Before pushing:** Ensure code passes build (`npm run build`)
-- **Commit messages:** `feat:`, `fix:`, `refactor:` — be descriptive
-- **Communication:** Discuss before modifying shared files such as schema, routes, and constants
-- **Never commit:** `.env` files, `node_modules`, `dist/`
-
----
-
-## ⚙️ Setup & Development
-
-### Prerequisites
-
-- Node.js v18+
-- MySQL 8.0+
-- Git
-
-### First Time Setup
-
-```bash
-# 1. Clone repo
-git clone <repo-url>
-cd bens-cafe-management
-
-# 2. Backend
-cd backend
-npm install
-cp .env.example .env
-npm run build
-
-# 3. Frontend
-cd ../frontend
-npm install
-npm run build
-```
-
-### Development Workflow
-
-**Terminal 1 - Backend:**
-
-```bash
-cd backend && npm run dev
-```
-
-Backend runs on:
-
-```txt
-http://localhost:3000
-```
-
-**Terminal 2 - Frontend:**
-
-```bash
-cd frontend && npm run dev
-```
-
-Frontend runs on:
-
-```txt
-http://localhost:5173
-```
-
-### Database Setup
-
-```bash
-# Import schema
-mysql -h <host> -u <user> -p <database> < database/schema/schema.sql
-
-# Seed test data - optional
-mysql -h <host> -u <user> -p <database> < database/seeders/users-seeder.sql
-```
-
----
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| Backend won't connect to DB | Verify `.env` credentials and firewall settings |
-| Build fails | Run `npm run build` and check TypeScript errors |
-| Frontend shows blank page | Check browser console and verify `VITE_API_URL` |
-| Port already in use | Change port in `.env` or kill the process using the port |
-
----
-
-## 📞 Questions?
-
-- **Architecture:** Review the layer breakdown above
-- **Coding issues:** Check team guidelines
-- **Git/deployment:** Ask team lead
-- **Database:** See `database/schema/schema.sql` for table structure
-
----
-
-## 📁 Project Structure
+## Detailed Tree
 
 ```txt
 bens-cafe-management/
-│
-├── frontend/                                   # React + TypeScript frontend using Vite
-│   ├── src/
-│   │   ├── pages/                             # Page components
-│   │   │   ├── admin/                         # Admin-only pages (dashboard, reports, staff management)
-│   │   │   └── employee/                      # Employee-only pages (staff board, shift info, requests)
-│   │   ├── components/                        # Reusable UI components (buttons, cards, modals, forms, tables, sidebar)
-│   │   ├── styles/                            # Global and component CSS
-│   │   ├── utils/                             # Helper functions (formatMoney, formatDate, validation helpers)
-│   │   ├── App.tsx                            # Main app component with routing
-│   │   ├── main.tsx                           # Entry point
-│   │   └── index.css                          # Global styles
-│   ├── public/                                # Static assets (images, icons, fonts)
-│   ├── package.json                           # Frontend dependencies
-│   ├── tsconfig.json                          # TypeScript config
-│   ├── vite.config.ts                         # Vite bundler config
-│   └── .gitignore                             # Git ignore rules
-│
-├── backend/                                   # Node.js + Express.js + TypeScript backend
-│   ├── src/
-│   │   ├── models/                            # TypeScript interfaces matching database tables
-│   │   │   ├── user.model.ts                  # User and auth related types
-│   │   │   ├── employee.model.ts              # Employee profile types
-│   │   │   ├── inventory.model.ts             # Inventory item and category types
-│   │   │   ├── sales.model.ts                 # Sales entry types
-│   │   │   ├── shift.model.ts                 # Shift session types
-│   │   │   ├── expense.model.ts               # Expense types
-│   │   │   ├── payroll.model.ts               # Payroll entry types
-│   │   │   ├── staff-message.model.ts         # Staff board message types
-│   │   │   ├── restock.model.ts               # Restock calculation types
-│   │   │   └── index.ts                       # Barrel export - export all models for easy importing
-│   │   │
-│   │   ├── repositories/                      # Database access layer - handles all SQL queries
-│   │   │   ├── user.repository.ts             # Queries for user table
-│   │   │   ├── employee.repository.ts         # Queries for employee_profiles table
-│   │   │   ├── inventory.repository.ts        # Queries for inventory and category tables
-│   │   │   ├── sales.repository.ts            # Queries for sales_entries table
-│   │   │   ├── shift.repository.ts            # Queries for shift_sessions table
-│   │   │   ├── expense.repository.ts          # Queries for expenses table
-│   │   │   ├── payroll.repository.ts          # Queries for payroll_entries table
-│   │   │   ├── staff-message.repository.ts    # Queries for staff_messages table
-│   │   │   └── index.ts                       # Barrel export
-│   │   │
-│   │   ├── services/                          # Business logic layer
-│   │   │   ├── user.service.ts                # User management, password hashing, authentication
-│   │   │   ├── employee.service.ts            # Employee profile management
-│   │   │   ├── inventory.service.ts           # Stock updates, thresholds, restock logic
-│   │   │   ├── sales.service.ts               # Sales entry creation, revenue calculations
-│   │   │   ├── shift.service.ts               # Shift tracking and cash variance
-│   │   │   ├── expense.service.ts             # Expense categorization and deduction logic
-│   │   │   ├── payroll.service.ts             # Payroll calculations
-│   │   │   ├── staff-message.service.ts       # Staff message management and status updates
-│   │   │   └── index.ts                       # Barrel export
-│   │   │
-│   │   ├── controllers/                       # Request handlers
-│   │   │   ├── user.controller.ts             # User registration, login, profile endpoints
-│   │   │   ├── employee.controller.ts         # Employee CRUD endpoints
-│   │   │   ├── inventory.controller.ts        # Inventory requests and adjustments
-│   │   │   ├── sales.controller.ts            # Sales entry endpoints
-│   │   │   ├── shift.controller.ts            # Shift start/end endpoints
-│   │   │   ├── expense.controller.ts          # Expense endpoints
-│   │   │   ├── payroll.controller.ts          # Payroll endpoints
-│   │   │   ├── staff-message.controller.ts    # Staff message endpoints
-│   │   │   └── index.ts                       # Barrel export
-│   │   │
-│   │   ├── routes/                            # Express route definitions
-│   │   │   ├── user.routes.ts                 # User and auth routes
-│   │   │   ├── employee.routes.ts             # Employee routes
-│   │   │   ├── inventory.routes.ts            # Inventory routes
-│   │   │   ├── sales.routes.ts                # Sales routes
-│   │   │   ├── shift.routes.ts                # Shift routes
-│   │   │   ├── expense.routes.ts              # Expense routes
-│   │   │   ├── payroll.routes.ts              # Payroll routes
-│   │   │   ├── staff-message.routes.ts        # Staff message routes
-│   │   │   └── index.ts                       # Mount all routes
-│   │   │
-│   │   ├── middleware/                        # Request processing middleware
-│   │   │   ├── auth.middleware.ts             # JWT verification and role-based access
-│   │   │   ├── error.handler.ts               # Global error handling
-│   │   │   ├── request.logger.ts              # Request logging
-│   │   │   └── validation.middleware.ts       # Request payload validation
-│   │   │
-│   │   ├── validators/                        # Input validation schemas
-│   │   │   ├── user.validator.ts              # User validation
-│   │   │   ├── inventory.validator.ts         # Inventory validation
-│   │   │   ├── sales.validator.ts             # Sales validation
-│   │   │   ├── shift.validator.ts             # Shift validation
-│   │   │   └── expense.validator.ts           # Expense validation
-│   │   │
-│   │   ├── xml/                               # XML handling
-│   │   │   ├── parsers/                       # Convert XML to JavaScript objects
-│   │   │   │   ├── inventory.parser.ts
-│   │   │   │   ├── sales.parser.ts
-│   │   │   │   └── payroll.parser.ts
-│   │   │   ├── builders/                      # Convert JavaScript objects to XML
-│   │   │   │   ├── report.builder.ts
-│   │   │   │   ├── inventory.builder.ts
-│   │   │   │   └── payroll.builder.ts
-│   │   │   └── templates/                     # XML templates
-│   │   │       ├── inventory.template.xml
-│   │   │       ├── sales.template.xml
-│   │   │       └── payroll.template.xml
-│   │   │
-│   │   ├── utils/                             # Shared utility functions
-│   │   │   ├── password.hash.ts               # bcrypt password hashing/verification
-│   │   │   ├── date.utils.ts                  # Date formatting and calculations
-│   │   │   ├── money.utils.ts                 # Money formatting and decimal calculations
-│   │   │   ├── cash.variance.ts               # Cash variance calculation
-│   │   │   └── jwt.utils.ts                   # Generate and verify JWT tokens
-│   │   │
-│   │   ├── config/                            # Configuration files
-│   │   │   ├── database.ts                    # MySQL connection pool setup
-│   │   │   └── constants.ts                   # App-wide constants
-│   │   │
-│   │   └── server.ts                          # Express app setup
-│   │
-│   ├── dist/                                  # Compiled JavaScript output
-│   ├── package.json                           # Backend dependencies and scripts
-│   ├── package-lock.json                      # Locked dependency versions
-│   ├── tsconfig.json                          # TypeScript configuration
-│   ├── .env                                   # Environment variables - DO NOT COMMIT
-|   ├── .env.example                           # Example environment configuration for the backend.
-│   └── .gitignore                             # Git ignore rules
-│
-├── database/                                  # Database-related files
-│   ├── schema/
-│   │   └── schema.sql                         # Table definitions
-│   ├── migrations/                            # Future schema changes
-│   └── seeders/                               # Optional test data
-│       ├── users-seeder.sql
-│       ├── inventory-seeder.sql
-│       └── README.md
-│
-├── docs/                                      # Project documentation
-│   ├── erd/
-│   │   └── ben-cafe-erd.pdf
-│   ├── prototypes/
-│   ├── requirements/
-│   └── api-docs/
-│       └── API_ROUTES.md
-│
-├── tests/                                     # Test files
-│   ├── unit/
-│   ├── integration/
-│   └── README.md
-│
-├── .gitignore
-└── README.md
+├── README.md
+├── backend/
+│   ├── .env
+│   ├── .env.example
+│   ├── .gitignore
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── src/
+│       ├── server.ts
+│       ├── config/
+│       │   ├── constants.ts
+│       │   ├── database.ts
+│       │   ├── db-options.ts
+│       │   └── session-store.ts
+│       ├── controllers/
+│       │   ├── auth.controller.ts
+│       │   ├── employee.controller.ts
+│       │   ├── expense.controller.ts
+│       │   ├── index.ts
+│       │   ├── inventory-budget-account.controller.ts
+│       │   ├── inventory-budget-log.controller.ts
+│       │   ├── inventory-item.controller.ts
+│       │   ├── inventory-request.controller.ts
+│       │   ├── restock-calculation.controller.ts
+│       │   ├── sales-entry.controller.ts
+│       │   ├── shift.controller.ts
+│       │   ├── staff-message.controller.ts
+│       │   └── xml-export.controller.ts
+│       ├── middleware/
+│       │   ├── auth.middleware.ts
+│       │   └── validation.middleware.ts
+│       ├── models/
+│       │   └── index.ts
+│       ├── repositories/
+│       │   ├── employee.repository.ts
+│       │   ├── expense.repository.ts
+│       │   ├── index.ts
+│       │   ├── inventory-adjustment.repository.ts
+│       │   ├── inventory-budget-account.repository.ts
+│       │   ├── inventory-budget-log.repository.ts
+│       │   ├── inventory-item.repository.ts
+│       │   ├── inventory-request.repository.ts
+│       │   ├── payroll-entry.repository.ts
+│       │   ├── restock-calculation-item.repository.ts
+│       │   ├── restock-calculation.repository.ts
+│       │   ├── sales-entry.repository.ts
+│       │   ├── shift.repository.ts
+│       │   ├── staff-message.repository.ts
+│       │   └── user.repository.ts
+│       ├── routes/
+│       │   ├── auth.routes.ts
+│       │   ├── employee.routes.ts
+│       │   ├── expense.routes.ts
+│       │   ├── index.ts
+│       │   ├── inventory-budget-account.routes.ts
+│       │   ├── inventory-budget-log.routes.ts
+│       │   ├── inventory-item.routes.ts
+│       │   ├── inventory-request.routes.ts
+│       │   ├── restock-calculation.routes.ts
+│       │   ├── sales-entry.routes.ts
+│       │   ├── shift.routes.ts
+│       │   ├── staff-message.routes.ts
+│       │   └── xml-export.routes.ts
+│       ├── scripts/
+│       │   └── seed-admin.cjs
+│       ├── services/
+│       │   ├── auth.service.ts
+│       │   ├── employee.service.ts
+│       │   ├── expense.service.ts
+│       │   ├── index.ts
+│       │   ├── inventory-budget-account.service.ts
+│       │   ├── inventory-budget-log.service.ts
+│       │   ├── inventory-item.service.ts
+│       │   ├── inventory-request.service.ts
+│       │   ├── restock-calculation.service.ts
+│       │   ├── sales-entry.service.ts
+│       │   ├── shift.service.ts
+│       │   └── staff-message.service.ts
+│       ├── types/
+│       ├── utils/
+│       │   ├── datetime.utils.ts
+│       │   ├── password-hash.ts
+│       │   └── xmlFormatter.ts
+│       └── validators/
+│           ├── auth.validator.ts
+│           ├── common.validator.ts
+│           ├── employee.validator.ts
+│           ├── expense.validator.ts
+│           ├── index.ts
+│           ├── inventory-budget-account.validator.ts
+│           ├── inventory-budget-log.validator.ts
+│           ├── inventory-item.validator.ts
+│           ├── inventory-request.validator.ts
+│           ├── payroll-entry.validator.ts
+│           ├── restock-calculation-item.validator.ts
+│           ├── restock-calculation.validator.ts
+│           ├── sales-entry.validator.ts
+│           ├── shift.validator.ts
+│           └── staff-message.validator.ts
+├── database/
+│   └── schema/
+│       └── schema.sql
+├── frontend/
+│   ├── .env
+│   ├── .gitignore
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── lint-results.json
+│   ├── package.json
+│   ├── public/
+│   ├── README.md
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   ├── vercel.json
+│   ├── vite.config.ts
+│   └── src/
+│       ├── App.css
+│       ├── App.tsx
+│       ├── index.css
+│       ├── main.tsx
+│       ├── vite-env.d.ts
+│       ├── api/
+│       │   ├── apiError.ts
+│       │   ├── apiFetch.ts
+│       │   ├── csvExportApi.ts
+│       │   ├── employeeApi.ts
+│       │   ├── expenseApi.ts
+│       │   ├── inventoryBudgetAccountApi.ts
+│       │   ├── inventoryBudgetLogApi.ts
+│       │   ├── inventoryItemApi.ts
+│       │   ├── inventoryRequestApi.ts
+│       │   ├── notesApi.ts
+│       │   ├── restockCalculationApi.ts
+│       │   ├── salesApi.ts
+│       │   ├── shiftApi.ts
+│       │   ├── shiftSummaryApi.ts
+│       │   └── xmlExportApi.ts
+│       ├── assets/
+│       │   ├── hero.png
+│       │   ├── react.svg
+│       │   └── vite.svg
+│       ├── components/
+│       │   ├── AddNewEmployeeModal.tsx
+│       │   ├── Admin/
+│       │   │   ├── AdminDashboard.tsx
+│       │   │   ├── AdminInventory.tsx
+│       │   │   ├── AdminPortal.tsx
+│       │   │   ├── AdminReports.tsx
+│       │   │   ├── AdminStaffBoard.tsx
+│       │   │   ├── CsvExportButton.tsx
+│       │   │   ├── SalesEntry.tsx
+│       │   │   ├── StaffRegistry.tsx
+│       │   │   └── XmlExportButton.tsx
+│       │   ├── Auth/
+│       │   │   └── Login.tsx
+│       │   └── StaffPortal/
+│       │       ├── InventoryManager.tsx
+│       │       ├── NotesManager.tsx
+│       │       ├── ShiftManager.tsx
+│       │       └── StaffPortal.tsx
+│       ├── config/
+│       │   └── api.ts
+│       └── utils/
+│           ├── datetime.utils.ts
+│           ├── storeWeek.utils.ts
+│           └── xmlToCsv.ts
+└── shared/
+    ├── .gitignore
+    ├── package.json
+    ├── tsconfig.json
+    └── src/
+        ├── index.ts
+        ├── constants/
+        │   ├── app.constants.ts
+        │   └── index.ts
+        └── models/
+            ├── auth.model.ts
+            ├── employee.model.ts
+            ├── expense.model.ts
+            ├── index.ts
+            ├── inventory-adjustment.model.ts
+            ├── inventory-budget-account.model.ts
+            ├── inventory-budget-log.model.ts
+            ├── inventory-item.model.ts
+            ├── inventory-request.model.ts
+            ├── payroll-entry.model.ts
+            ├── restock-calculation-item.model.ts
+            ├── restock-calculation.model.ts
+            ├── sales-entry.model.ts
+            ├── shift.model.ts
+            ├── staff-message.model.ts
+            └── user.model.ts
 ```
 
----
-
-## 🧠 Key Principles
-
-1. **Models:** Data shape only using TypeScript interfaces from schema
-2. **Repositories:** Database queries and CRUD operations only
-3. **Services:** Business logic, constraints, validations, and calculations
-4. **Controllers:** HTTP request handlers
-5. **Routes:** URL mappings to controllers
-6. **Middleware:** Request/response processing
-7. **XML:** Separate module for XML parsing and building
-
----
-
-## 🔁 Data Flow
-
-```txt
-HTTP Request
-    ↓
-Route
-    ↓
-Controller
-    ↓
-Service
-    ↓
-Repository
-    ↓
-Database
-```
-
-The service layer handles:
-
-- Validation
-- Business logic
-- Error handling
-- Calculations
-
----
-
-## 🏷️ Naming Conventions
-
-- **File names:** kebab-case  
-  Example: `user-service.ts`, `inventory-repository.ts`
-
-- **Classes/Interfaces:** PascalCase  
-  Example: `UserService`, `InventoryItem`
-
-- **Functions/Variables:** camelCase  
-  Example: `getUserById`, `totalRevenue`
-
-- **Constants:** UPPER_SNAKE_CASE  
-  Example: `MAX_RETRIES`, `DB_TIMEOUT`
-
----
-
-## 👥 Team Notes
-
-### General
-
-- Follow the architecture strictly:
-  ```txt
-  Model → Repository → Service → Controller → Route
-  ```
-- Do NOT skip layers
-- Keep functions small and focused
-- Follow single responsibility principle
-
-### Frontend
-
-- Place API calls in services or utility functions
-- Do NOT call backend directly inside components
-- Use reusable components from `/components`
-- Move heavy logic to hooks or utils
+## What Each Area Is For
 
 ### Backend
 
-- Controllers = request/response only
-- Services = ALL business logic
-- Repositories = SQL only
-- Always validate input before reaching controllers
-- Use async/await for asynchronous operations
+`backend/src/server.ts` is the runtime start point for the API. From there, the path is usually route first, then controller, then service, then repository.
+
+Use these folders as the default mental model:
+
+- `config/` for shared backend configuration such as database setup and constants
+- `controllers/` for request/response orchestration
+- `middleware/` for auth and request guards
+- `repositories/` for SQL and persistence
+- `routes/` for URL wiring
+- `services/` for feature logic and domain behavior
+- `validators/` for schema validation before controller/service work begins
+- `utils/` for reusable backend helpers
+- `scripts/` for operational scripts
+- `models/` and `types/` for contracts that cross internal modules
+
+If you are changing behavior, find the service first. If you are changing how a request enters the system, find the route. If you are changing how data is stored or retrieved, find the repository.
+
+### Frontend
+
+`frontend/src/main.tsx` mounts the app, and `frontend/src/App.tsx` defines the main shell. Most feature work will fan out from there into `components/` and `api/`.
+
+The frontend folders are intentionally split by concern:
+
+- `api/` wraps the backend calls for each feature area
+- `components/Admin/` contains admin-focused screens and actions
+- `components/StaffPortal/` contains the staff-facing portal workflow
+- `components/Auth/` contains authentication UI
+- `assets/` stores images and static media
+- `config/` stores frontend configuration such as API wiring
+- `utils/` contains formatting and local transformation helpers
+
+### Shared
+
+`shared/` is the bridge between frontend and backend.
+
+Keep these principles in mind:
+
+- Shared models belong in `shared/src/models/` when both apps need the same data shape.
+- Shared constants belong in `shared/src/constants/` when both apps need the same values.
+- `shared/src/index.ts` should stay the clean import surface for consumers.
 
 ### Database
 
-- No raw SQL outside repositories
-- Follow schema naming consistency
-- Use parameterized queries to prevent SQL injection
+`database/schema/schema.sql` is the source of truth for schema structure. When a table changes, inspect the related repository, service, validator, and shared model together so the API contract stays aligned.
 
-Correct:
+## Typical Change Paths
 
-```ts
-const [rows] = await pool.query(
-  'SELECT * FROM users WHERE id = ?',
-  [userId]
-);
-```
+Use these as the shortest path into the repo:
 
-Wrong:
+1. New backend endpoint: `routes/` -> `controllers/` -> `services/` -> `repositories/`
+2. New validation rule: `validators/` first, then the controller or service that consumes it
+3. UI screen change: `App.tsx` or the relevant feature component under `components/`
+4. API contract update: `shared/src/models/` plus the matching frontend API wrapper and backend service/repository
+5. Schema change: `database/schema/schema.sql`, then follow every affected backend and shared file
 
-```ts
-const [rows] = await pool.query(
-  `SELECT * FROM users WHERE id = ${userId}`
-);
-```
+## Working Notes
 
----
-
-## 🔐 Authentication & Security
-
-- Always hash passwords using `bcrypt` in `password.hash.ts`
-- Protect admin routes with auth middleware
-- Use JWT tokens for authentication through `jwt.utils.ts`
-- Never expose sensitive data such as passwords, tokens, or API keys
-- Always release database connections after use
-
-```ts
-connection.release();
-```
-
----
-
-## ❌ Error Handling
-
-- Use centralized error handler: `error.handler.ts`
-- Services should throw errors with descriptive messages
-- Controllers should catch errors and send responses
-
-Standard response format:
-
-```ts
-{
-  success: boolean,
-  message: string,
-  data?: any
-}
-```
-
----
-
-## 🌿 Git Workflow
-
-- Use clean commit messages:
-  - `feat:` for new features
-  - `fix:` for bug fixes
-  - `refactor:` for code cleanup
-- One feature per branch
-- Do not push broken code
-- Do NOT commit `.env`
-- Use `.env.example` instead
-
----
-
-## 🧼 Code Quality
-
-- Follow naming conventions
-- Remove unused code before committing
-- Remove unnecessary console logs
-- Keep files organized in their correct folders
-- Use TypeScript types properly
-- Avoid `any` unless necessary
-
----
-
-## 🧪 Testing
-
-- Test services first because they contain business logic
-- Use integration tests for API routes
-- Run tests before pushing
-
-```bash
-npm test
-```
-
----
-
-## 📚 Documentation
-
-- Keep `README.md` updated with setup instructions
-- Update `docs/api-docs/API_ROUTES.md` when endpoints change
-- Add comments only for complex logic
-
----
-
-## 🤝 Collaboration
-
-- Communicate before editing shared files:
-  - database schema
-  - routes
-  - constants
-- Avoid breaking changes without team discussion
-- Review each other's pull requests
+- This repository is public and intended to be easily understood by reviewers and contributors.
+- Follow the backend flow strictly: route → controller → service → repository.
+- Keep business logic inside services; avoid placing logic in controllers or repositories.
+- Use shared models and constants instead of duplicating types across frontend and backend.
+- When updating database schema, ensure corresponding repositories, services, validators, and shared models are updated together.
+- Maintain consistent response structures (`success`, `message`, `data`) across API endpoints.
+- Keep formatting and UI logic inside frontend `utils/` when reusable.
