@@ -19,7 +19,12 @@ import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { expenseApi } from '../../api/expenseApi';
 import type { SalesEntry, ShiftSummaryItem, Expense } from 'shared/models';
 import { CsvExportButton } from './CsvExportButton';
-import { formatIsoDateTimeToTime } from '../../utils/datetime.utils';
+import { 
+  formatIsoDateTimeToTime, 
+  formatIsoDateTimeToDateTime, 
+  formatIsoDateTimeToDate,
+  formatShiftDurationDisplay
+} from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -36,11 +41,6 @@ function getWeekRange() {
   sunday.setHours(23, 59, 59, 999);
   const toDateStr = (d: Date) => d.toISOString().split('T')[0];
   return { start: toDateStr(monday), end: toDateStr(sunday) };
-}
-
-function formatDuration(_startStr: string, endStr: string | null): string {
-  if (!endStr) return '—';
-  return '—';
 }
 
 export function AdminReports() {
@@ -383,7 +383,7 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {formatIsoDateTimeToTime(String(entry.postedAt))}
+                              {formatIsoDateTimeToDate(String(entry.postedAt))}
                             </p>
                             <p className="text-[11px] text-gray-400">
                               {formatIsoDateTimeToTime(String(entry.postedAt))}
@@ -576,14 +576,24 @@ export function AdminReports() {
                           <td className="px-6 py-3.5">
                             <p className="text-sm text-gray-700 font-medium">
                               {formatIsoDateTimeToTime(String(shift.startTime))}
-                              {shift.endTime && (
-                                <span className="text-gray-400"> – {formatIsoDateTimeToTime(String(shift.endTime))}</span>
+
+                              {shift.endTime ? (
+                                <span className="text-gray-400">
+                                  {' '}– {formatIsoDateTimeToTime(String(shift.endTime))}
+                                </span>
+                              ) : (
+                                <span className="text-amber-600 font-semibold">
+                                  {' '}– Ongoing
+                                </span>
                               )}
                             </p>
                           </td>
                           <td className="px-6 py-3.5 text-right">
                             <span className="text-sm font-medium text-gray-700">
-                              {formatDuration(formatIsoDateTimeToTime(String(shift.startTime)), formatIsoDateTimeToTime(String(shift.endTime)))}
+                              {formatShiftDurationDisplay(
+                                String(shift.startTime),
+                                shift.endTime ? String(shift.endTime) : null
+                              )}
                             </span>
                           </td>
                           <td className="px-6 py-3.5 text-right">
@@ -602,7 +612,7 @@ export function AdminReports() {
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : 'bg-amber-50 text-amber-700'
                             }`}>
-                              {isCompleted ? 'Completed' : 'Active'}
+                              {isCompleted ? 'Completed' : 'In Progress'}
                             </span>
                           </td>
                         </tr>
@@ -717,7 +727,7 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {formatIsoDateTimeToTime(String(expense.postedAt))}
+                              {formatIsoDateTimeToDateTime(String(expense.postedAt))}
                             </p>
                           </div>
                         </div>

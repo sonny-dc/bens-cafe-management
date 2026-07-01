@@ -11,7 +11,7 @@ import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type R
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { apiFetch } from '../../api/apiFetch';
 import { formatDateToYYYYMMDD, getStoreWeekRange, DEFAULT_CLOSING_DAY, WEEKDAY_LABELS } from '../../utils/storeWeek.utils';
-import { getShiftProgressHours, formatIsoDateTimeToTime } from '../../utils/datetime.utils';
+import { getShiftProgressHours, formatIsoDateTimeToTime, formatIsoDateTimeToDateTime } from '../../utils/datetime.utils';
 
 // --- HELPERS ---
 const getNoteStyle = (type: MessageType) => {
@@ -433,7 +433,7 @@ export function AdminStaffBoard() {
                           <Icon size={14} className={style.text} />
                           <span className="text-xs font-bold uppercase tracking-wider text-gray-900">{note.employeeName}</span>
                         </div>
-                        <span className="text-[10px] text-gray-500 font-medium">{formatIsoDateTimeToTime(String(note.postedAt))}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">{formatIsoDateTimeToDateTime(String(note.postedAt))}</span>
                       </div>
                       <p className="text-sm font-bold text-gray-900 mb-1">{note.subject}</p>
                       <p className="text-xs text-gray-700 leading-relaxed">{note.messageText}</p>

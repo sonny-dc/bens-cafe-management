@@ -9,7 +9,7 @@ import { inventoryItemApi } from '../../api/inventoryItemApi';
 import { restockCalculationApi } from '../../api/restockCalculationApi';
 import { inventoryBudgetAccountApi } from '../../api/inventoryBudgetAccountApi';
 import { inventoryBudgetLogApi } from '../../api/inventoryBudgetLogApi';
-import { formatIsoDateTimeToTime } from '../../utils/datetime.utils';
+import { formatIsoDateTimeToDateTime } from '../../utils/datetime.utils';
 
 import {
   INVENTORY_ITEM_CATEGORIES,
@@ -1109,7 +1109,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       return (
                         <tr key={log.id} className="hover:bg-gray-50/60">
                           <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">
-                            {formatIsoDateTimeToTime(String(log.postedAt))}
+                            {formatIsoDateTimeToDateTime(String(log.postedAt))}
                           </td>
                           <td className="px-5 py-3">
                             <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md
