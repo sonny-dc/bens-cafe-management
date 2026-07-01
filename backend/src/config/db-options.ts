@@ -12,7 +12,6 @@ export const dbOptions = {
   user: process.env.DB_USER as string,
   password: process.env.DB_PASSWORD as string,
   database: process.env.DB_NAME as string,
-  timezone: '+8:00',
   ssl: {
     rejectUnauthorized: false // Required for Aiven cloud database SSL
   }
