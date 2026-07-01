@@ -12,7 +12,6 @@ import {
 
 import { apiFetch } from './apiFetch';
 import { inventoryItemApi } from './inventoryItemApi';
-import { parseSQLDate } from '../utils/datetime.utils';
 
 type CreateInventoryRequestPayload = CreateInventoryRequestInput;
 
@@ -114,7 +113,7 @@ export const inventoryRequestApi = {
       })
       .sort(
         (a, b) =>
-          parseSQLDate(b.createdAt).getTime() - parseSQLDate(a.createdAt).getTime()
+          String(b.createdAt).localeCompare(String(a.createdAt))
       );
   },
 

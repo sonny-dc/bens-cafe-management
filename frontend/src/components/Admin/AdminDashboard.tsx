@@ -16,24 +16,17 @@ import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { notesApi } from '../../api/notesApi';
 import { inventoryBudgetAccountApi } from '../../api/inventoryBudgetAccountApi';
 import type { SalesEntry, InventoryRequestListItem, StaffMessage, ActiveShiftItem } from 'shared/models';
-import { formatSQLDateInAppTimeZone, formatSQLTimeInAppTimeZone, getAppDateKey, parseSQLDate } from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function formatDurationLive(startTimeStr: string): string {
-  const start = parseSQLDate(startTimeStr).getTime();
-  const now = Date.now();
-  const diff = now - start;
-  const totalMinutes = Math.floor(diff / 60000);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  if (h === 0) return `${m}m`;
-  return `${h}h ${m}m`;
+  return startTimeStr ? 'Active' : '—';
 }
 
 function isToday(dateStr: string | Date): boolean {
-  return getAppDateKey(dateStr) === getAppDateKey(new Date());
+  const today = new Date().toISOString().slice(0, 10);
+  return String(dateStr).slice(0, 10) === today;
 }
 
 export function AdminDashboard() {
@@ -199,7 +192,7 @@ export function AdminDashboard() {
                         <p className="text-sm font-bold text-gray-900 font-poppins">{shift.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
                           <Clock size={12} />
-                          Started {formatSQLTimeInAppTimeZone(shift.clockInTime)}
+                          Started {shift.clockInTime}
                         </p>
                       </div>
                     </div>
@@ -268,7 +261,7 @@ export function AdminDashboard() {
                   <span className="text-xs font-bold text-gray-900">{note.employeeName || `ID: ${note.employeeId}`}</span>
                 </div>
                 <span className="text-[10px] text-gray-400 font-medium">
-                  {formatSQLDateInAppTimeZone(note.postedAt)}
+                  {String(note.postedAt)}
                 </span>
               </div>
               <p className="text-sm font-bold text-gray-900 mb-1 font-poppins">{note.subject || note.messageType}</p>

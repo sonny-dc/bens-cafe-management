@@ -11,8 +11,6 @@ import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type R
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { apiFetch } from '../../api/apiFetch';
 import { formatDateToYYYYMMDD, getStoreWeekRange, DEFAULT_CLOSING_DAY, WEEKDAY_LABELS } from '../../utils/storeWeek.utils';
-import { parseSQLDate } from '../../utils/datetime.utils';
-import { formatSQLDateInAppTimeZone, formatSQLTimeInAppTimeZone } from '../../utils/datetime.utils';
 
 // --- HELPERS ---
 const getNoteStyle = (type: MessageType) => {
@@ -142,7 +140,7 @@ export function AdminStaffBoard() {
     const grouped: Record<string, any> = {};
 
     empShifts.forEach(shift => {
-      const dateObj = parseSQLDate(shift.shiftDate);
+      const dateObj = new Date(String(shift.shiftDate));
       dateObj.setHours(0, 0, 0, 0);
 
       const day = dateObj.getDay();
@@ -193,9 +191,9 @@ export function AdminStaffBoard() {
     const rows = [
       ["Date", "Start Time", "End Time", "Opening Cash", "Closing Cash", "Cash Variance"],
       ...weekData.shifts.map((s: ShiftSummaryItem) => [
-        parseSQLDate(s.shiftDate).toLocaleDateString(),
-        parseSQLDate(s.startTime).toLocaleTimeString(),
-        s.endTime ? parseSQLDate(s.endTime).toLocaleTimeString() : 'N/A',
+        String(s.shiftDate),
+        String(s.startTime),
+        s.endTime ? String(s.endTime) : 'N/A',
         s.openingCash,
         s.closingCash,
         (s as any).cashVariance || 0
@@ -286,7 +284,7 @@ export function AdminStaffBoard() {
                 <p className="text-sm text-gray-500 text-center py-4">No staff currently clocked in.</p>
               ) : (
                 activeShifts.map(staff => {
-                  const hoursElapsed = ((new Date().getTime() - parseSQLDate(staff.clockInTime).getTime()) / (1000 * 60 * 60)).toFixed(1);
+                  const hoursElapsed = ((new Date().getTime() - new Date(String(staff.clockInTime)).getTime()) / (1000 * 60 * 60)).toFixed(1);
                   return (
                     <div key={staff.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
@@ -300,7 +298,7 @@ export function AdminStaffBoard() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs font-bold text-gray-900">{hoursElapsed} hrs</p>
-                        <p className="text-[10px] text-gray-400">In at {parseSQLDate(staff.clockInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        <p className="text-[10px] text-gray-400">In at {String(staff.clockInTime)}</p>
                       </div>
                     </div>
                   );
@@ -434,7 +432,7 @@ export function AdminStaffBoard() {
                           <Icon size={14} className={style.text} />
                           <span className="text-xs font-bold uppercase tracking-wider text-gray-900">{note.employeeName}</span>
                         </div>
-                        <span className="text-[10px] text-gray-500 font-medium">{formatSQLTimeInAppTimeZone(note.postedAt)}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">{String(note.postedAt)}</span>
                       </div>
                       <p className="text-sm font-bold text-gray-900 mb-1">{note.subject}</p>
                       <p className="text-xs text-gray-700 leading-relaxed">{note.messageText}</p>
@@ -598,9 +596,9 @@ export function AdminStaffBoard() {
                                         <div key={shift.shiftId} className="flex flex-col p-3 rounded-lg bg-white border border-gray-100 shadow-sm hover:border-[#4a6741]/20 transition-colors">
                                           <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-50">
                                             <span className="text-sm font-bold text-gray-800">
-                                              {formatSQLDateInAppTimeZone(shift.shiftDate)}
+                                              {String(shift.shiftDate)}
                                               <span className="text-xs font-normal text-gray-400 ml-1">
-                                                {formatSQLTimeInAppTimeZone(shift.startTime)}
+                                                {String(shift.startTime)}
                                               </span>
                                             </span>
                                           </div>

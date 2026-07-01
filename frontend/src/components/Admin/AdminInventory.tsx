@@ -19,7 +19,6 @@ import {
 } from 'shared/constants';
 import type { InventoryItemListItem, InventoryBudgetLog, CreateRestockCalculationInput, InventoryBudgetAccount } from 'shared/models';
 import { ApiError } from '../../api/apiError';
-import { formatSQLDateTimeInAppTimeZone } from '../../utils/datetime.utils';
 
 const ROWS_PER_PAGE = 6;
 
@@ -1109,7 +1108,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       return (
                         <tr key={log.id} className="hover:bg-gray-50/60">
                           <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">
-                            {formatSQLDateTimeInAppTimeZone(log.postedAt)}
+                            {String(log.postedAt)}
                           </td>
                           <td className="px-5 py-3">
                             <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md

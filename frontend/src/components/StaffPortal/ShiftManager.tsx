@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Square, CheckCircle2, AlertCircle, Clock, TrendingUp } from 'lucide-react';
 import { shiftApi, type Shift } from '../../api/shiftApi';
-import { formatSQLTimeInAppTimeZone } from '../../utils/datetime.utils';
 
 export function ShiftManager() {
 
@@ -177,7 +176,7 @@ export function ShiftManager() {
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-sm text-gray-500 flex items-center gap-2"><Clock size={14} /> Started</span>
                   <span className="text-sm font-semibold text-gray-800">
-                    {formatSQLTimeInAppTimeZone(shift.startTime)}
+                    {String(shift.startTime)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
@@ -362,7 +361,7 @@ export function ShiftManager() {
               <span className="text-sm font-semibold text-emerald-800">Shift Active</span>
             </div>
             <p className="text-sm text-emerald-700 leading-relaxed">
-              Your shift started at <span className="font-bold">{formatSQLTimeInAppTimeZone(shift.startTime)}</span>. Great work today!
+              Your shift started at <span className="font-bold">{String(shift.startTime)}</span>. Great work today!
             </p>
           </motion.div>
         )}

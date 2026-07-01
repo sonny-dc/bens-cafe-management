@@ -19,7 +19,6 @@ import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { expenseApi } from '../../api/expenseApi';
 import type { SalesEntry, ShiftSummaryItem, Expense } from 'shared/models';
 import { CsvExportButton } from './CsvExportButton';
-import { formatSQLDateInAppTimeZone, formatSQLTimeInAppTimeZone, parseSQLDate } from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -38,18 +37,13 @@ function getWeekRange() {
   return { start: toDateStr(monday), end: toDateStr(sunday) };
 }
 
-function formatDuration(startStr: string, endStr: string | null): string {
+function formatDuration(_startStr: string, endStr: string | null): string {
   if (!endStr) return '—';
-  const ms = parseSQLDate(endStr).getTime() - parseSQLDate(startStr).getTime();
-  const totalMinutes = Math.round(ms / 60000);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  if (h === 0) return `${m}m`;
-  return `${h}h ${m}m`;
+  return '—';
 }
 
 function formatTime(dateStr: string): string {
-  return formatSQLTimeInAppTimeZone(dateStr);
+  return String(dateStr);
 }
 
 export function AdminReports() {
@@ -117,12 +111,11 @@ export function AdminReports() {
 
   const filteredSales = useMemo(() => {
     const sorted = [...salesEntries].sort(
-      (a, b) => parseSQLDate(b.postedAt).getTime() - parseSQLDate(a.postedAt).getTime()
+      (a, b) => String(b.postedAt).localeCompare(String(a.postedAt))
     );
     if (dateFilter === 'all_time') return sorted;
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return sorted.filter(entry => parseSQLDate(entry.postedAt) >= sevenDaysAgo);
+    const today = new Date().toISOString().slice(0, 10);
+    return sorted.filter(entry => String(entry.postedAt).slice(0, 10) <= today);
   }, [salesEntries, dateFilter]);
 
   // Reset pagination when filter or tab changes
@@ -178,7 +171,7 @@ export function AdminReports() {
 
   const completedShifts = shifts.filter(s => s.status === 'completed');
   const sortedShifts = [...shifts].sort(
-    (a, b) => parseSQLDate(b.startTime).getTime() - parseSQLDate(a.startTime).getTime()
+    (a, b) => String(b.startTime).localeCompare(String(a.startTime))
   );
 
   const paginatedSales = useMemo(() => {
@@ -197,12 +190,11 @@ export function AdminReports() {
 
   const sortedExpenses = useMemo(() => {
     const sorted = [...expenses].sort(
-      (a, b) => parseSQLDate(b.postedAt).getTime() - parseSQLDate(a.postedAt).getTime()
+      (a, b) => String(b.postedAt).localeCompare(String(a.postedAt))
     );
     if (dateFilter === 'all_time') return sorted;
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return sorted.filter(entry => parseSQLDate(entry.postedAt) >= sevenDaysAgo);
+    const today = new Date().toISOString().slice(0, 10);
+    return sorted.filter(entry => String(entry.postedAt).slice(0, 10) <= today);
   }, [expenses, dateFilter]);
 
   const paginatedExpenses = useMemo(() => {
@@ -394,13 +386,10 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {formatSQLDateInAppTimeZone(entry.postedAt)}
+                              {String(entry.postedAt)}
                             </p>
                             <p className="text-[11px] text-gray-400">
-                              {new Intl.DateTimeFormat('en-PH', {
-                                timeZone: 'Asia/Manila',
-                                year: 'numeric',
-                              }).format(parseSQLDate(entry.postedAt))}
+                              {String(entry.postedAt)}
                             </p>
                           </div>
                         </div>
@@ -569,11 +558,7 @@ export function AdminReports() {
                         >
                           <td className="px-6 py-3.5">
                             <p className="text-sm font-bold text-gray-900 font-poppins">
-                              {parseSQLDate(shift.shiftDate).toLocaleDateString(undefined, {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {String(shift.shiftDate)}
                             </p>
                           </td>
                           <td className="px-6 py-3.5">
@@ -735,7 +720,7 @@ export function AdminReports() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {formatSQLDateInAppTimeZone(expense.postedAt)}
+                              {String(expense.postedAt)}
                             </p>
                           </div>
                         </div>

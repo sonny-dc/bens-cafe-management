@@ -4,7 +4,6 @@ import { ShoppingCart, Send, Package, AlertCircle, CheckCircle2, Clock } from 'l
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { inventoryItemApi } from '../../api/inventoryItemApi';
 import { REQUEST_STATUS } from 'shared/constants';
-import { formatSQLDateTimeInAppTimeZone } from '../../utils/datetime.utils';
 import type { StaffInventoryRequest, InventoryItemOption } from 'shared/models';
 
 
@@ -283,7 +282,7 @@ export function InventoryManager() {
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-gray-400">
                         <Clock size={11} />
-                        {formatSQLDateTimeInAppTimeZone(req.postedAt)}
+                        {String(req.postedAt)}
                       </div>
                     </div>
                     
