@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Clock, Banknote, 
-  MessageSquare, AlertTriangle, Info, Package, CheckCircle2, Search, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
+  MessageSquare, AlertTriangle, Info, Package, CheckCircle2, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
 import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { type ShiftSummaryItem, type InventoryRequestListItem, type StaffWeeklyPerformance  } from 'shared/models';
