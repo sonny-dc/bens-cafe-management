@@ -59,6 +59,16 @@ export function AdminReports() {
   const [salesPage, setSalesPage] = useState(1);
   const [shiftsPage, setShiftsPage] = useState(1);
   const [expensesPage, setExpensesPage] = useState(1);
+  const [, forceTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      forceTick(t => t + 1);
+    }, 1000); // updates every second
+
+    return () => clearInterval(interval);
+  }, []);
+
   const itemsPerPage = 6;
 
   useEffect(() => {
@@ -582,9 +592,7 @@ export function AdminReports() {
                                   {' '}– {formatIsoDateTimeToTime(String(shift.endTime))}
                                 </span>
                               ) : (
-                                <span className="text-gray-400">
-                                  {' '}– —
-                                </span>
+                                <span className="text-gray-400">{' '}–</span>
                               )}
                             </p>
                           </td>
