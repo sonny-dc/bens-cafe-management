@@ -582,8 +582,8 @@ export function AdminReports() {
                                   {' '}– {formatIsoDateTimeToTime(String(shift.endTime))}
                                 </span>
                               ) : (
-                                <span className="text-amber-600 font-semibold">
-                                  {' '}– Ongoing
+                                <span className="text-gray-400">
+                                  {' '}– —
                                 </span>
                               )}
                             </p>

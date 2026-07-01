@@ -468,3 +468,25 @@ CREATE TABLE inventory_budget_logs (
       )
     )
 ) ENGINE=InnoDB;
+
+-- ======================================
+-- INDEXES FOR PERFORMANCE OPTIMIZATION
+-- ======================================
+
+-- SHIFT SESSIONS INDEXES
+CREATE INDEX idx_shift_sessions_start_time ON shift_sessions(start_time);
+CREATE INDEX idx_shift_sessions_shift_date ON shift_sessions(shift_date);
+CREATE INDEX idx_shift_sessions_shift_status ON shift_sessions(shift_status);
+CREATE INDEX idx_shift_sessions_employee_id ON shift_sessions(employee_id);
+CREATE INDEX idx_shift_sessions_shift_date_shift_status ON shift_sessions(shift_date, shift_status);
+CREATE INDEX idx_shift_sessions_start_time_end_time ON shift_sessions(start_time, end_time);
+
+-- SALES ENTRIES INDEXES
+CREATE INDEX idx_sales_entries_posted_at ON sales_entries(posted_at);
+CREATE INDEX idx_sales_entries_posted_at_desc ON sales_entries(posted_at DESC);
+
+-- EXPENSES INDEXES
+CREATE INDEX idx_expenses_posted_at ON expenses(posted_at);
+CREATE INDEX idx_expenses_category ON expenses(expense_category);
+CREATE INDEX idx_expenses_posted_at_category ON expenses(posted_at, expense_category);
+
