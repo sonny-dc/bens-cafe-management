@@ -77,7 +77,7 @@ export function Login({ onLogin }: LoginProps) {
           className="relative z-10 flex flex-col items-center"
         >
           <div className="w-96 h-96 flex items-center justify-center drop-shadow-2xl">
-            <img src="/bens-logo-hd.svg" alt="Ben's Cafe Logo" className="w-full h-full object-contain brightness-0 invert opacity-90" />
+            <img src="/bens-logo-hd-traced.png" alt="Ben's Cafe Logo" className="w-full h-full object-contain brightness-0 invert opacity-90" />
           </div>
         </motion.div>
       </div>
