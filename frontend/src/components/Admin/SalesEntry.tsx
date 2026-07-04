@@ -39,8 +39,6 @@ export function SalesEntry() {
 
   const [cashSales, setCashSales] = useState<number | ''>('');
   const [cardSales, setCardSales] = useState<number | ''>('');
-  const [physicalCash, setPhysicalCash] = useState<number | ''>('');
-
   const parsedCash = cashSales || 0;
   const parsedCard = cardSales || 0;
   const totalRevenue = parsedCash + parsedCard;
@@ -94,7 +92,7 @@ export function SalesEntry() {
       await salesApi.createSalesEntryTransaction({
         cashSales: String(parsedCash),
         onlineCardSales: String(parsedCard),
-        physicalCashCount: physicalCash ? String(physicalCash) : null,
+        physicalCashCount: null,
         userId: null,
         payrollEntries: payroll.filter(p => p.isChecked).map(p => ({
           employeeId: p.id,
@@ -112,7 +110,7 @@ export function SalesEntry() {
       setTimeout(() => {
         setIsSuccess(false);
         setStep(1);
-        setCashSales(''); setCardSales(''); setPhysicalCash('');
+        setCashSales(''); setCardSales('');
         setPayroll(prev => prev.map(p => ({ ...p, isChecked: false })));
         setExpenses(defaultExpenseFormItems);
       }, 2000);
@@ -188,15 +186,6 @@ export function SalesEntry() {
                       <input type="number" step="0.01" min="0" value={cardSales} onChange={e => setCardSales(e.target.value ? parseFloat(e.target.value) : '')} placeholder="0.00"
                         className="w-full pl-9 pr-4 py-3.5 bg-white border border-[#e8dccb] rounded-xl focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all placeholder-gray-400 text-gray-900" />
                     </div>
-                  </div>
-                </div>
-
-                <div className="bg-[#f9f7f4] rounded-xl p-6 border border-[#e8dccb]/60">
-                  <label className="block text-sm font-semibold text-gray-800 mb-1">Physical Cash Count <span className="font-normal text-gray-500">(optional — count the bills in the drawer)</span></label>
-                  <div className="relative mt-3">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">₱</span>
-                    <input type="number" step="0.01" min="0" value={physicalCash} onChange={e => setPhysicalCash(e.target.value ? parseFloat(e.target.value) : '')} placeholder="Count the cash drawer..."
-                      className="w-full pl-9 pr-4 py-3 bg-white border border-[#e8dccb] rounded-xl focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all text-sm placeholder-gray-400 text-gray-900" />
                   </div>
                 </div>
 
