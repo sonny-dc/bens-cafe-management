@@ -55,7 +55,7 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
         transition={{ duration: 0.35, ease: 'easeOut' }}
         className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-gray-200"
       >
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Brand */}
           <div className="flex items-center gap-1">
             <img
@@ -93,7 +93,7 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
       </motion.header>
 
       {/* ── Main ── */}
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         {/* Greeting */}
         <motion.div
@@ -111,7 +111,7 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.35 }}
-          className="flex gap-1 mb-8 border-b border-gray-200"
+          className="flex gap-1 mb-8 border-b border-gray-200 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -123,7 +123,7 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
                 className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors
                   ${isActive ? 'text-[#4a6741]' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                <Icon size={15} />
+                <Icon size={15} className="hidden sm:block" />
                 {tab.label}
                 {tab.badge && (
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full 

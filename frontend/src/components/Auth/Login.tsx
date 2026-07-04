@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Coffee, Lock, User, ArrowRight } from 'lucide-react';
+import { ArrowRight, Lock, User } from 'lucide-react';
 import { type UserRole, USER_ROLES } from 'shared/constants';
 import { API_BASE_URL } from '../../config/api';
 
@@ -91,12 +91,7 @@ export function Login({ onLogin }: LoginProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="flex items-center gap-3 mb-8 md:hidden">
-              <div className="w-12 h-12 rounded-xl bg-[#4a6741] flex items-center justify-center">
-                <Coffee className="text-white" size={24} />
-              </div>
-              <h1 className="font-bold text-gray-900 text-xl font-poppins">Ben's Cafe</h1>
-            </div>
+
 
             <h2 className="text-3xl font-bold font-poppins text-gray-900 mb-2">Welcome back</h2>
             <p className="text-gray-500 mb-10 text-sm">Please enter your details to sign in to your shift.</p>

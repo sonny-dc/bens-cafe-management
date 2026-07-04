@@ -286,7 +286,7 @@ export function AdminReports() {
       </div>
 
       {/* ── Tab Switcher ── */}
-      <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit overflow-x-auto hide-scrollbar whitespace-nowrap">
         {reportTabs.map(tab => (
           <button
             key={tab.id}
@@ -325,7 +325,7 @@ export function AdminReports() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="bg-gray-50/60 border-b border-gray-100">
                   <th className="px-6 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
@@ -511,7 +511,7 @@ export function AdminReports() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="bg-gray-50/60 border-b border-gray-100">
                     <th className="px-6 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Date</th>
@@ -683,7 +683,7 @@ export function AdminReports() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="bg-gray-50/60 border-b border-gray-100">
                   <th className="px-6 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Date</th>
