@@ -215,7 +215,8 @@ export async function getAllInventoryRequestsByEmployeeId(employeeId: number): P
                 FROM inventory_requests r
                 JOIN inventory_items i ON r.item_id = i.item_id
                 WHERE r.employee_id = ?
-                ORDER BY r.posted_at ASC
+                AND r.posted_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                ORDER BY r.posted_at DESC, r.request_id DESC
             `,
             [employeeId]
         );

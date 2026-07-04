@@ -9,6 +9,8 @@ import {
 
 import { validate } from '../middleware/validation.middleware.js';
 import { requireAdmin } from '../middleware/auth.middleware.js';
+import { inventoryMutationLimiter } from '../middleware/rate-limiter.middleware.js';
+
 import { REQUEST_TYPES } from '../config/constants.js';
 
 const router = Router();
@@ -31,6 +33,7 @@ router.get(
 // POST /api/restock-calculations
 router.post(
     '/',
+    inventoryMutationLimiter,
     validate(createRestockCalculationSchema, REQUEST_TYPES.BODY),
     restockCalculationController.executeRestockCalculation
 );

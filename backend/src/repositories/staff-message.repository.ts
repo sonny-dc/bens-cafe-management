@@ -82,6 +82,7 @@ export async function getStaffMessagesByEmployee(employeeId: number): Promise<St
              LEFT JOIN employee_profiles ep ON ep.employee_id = sm.employee_id
              LEFT JOIN users u ON u.user_id = ep.user_id
              WHERE sm.employee_id = ?
+             AND sm.posted_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
              ORDER BY sm.posted_at DESC`,
             [employeeId]
         );

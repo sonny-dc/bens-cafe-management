@@ -9,6 +9,7 @@ import {
 
 import { validate } from '../middleware/validation.middleware.js';
 import { requireAdmin, requireEmployee } from '../middleware/auth.middleware.js';
+import { inventoryMutationLimiter } from '../middleware/rate-limiter.middleware.js';
 
 const router = Router();
 
@@ -28,11 +29,19 @@ router.get('/simplified',
     inventoryRequestController.getAllInventoryRequestsSimplified
 );
 
+// Admin gets an inventory request by ID simplified
+router.get(
+    '/simplified/:requestId',
+    requireAdmin,
+    validate(inventoryRequestIdParamSchema, REQUEST_TYPES.PARAMS),
+    inventoryRequestController.getInventoryRequestByIdSimplified
+);
+
 router.get(
     '/my',
     requireEmployee,
     inventoryRequestController.getMyInventoryRequests
-)
+);
 
 // Admin gets an inventory request by ID
 router.get(
@@ -40,14 +49,7 @@ router.get(
     requireAdmin,
     validate(inventoryRequestIdParamSchema, REQUEST_TYPES.PARAMS),
     inventoryRequestController.getInventoryRequestById
-)
-// Admin gets an inventory request by ID simplified
-router.get(
-    '/simplified/:requestId',
-    requireAdmin,
-    validate(inventoryRequestIdParamSchema, REQUEST_TYPES.PARAMS),
-    inventoryRequestController.getInventoryRequestByIdSimplified
-)
+);
 
 // ==========================
 // POST ROUTES
@@ -57,9 +59,10 @@ router.get(
 router.post(
     '/',
     requireEmployee,
+    inventoryMutationLimiter,
     validate(createInventoryRequestSchema, REQUEST_TYPES.BODY),
     inventoryRequestController.createInventoryRequest
-)
+);
 
 // ==========================
 // PUT/PATCH ROUTES
@@ -69,9 +72,10 @@ router.post(
 router.patch(
     '/:requestId/status',
     requireAdmin,
+    inventoryMutationLimiter,
     validate(inventoryRequestIdParamSchema, REQUEST_TYPES.PARAMS),
     validate(updateInventoryRequestStatusSchema, REQUEST_TYPES.BODY),
     inventoryRequestController.updateInventoryRequestStatus
-)
+);
 
 export default router;

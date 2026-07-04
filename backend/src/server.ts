@@ -9,6 +9,7 @@ import {fileURLToPath} from 'url';
 import { testConnection } from './config/database.js';
 import { sessionStore } from './config/session-store.js';
 import { SESSION_COOKIE_NAME } from 'shared/constants';
+import { generalRateLimiter } from './middleware/rate-limiter.middleware.js';
 
 // Route imports
 import {
@@ -47,10 +48,9 @@ if (!process.env.SESSION_SECRET) {
 
 const PORT = process.env.PORT || 3000; // Default to 3000 if not set
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 // CORS middleware
 app.use(cors({
@@ -60,10 +60,13 @@ app.use(cors({
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
 }));
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use("/api", generalRateLimiter); // Apply general rate limiter to all API routes
 
 // Session middleware
-app.set("trust proxy", 1);
-
 app.use(session({
   name: SESSION_COOKIE_NAME,
   secret: process.env.SESSION_SECRET!,

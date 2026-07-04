@@ -5,11 +5,13 @@ import { authController } from '../controllers/index.js';
 import { loginSchema } from '../validators/index.js';
 import { REQUEST_TYPES } from '../config/constants.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
+import { loginRateLimiter } from '../middleware/rate-limiter.middleware.js';
 
 const router = Router();
 
 router.post(
     '/login',
+    loginRateLimiter,
     validate(loginSchema, REQUEST_TYPES.BODY),
     authController.login
 );

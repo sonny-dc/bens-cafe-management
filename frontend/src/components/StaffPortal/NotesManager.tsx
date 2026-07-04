@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PenLine, Send, AlertTriangle, Info, MessageSquare, CheckCircle2, AlertCircle } from 'lucide-react';
 import { notesApi, type Note, type MessageType } from '../../api/notesApi';
-import { formatIsoDateTimeToTime } from '../../utils/datetime.utils';
+import { formatIsoDateTimeToShortDateTime } from '../../utils/datetime.utils';
 
-import { MESSAGE_TYPES } from 'shared/constants';
+import { MESSAGE_TYPES, MESSAGE_STATUS } from 'shared/constants';
 
 const CATEGORIES: {
   value: MessageType;
@@ -269,9 +269,21 @@ export function NotesManager() {
                         <span className="text-xs font-bold uppercase tracking-wide truncate">{meta.label}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {note.messageStatus === 'new' && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+                        {note.messageStatus === MESSAGE_STATUS.NEW && (
+                          <span
+                            title="New"
+                            className="w-1.5 h-1.5 rounded-full bg-red-500"
+                          />
+                        )}
+
+                        {note.messageStatus === MESSAGE_STATUS.ACKNOWLEDGED && (
+                          <span
+                            title="Acknowledged"
+                            className="w-1.5 h-1.5 rounded-full bg-emerald-500"
+                          />
+                        )}
                         <span className="text-[10px] text-gray-500 font-medium">
-                          {formatIsoDateTimeToTime(String(note.postedAt || note.createdAt))}
+                          {formatIsoDateTimeToShortDateTime(String(note.postedAt))}
                         </span>
                       </div>
                     </div>

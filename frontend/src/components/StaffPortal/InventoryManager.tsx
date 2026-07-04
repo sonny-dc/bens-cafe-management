@@ -5,7 +5,7 @@ import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { inventoryItemApi } from '../../api/inventoryItemApi';
 import { REQUEST_STATUS } from 'shared/constants';
 import type { StaffInventoryRequest, InventoryItemOption } from 'shared/models';
-import { formatIsoDateTimeToTime } from '../../utils/datetime.utils';
+import { formatIsoDateTimeToShortDateTime } from '../../utils/datetime.utils';
 
 
 export function InventoryManager() {
@@ -283,7 +283,7 @@ export function InventoryManager() {
                       </div>
                       <div className="flex items-center gap-1 text-[11px] text-gray-400">
                         <Clock size={11} />
-                        {formatIsoDateTimeToTime(String(req.postedAt))}
+                        {formatIsoDateTimeToShortDateTime(String(req.postedAt))}
                       </div>
                     </div>
                     

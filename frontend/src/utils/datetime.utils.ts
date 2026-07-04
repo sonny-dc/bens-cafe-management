@@ -111,6 +111,39 @@ export function formatIsoDateTimeToDateTime(
   return `${monthNames[month - 1]} ${day}, ${year} ${displayHour}:${minute} ${period}`;
 }
 
+/**
+ * Formats a datetime value into a human-readable string with the short date and time.
+ * Example:
+ * - "2026-07-01T13:49:57.000Z" -> "July 1, 1:49 PM"
+ */
+export function formatIsoDateTimeToShortDateTime(
+  value: string | Date | null | undefined
+): string {
+  if (!value) {
+    return '';
+  }
+
+  const text = value instanceof Date
+    ? value.toISOString()
+    : String(value).trim();
+
+  const match = /(\d{4})-(\d{2})-(\d{2})T?[\sT]?(\d{2}):(\d{2})/.exec(text);
+
+  if (!match) {
+    return text;
+  }
+
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = match[5];
+
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+
+  return `${monthNames[month - 1]} ${day}, ${displayHour}:${minute} ${period}`;
+}
+
 const SHIFT_HOURS = 8;
 
 export function getShiftProgressHours(startTimeValue: string | Date | null | undefined): string {

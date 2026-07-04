@@ -10,6 +10,7 @@ import {
 import { REQUEST_TYPES } from '../config/constants.js';
 import { validate } from '../middleware/validation.middleware.js';
 import { requireAdmin, requireAuth } from '../middleware/auth.middleware.js';
+import { inventoryMutationLimiter } from '../middleware/rate-limiter.middleware.js';
 
 const router = Router();
 
@@ -17,6 +18,7 @@ const router = Router();
 router.post(
     '/',
     requireAdmin,
+    inventoryMutationLimiter,
     validate(createInventoryItemSchema, REQUEST_TYPES.BODY),
     inventoryItemController.createInventoryItem
 );
@@ -54,6 +56,7 @@ router.get(
 router.patch(
     '/:itemId',
     requireAdmin,
+    inventoryMutationLimiter,
     validate(inventoryItemIdParamSchema, REQUEST_TYPES.PARAMS),
     validate(updateInventoryItemSchema, REQUEST_TYPES.BODY),
     inventoryItemController.updateInventoryItem
@@ -63,6 +66,7 @@ router.patch(
 router.delete(
     '/:itemId',
     requireAdmin,
+    inventoryMutationLimiter,
     validate(inventoryItemIdParamSchema, REQUEST_TYPES.PARAMS),
     inventoryItemController.deleteInventoryItem
 );

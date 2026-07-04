@@ -101,6 +101,7 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
           <header className="h-16 lg:h-20 px-4 lg:px-8 flex items-center justify-between border-b border-gray-100 shrink-0">
             <div className="flex items-center gap-2 lg:gap-3 text-sm font-medium">
               <button 
+                title="Open menu"
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="lg:hidden p-1.5 -ml-1 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
               >
