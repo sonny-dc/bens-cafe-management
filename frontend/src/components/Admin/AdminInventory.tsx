@@ -339,7 +339,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
           </div>
         </div>
 
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-1 border-b border-gray-200 overflow-x-auto hide-scrollbar w-full whitespace-nowrap">
           {tabs.map(t => (
             <button
               key={t.id}
@@ -470,8 +470,8 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
           {/* ═══ STOCK OVERVIEW ═══ */}
           {tab === 'stock' && (
             <div>
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <table className="w-full text-sm text-left">
+              <div className="border border-gray-200 rounded-xl overflow-x-auto">
+                <table className="w-full text-sm text-left min-w-[600px]">
                   <thead>
                     <tr className="bg-gray-50 text-[11px] text-gray-500 uppercase tracking-wider">
                       <th className="px-5 py-3 font-semibold">Item</th>

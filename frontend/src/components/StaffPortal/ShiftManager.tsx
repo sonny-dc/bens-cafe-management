@@ -283,7 +283,7 @@ export function ShiftManager() {
                       <p className={`mb-4 ${ isShort ? 'text-red-600' : 'text-emerald-700'}`}>
                         Are you sure you want to submit this?
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <button
                           type="button"
                           onClick={() => setShowConfirm(false)}
@@ -309,7 +309,7 @@ export function ShiftManager() {
 
                 {/* Main actions */}
                 {!showConfirm && (
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       type="button"
                       onClick={() => { setIsEndingShift(false); setClosingCash(''); setShowConfirm(false); }}

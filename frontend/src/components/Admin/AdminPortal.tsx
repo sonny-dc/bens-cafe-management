@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, LayoutDashboard, Calculator, ClipboardList, Package, BarChart3, Users } from 'lucide-react';
+import { LogOut, LayoutDashboard, Calculator, ClipboardList, Package, BarChart3, Users, Menu } from 'lucide-react';
 import { SalesEntry } from './SalesEntry';
 import { AdminStaffBoard } from './AdminStaffBoard';
 import { StaffRegistry } from './StaffRegistry';
@@ -26,12 +26,21 @@ interface AdminPortalProps {
 export function AdminPortal({ onLogout }: AdminPortalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [inventorySubTitle, setInventorySubTitle] = useState('Stock Overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex bg-[#2a2a2a] font-sans">
       
+      {/* ── Sidebar Overlay for Mobile ── */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* ── Sidebar (Left) ── */}
-      <aside className="w-64 bg-[#f2f4f6] flex flex-col justify-between shrink-0 h-screen sticky top-0">
+      <aside className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 w-64 bg-[#f2f4f6] flex flex-col justify-between shrink-0 h-screen transition-transform duration-300 ease-in-out`}>
         <div>
           {/* Header */}
           <div className="p-5 flex items-center gap-1">
@@ -56,7 +65,7 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
                       ${isActive 
                         ? 'bg-[#5c7155] text-white shadow-sm' 
@@ -84,14 +93,20 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
       </aside>
 
       {/* ── Main Content Area (Right) ── */}
-      <main className="flex-1 bg-[#f2f4f6]">
+      <main className="flex-1 bg-[#f2f4f6] w-full min-w-0">
         {/* The rounded white container */}
-        <div className="bg-white rounded-tl-[40px] h-full w-full shadow-2xl overflow-hidden flex flex-col">
+        <div className="bg-white rounded-none lg:rounded-tl-[40px] h-full w-full shadow-2xl overflow-hidden flex flex-col">
           
           {/* Top Bar inside content */}
-          <header className="h-20 px-8 flex items-center justify-between border-b border-gray-100 shrink-0">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <span className="text-gray-900 font-bold">{tabs.find(t => t.id === activeTab)?.label}</span>
+          <header className="h-16 lg:h-20 px-4 lg:px-8 flex items-center justify-between border-b border-gray-100 shrink-0">
+            <div className="flex items-center gap-2 lg:gap-3 text-sm font-medium">
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden p-1.5 -ml-1 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Menu size={20} />
+              </button>
+              <span className="text-gray-900 font-bold hidden sm:inline">{tabs.find(t => t.id === activeTab)?.label}</span>
               {activeTab === 'sales' && (
                 <>
                   <span className="text-gray-300">/</span>
@@ -118,7 +133,7 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
           </header>
 
           {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto p-8">
+          <div className="flex-1 overflow-y-auto p-4 lg:p-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}

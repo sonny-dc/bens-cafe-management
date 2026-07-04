@@ -125,7 +125,8 @@ export function SalesEntry() {
   return (
     <div className="w-full max-w-3xl mx-auto pb-20">
       
-      <div className="flex items-center justify-center mb-12">
+      {/* Desktop Progress Indicator */}
+      <div className="hidden sm:flex items-center justify-center mb-10 overflow-x-auto hide-scrollbar py-2 w-full px-4">
         {(['Revenue', 'Payroll', 'Expenses', 'Summary'] as const).map((label, idx) => {
           const stepNum = (idx + 1) as Step;
           const isCompleted = step > stepNum;
@@ -152,7 +153,29 @@ export function SalesEntry() {
         })}
       </div>
 
-      <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); setStep((s) => (s + 1) as Step); }} className="bg-white rounded-[24px] border border-[#e8dccb] p-8 sm:p-10 shadow-sm relative overflow-hidden">
+      {/* Mobile Progress Indicator */}
+      <div className="sm:hidden mb-8 px-2 overflow-x-auto hide-scrollbar">
+        <div className="flex gap-2">
+          {(['Revenue', 'Payroll', 'Expenses', 'Summary'] as const).map((label, idx) => {
+            const stepNum = idx + 1;
+            const isCompleted = step > stepNum;
+            const isCurrent = step === stepNum;
+            const textColor = (isCompleted || isCurrent) ? 'text-[#4a6741]' : 'text-gray-300';
+            const barColor = (isCompleted || isCurrent) ? 'bg-[#4a6741]' : 'bg-gray-200';
+
+            return (
+              <div key={label} className="flex-1 min-w-[70px] flex flex-col items-center gap-2">
+                <span className={`text-[11px] font-bold tracking-wide whitespace-nowrap transition-colors ${textColor}`}>
+                  {label}
+                </span>
+                <div className={`h-1.5 w-full rounded-full transition-colors duration-300 ${barColor}`} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); setStep((s) => (s + 1) as Step); }} className="bg-transparent sm:bg-white rounded-none sm:rounded-[24px] border-none sm:border sm:border-[#e8dccb] p-2 sm:p-10 shadow-none sm:shadow-sm relative overflow-hidden pb-24 sm:pb-10">
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -331,7 +354,8 @@ export function SalesEntry() {
           </motion.div>
         </AnimatePresence>
 
-        <div className="mt-12 pt-6 flex items-center justify-between">
+        {/* Desktop Actions */}
+        <div className="hidden sm:flex mt-12 pt-6 items-center justify-between">
           {step > 1 ? (
             <button
               type="button"
@@ -365,6 +389,45 @@ export function SalesEntry() {
               </>
             ) : step === 4 ? (
               'Save Today\'s Entry'
+            ) : (
+              <>
+                Continue <ChevronRight size={16} className="ml-1" />
+              </>
+            )}
+          </motion.button>
+        </div>
+
+        {/* Mobile Fixed Bottom Actions */}
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-20 flex items-center justify-between pb-safe">
+          {step > 1 ? (
+            <button
+              type="button"
+              onClick={() => setStep((s) => (s - 1) as Step)}
+              className="text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-1.5 py-3 pr-4"
+            >
+              <ChevronLeft size={16} /> Back
+            </button>
+          ) : <div />}
+
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            disabled={isSubmitting || isSuccess || (step === 1 && !cashSales && !cardSales)}
+            className={`px-6 py-4 rounded-xl font-semibold text-sm flex items-center justify-center transition-all flex-1 ml-auto max-w-[200px]
+              ${isSuccess 
+                ? 'bg-emerald-500 text-white' 
+                : 'bg-[#4a6741] hover:bg-[#3d5535] text-white'}
+              disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {isSubmitting ? (
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : isSuccess ? (
+              <>
+                <Check size={18} className="mr-2" />
+                Saved!
+              </>
+            ) : step === 4 ? (
+              'Save Entry'
             ) : (
               <>
                 Continue <ChevronRight size={16} className="ml-1" />
