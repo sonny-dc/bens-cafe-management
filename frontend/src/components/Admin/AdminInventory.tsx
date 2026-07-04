@@ -339,7 +339,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
           </div>
         </div>
 
-        <div className="flex gap-1 border-b border-gray-200 overflow-x-auto hide-scrollbar w-full whitespace-nowrap">
+        <div className="flex gap-1 border-b border-gray-200 overflow-x-auto hide-scrollbar whitespace-nowrap">
           {tabs.map(t => (
             <button
               key={t.id}
