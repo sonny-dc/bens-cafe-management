@@ -40,7 +40,7 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
       )}
 
       {/* ── Sidebar (Left) ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 w-64 bg-[#f2f4f6] flex flex-col justify-between shrink-0 h-screen transition-transform duration-300 ease-in-out`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:sticky lg:top-0 lg:translate-x-0 w-64 bg-[#f2f4f6] flex flex-col justify-between shrink-0 h-screen transition-transform duration-300 ease-in-out`}>
         <div>
           {/* Header */}
           <div className="p-5 flex items-center gap-1">
