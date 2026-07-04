@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response } from 'express';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -10,6 +10,7 @@ import { testConnection } from './config/database.js';
 import { sessionStore } from './config/session-store.js';
 import { SESSION_COOKIE_NAME } from 'shared/constants';
 import { generalRateLimiter } from './middleware/rate-limiter.middleware.js';
+import { globalErrorHandler } from './middleware/error.middleware.js';
 
 // Route imports
 import {
@@ -100,16 +101,13 @@ app.use("/api/inventory-budget-accounts", inventoryBudgetAccountRoutes);
 app.use("/api/inventory-budget-logs", inventoryBudgetLogRoutes);
 app.use("/api/export-xml", xmlExportRoutes);
 
-// Error handling middleware
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('Error:', err.message);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
-
 // 404 handler
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
+
+// Global error handler
+app.use(globalErrorHandler);
 
 app.listen(PORT, async () => {
   console.log(`Server ready at http://localhost:${PORT}`);

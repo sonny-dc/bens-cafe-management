@@ -1,0 +1,16 @@
+import { ApiError } from '../api/apiError';
+
+export function getClientErrorMessage(
+  error: unknown,
+  fallback = 'Something went wrong'
+): string {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return fallback;
+}

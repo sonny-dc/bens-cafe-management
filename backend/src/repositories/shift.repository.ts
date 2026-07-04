@@ -142,6 +142,27 @@ async function getShiftByIdWithConnection(
     return mapShiftRow(row);
 }
 
+export async function hasActiveShiftByEmployeeWithConnection(
+    connection: PoolConnection,
+    employeeId: number
+): Promise<boolean> {
+    const [rows] = await connection.query<RowDataPacket[]>(
+        `
+        SELECT 1
+        FROM shift_sessions
+        WHERE employee_id = ?
+          AND shift_status = ?
+        LIMIT 1
+        `,
+        [
+            employeeId,
+            SHIFT_STATUS.IN_PROGRESS
+        ]
+    );
+
+    return rows.length > 0;
+}
+
 export async function getActiveShiftByEmployee(
     employeeId: number
 ): Promise<Shift | null> {

@@ -1,9 +1,17 @@
 import type { Employee, EmployeeProfile, RegisterEmployeeInput, UpdateEmployeeInput } from "../models/index.js";
-import { USER_ROLES } from "../config/constants.js";
-import { userRepository, employeeRepository } from "../repositories/index.js";
+import { USER_ROLES, EMPLOYMENT_STATUS } from "../config/constants.js";
+import { userRepository, employeeRepository, shiftRepository } from "../repositories/index.js";
 
 import { withTransaction } from "../config/database.js";
 import { hashPassword } from "../utils/password-hash.js";
+
+import {
+    EmployeeNotFoundError,
+    EmployeeDeletionError,
+    EmployeeAlreadyExistsError,
+    EmployeeStatusError,
+    EmployeeUpdateError
+} from "../errors/index.js";
 
 
 /**
@@ -23,6 +31,11 @@ export async function registerEmployee(
     const passwordHash = await hashPassword(input.password);
 
     return withTransaction(async (connection) => {
+
+        const isExistingUser = await userRepository.getUserByUsernameWithConnection(input.username, connection);
+        if (isExistingUser) {
+            throw new EmployeeAlreadyExistsError(`Username already exists`);
+        }
 
         const user = await userRepository.createUserWithConnection({
             passwordHash,
@@ -64,8 +77,12 @@ export async function getEmployeeProfiles(): Promise<EmployeeProfile[]> {
  */
 export async function getEmployeeById(
     employeeId: number
-): Promise<Employee | null> {
-    return await employeeRepository.getEmployeeById(employeeId);
+): Promise<Employee> {
+    const employee = await employeeRepository.getEmployeeById(employeeId);
+    if (!employee) {
+        throw new EmployeeNotFoundError();
+    }
+    return employee;
 }
 
 /**
@@ -74,8 +91,12 @@ export async function getEmployeeById(
  */
 export async function getEmployeeProfileByUserId(
     userId: number
-): Promise<EmployeeProfile | null> {
-    return employeeRepository.getEmployeeProfileByUserId(userId);
+): Promise<EmployeeProfile> {
+    const employeeProfile = await employeeRepository.getEmployeeProfileByUserId(userId);
+    if (!employeeProfile) {
+        throw new EmployeeNotFoundError();
+    }
+    return employeeProfile;
 }
 
 /**
@@ -84,45 +105,127 @@ export async function getEmployeeProfileByUserId(
 export async function updateEmployee(
     employeeId: number,
     input: UpdateEmployeeInput
-): Promise<Employee | null> {
-    return await employeeRepository.updateEmployee(employeeId, input);
+): Promise<Employee> {
+    return withTransaction(async (connection) => {
+        const employee = await employeeRepository.getEmployeeByIdWithConnection(
+            employeeId,
+            connection
+        );
+
+        if (!employee) {
+            throw new EmployeeNotFoundError();
+        }
+
+        if (input.employmentStatus === EMPLOYMENT_STATUS.INACTIVE) {
+            if (employee.employmentStatus === EMPLOYMENT_STATUS.INACTIVE) {
+                throw new EmployeeStatusError(
+                    'Cannot deactivate employee because they are already inactive'
+                );
+            }
+
+            const hasActiveShift =
+                await shiftRepository.hasActiveShiftByEmployeeWithConnection(
+                    connection,
+                    employeeId
+                );
+
+            if (hasActiveShift) {
+                throw new EmployeeStatusError(
+                    'Cannot deactivate employee with an active shift'
+                );
+            }
+        }
+
+        if (input.employmentStatus === EMPLOYMENT_STATUS.ACTIVE) {
+            if (employee.employmentStatus === EMPLOYMENT_STATUS.ACTIVE) {
+                throw new EmployeeStatusError(
+                    'Cannot activate employee because they are already active'
+                );
+            }
+        }
+
+        const updatedEmployee =
+            await employeeRepository.updateEmployeeWithConnection(
+                employeeId,
+                input,
+                connection
+            );
+
+        if (!updatedEmployee) {
+            throw new EmployeeUpdateError(
+                `Failed to update employee with ID ${employeeId}`
+            );
+        }
+
+        return updatedEmployee;
+    });
 }
 
 /**
  * Sets employee's employment_status to 'active'.
  * best for buttons that toggle activation of an employee.
  */
-export async function activateEmployee(employeeId: number): Promise<Employee | null> {
-    return await employeeRepository.activateEmployee(employeeId);
+export async function activateEmployee(employeeId: number): Promise<Employee> {
+    return withTransaction(async (connection) => {
+        const employee = await employeeRepository.getEmployeeByIdWithConnection(employeeId, connection);
+        if (!employee) {
+            throw new EmployeeNotFoundError();
+        }
+        if (employee.employmentStatus === EMPLOYMENT_STATUS.ACTIVE) {
+            throw new EmployeeStatusError('Cannot activate employee because they are already active');
+        }
+        const activatedEmployee = await employeeRepository.activateEmployeeWithConnection(employeeId, connection);
+        if (!activatedEmployee) {
+            throw new EmployeeUpdateError(`Failed to activate employee`);
+        }
+        return activatedEmployee;
+    });
 }
 
 /**
  * Sets employee's employment_status to 'inactive'.
  * best for buttons that toggle deactivation of an employee.
  */
-export async function deactivateEmployee(employeeId: number): Promise<Employee | null> {
-    return await employeeRepository.deactivateEmployee(employeeId);
+export async function deactivateEmployee(employeeId: number): Promise<Employee> {
+    return withTransaction(async (connection) => {
+        const employee = await employeeRepository.getEmployeeByIdWithConnection(employeeId, connection);
+        if (!employee) {
+            throw new EmployeeNotFoundError();
+        }
+        if (employee.employmentStatus === EMPLOYMENT_STATUS.INACTIVE) {
+            throw new EmployeeStatusError('Cannot deactivate employee because they are already inactive');
+        }
+
+        const hasActiveShift = await shiftRepository.hasActiveShiftByEmployeeWithConnection(connection, employeeId);
+        if (hasActiveShift) {
+            throw new EmployeeStatusError('Cannot deactivate employee with an active shift');
+        }
+
+        const deactivatedEmployee = await employeeRepository.deactivateEmployeeWithConnection(employeeId, connection);
+        if (!deactivatedEmployee) {
+            throw new EmployeeUpdateError(`Failed to deactivate employee`);
+        }
+        return deactivatedEmployee;
+    });
 }
 
 /**
  * Deletes an employee profile permanently from the database. Use with caution.
  * Also deletes the associated user account.
  */
-export async function deleteEmployee(employeeId: number): Promise<boolean> {
+export async function deleteEmployee(employeeId: number): Promise<void> {
     return withTransaction(async (connection) => {
         const employee = await employeeRepository.getEmployeeByIdWithConnection(employeeId, connection);
         if (!employee) {
-            return false;
+            throw new EmployeeNotFoundError();
         }
         const isEmployeeDeleted = await employeeRepository.deleteEmployee(employeeId, connection);
         if (!isEmployeeDeleted) {
-            throw new Error(`Failed to delete employee with ID ${employeeId}`);
+            throw new EmployeeDeletionError(`Failed to delete employee with ID ${employeeId}`);
         }
         const isUserDeleted = await userRepository.deleteUserByIdWithConnection(employee.userId, connection);
         if (!isUserDeleted) {
-            throw new Error(`Failed to delete user account for employee with ID ${employeeId}`);
+            throw new EmployeeDeletionError(`Failed to delete user account for employee with ID ${employeeId}`);
         }
-
-        return true;
     });
 }

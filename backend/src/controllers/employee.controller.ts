@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { employeeService } from "../services/index.js";
 
 /**
@@ -6,44 +6,29 @@ import { employeeService } from "../services/index.js";
  */
 export async function getEmployees(
     _req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const employees = await employeeService.getEmployees();
-        if (employees.length === 0) {
-            res.status(404).json({
-                success: false,
-                message: "No employees found."
-            });
-            return;
-        }
+
         res.status(200).json({
             success: true,
             message: "Employees retrieved successfully.",
             data: employees
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while retrieving employees.";
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        next(error); 
     }
 }
 
 export async function getEmployeeProfiles(
     _req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const employees = await employeeService.getEmployeeProfiles();
-        if (employees.length === 0) {
-            res.status(404).json({
-                success: false,
-                message: "No employee profiles found."
-            });
-            return;
-        }
 
         res.status(200).json({
             success: true,
@@ -51,15 +36,7 @@ export async function getEmployeeProfiles(
             data: employees
         });
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An error occurred while retrieving employee profiles.";
-
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        next(error);
     }
 }
 
@@ -68,19 +45,14 @@ export async function getEmployeeProfiles(
  */
 export async function getEmployeeById(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const employeeId = Number(req.params.employeeId);
 
         const employee = await employeeService.getEmployeeById(employeeId);
-        if (!employee) {
-            res.status(404).json({
-                success: false,
-                message: "Employee not found."
-            });
-            return;
-        }
+
         res.status(200).json({
             success: true,
             message: "Employee retrieved successfully.",
@@ -88,14 +60,14 @@ export async function getEmployeeById(
         });
 
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while retrieving the employee.";
-        res.status(500).json({ success: false, message: errorMessage });
+        next(error);
     }
 }
 
 export async function getMyEmployeeProfile(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const userId = req.session.user?.userId;
@@ -124,15 +96,7 @@ export async function getMyEmployeeProfile(
             data: employee
         });
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An error occurred while retrieving your employee profile.";
-
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        next(error);
     }
 }
 
@@ -142,6 +106,7 @@ export async function getMyEmployeeProfile(
 export async function registerEmployee(
     req: Request,
     res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const employee = await employeeService.registerEmployee(req.body);
@@ -158,8 +123,7 @@ export async function registerEmployee(
             data: employee
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while registering the employee.";
-        res.status(500).json({ success: false, message: errorMessage });
+        next(error);
     }
 }
 
@@ -168,18 +132,13 @@ export async function registerEmployee(
  */
 export async function updateEmployee(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const employeeId: number = Number(req.params.employeeId);
         const updatedEmployee = await employeeService.updateEmployee(employeeId, req.body);
-        if (!updatedEmployee) {
-            res.status(404).json({
-                success: false,
-                message: "Employee not found."
-            });
-            return;
-        }
+    
         res.status(200).json({
             success: true,
             message: "Employee updated successfully.",
@@ -187,8 +146,7 @@ export async function updateEmployee(
         });
 
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while updating the employee.";
-        res.status(500).json({ success: false, message: errorMessage });
+        next(error);
     }
 }
 
@@ -197,26 +155,20 @@ export async function updateEmployee(
  */
 export async function activateEmployee(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {        
         const employeeId: number = Number(req.params.employeeId);
         const activatedEmployee = await employeeService.activateEmployee(employeeId);
-        if (!activatedEmployee) {
-            res.status(404).json({
-                success: false,
-                message: "Employee not found."
-            });
-            return;
-        }
+       
         res.status(200).json({
             success: true,
             message: "Employee activated successfully.",
             data: activatedEmployee
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while activating the employee.";
-        res.status(500).json({ success: false, message: errorMessage });
+        next(error);
     }
 }
 
@@ -225,26 +177,20 @@ export async function activateEmployee(
  */ 
 export async function deactivateEmployee(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const employeeId: number = Number(req.params.employeeId);
         const deactivatedEmployee = await employeeService.deactivateEmployee(employeeId);
-        if (!deactivatedEmployee) {
-            res.status(404).json({
-                success: false,
-                message: "Employee not found."
-            });
-            return;
-        }
+        
         res.status(200).json({
             success: true,
             message: "Employee deactivated successfully.",
             data: deactivatedEmployee
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while deactivating the employee.";
-        res.status(500).json({ success: false, message: errorMessage });
+        next(error);
     }
 }
 
@@ -253,24 +199,18 @@ export async function deactivateEmployee(
  */
 export async function deleteEmployee(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const employeeId: number = Number(req.params.employeeId);
-        const deleteSuccess = await employeeService.deleteEmployee(employeeId);
-        if (!deleteSuccess) {
-            res.status(404).json({
-                success: false,
-                message: "Employee not found."
-            });
-            return;
-        }
+        await employeeService.deleteEmployee(employeeId);
+        
         res.status(200).json({
             success: true,
             message: "Employee deleted successfully."
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while deleting the employee.";
-        res.status(500).json({ success: false, message: errorMessage });
+        next(error);
     }
 }

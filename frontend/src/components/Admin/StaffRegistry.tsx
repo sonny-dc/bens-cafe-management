@@ -5,6 +5,7 @@ import { employeeApi } from '../../api/employeeApi';
 import  { type EmployeeProfile, type UpdateEmployeeInput } from 'shared/models';
 import { EMPLOYMENT_STATUS, type EmploymentStatus } from 'shared/constants';
 import { ApiError } from '../../api/apiError';
+import { getClientErrorMessage } from '../../utils/error.utils';
 
 export function StaffRegistry() {
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
@@ -59,16 +60,27 @@ export function StaffRegistry() {
       await employeeApi.create(data);
       await fetchEmployees();
       setShowAddModal(false);
-    } catch (err: any) {
+    } catch (err) {
+      const fallbackMessage = 'Failed to create employee';
+      const errorMessage = getClientErrorMessage(err, fallbackMessage);
       if (err instanceof ApiError) {
-        setFieldErrors(err.errors?.fieldErrors || {});
+        const backendFieldErrors = err.errors?.fieldErrors || {};
+        const hasFieldErrors = Object.keys(backendFieldErrors).length > 0;
 
+        setFieldErrors(backendFieldErrors);
+
+        if (hasFieldErrors) {
+          setFormError(null);
+          return;
+        }
         const firstFormError = err.errors?.formErrors?.[0];
-        setFormError(firstFormError || null);
+
+        setFormError(
+          firstFormError || errorMessage
+        );
         return;
       }
-
-      setFormError(err.message || 'Failed to add employee');
+      setFormError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,13 +117,15 @@ export function StaffRegistry() {
 
     try {
       setIsSubmitting(true);
+      setFormError(null);
+      setFieldErrors({});
 
       await employeeApi.update(editingEmployee.employeeId, payload);
 
       await fetchEmployees();
       setEditingEmployee(null);
-    } catch (err: any) {
-      alert(err.message || 'Failed to update employee');
+    } catch (err) {
+      setFormError(getClientErrorMessage(err, 'Failed to update employee'));
     } finally {
       setIsSubmitting(false);
     }
@@ -228,7 +242,11 @@ export function StaffRegistry() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button 
-                          onClick={() => setEditingEmployee(emp)}
+                          onClick={() => {
+                            setFormError(null);
+                            setFieldErrors({});
+                            setEditingEmployee(emp)
+                          }}
                           className="p-2 text-gray-400 hover:text-[#4a6741] hover:bg-[#4a6741]/10 rounded-lg transition-colors"
                           title="Edit Employee"
                           aria-label={`Edit ${emp.fullName}'s details`}
@@ -354,7 +372,14 @@ export function StaffRegistry() {
                 </div>
 
                 <div className="pt-4 flex gap-3">
-                  <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
+                  <button type="button" onClick={() => {
+                    setFormError(null);
+                    setFieldErrors({});
+                    setShowAddModal(false);
+                  }} 
+                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-
+                  bold rounded-xl transition-colors"
+                  >
                     Cancel
                   </button>
                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
@@ -392,7 +417,11 @@ export function StaffRegistry() {
                 </div>
                 <button 
                   title='Close edit employee modal'
-                  onClick={() => setEditingEmployee(null)}
+                  onClick={() => {
+                    setFormError(null);
+                    setFieldErrors({});
+                    setEditingEmployee(null);
+                  }}
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                 >
                   <X size={16} />
@@ -400,6 +429,11 @@ export function StaffRegistry() {
               </div>
 
               <form onSubmit={handleEditSubmit} className="p-6 space-y-5">
+                {formError && (
+                  <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    {formError}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="jobRole" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
@@ -420,7 +454,11 @@ export function StaffRegistry() {
                 </div>
 
                 <div className="pt-4 flex gap-3">
-                  <button type="button" onClick={() => setEditingEmployee(null)} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
+                  <button type="button" onClick={() => {
+                    setFormError(null);
+                    setFieldErrors({});
+                    setEditingEmployee(null);
+                  }} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
                     Cancel
                   </button>
                   <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50">

@@ -16,7 +16,7 @@ import {
     type EmploymentStatus
 } from '../config/constants.js';
 
-import { withConnection, withTransaction } from '../config/database.js';
+import { withConnection } from '../config/database.js';
 
 type EmployeeRow = RowDataPacket & {
     employee_id: number;
@@ -45,6 +45,8 @@ type EmployeeProfileRow = RowDataPacket & {
     username: string;
     full_name: string;
 }
+
+type EmployeeUpdateValue = string | number;
 
 // ===============================
 // Helper Functions
@@ -79,6 +81,39 @@ function mapEmployeeProfileRow(row: EmployeeProfileRow): EmployeeProfile {
         updatedAt: row.updated_at,
         username: row.username,
         fullName: row.full_name
+    };
+}
+
+function buildEmployeeUpdateFields(input: UpdateEmployeeInput): {
+    fields: string[];
+    values: EmployeeUpdateValue[];
+} {
+    const fields: string[] = [];
+    const values: EmployeeUpdateValue[] = [];
+
+    if (input.jobRole !== undefined) {
+        fields.push("job_role = ?");
+        values.push(input.jobRole);
+    }
+
+    if (input.defaultShiftHours !== undefined) {
+        fields.push("default_shift_hours = ?");
+        values.push(input.defaultShiftHours);
+    }
+
+    if (input.hourlyRate !== undefined) {
+        fields.push("hourly_rate = ?");
+        values.push(input.hourlyRate);
+    }
+
+    if (input.employmentStatus !== undefined) {
+        fields.push("employment_status = ?");
+        values.push(input.employmentStatus);
+    }
+
+    return {
+        fields,
+        values
     };
 }
 
@@ -134,29 +169,49 @@ export async function getEmployeeByUserIdWithConnection(
     return mapEmployeeRow(row);
 }
 
+export async function updateEmployeeWithConnection(
+    employeeId: number,
+    input: UpdateEmployeeInput,
+    connection: PoolConnection
+): Promise<Employee | null> {
+    const { fields, values } = buildEmployeeUpdateFields(input);
+
+    if (fields.length === 0) {
+        return getEmployeeByIdWithConnection(employeeId, connection);
+    }
+
+    values.push(employeeId);
+
+    await connection.execute<ResultSetHeader>(
+        `
+        UPDATE employee_profiles
+        SET ${fields.join(", ")}
+        WHERE employee_id = ?
+        `,
+        values
+    );
+
+
+    return getEmployeeByIdWithConnection(employeeId, connection);
+}
+
 /**
  * Shared repository function for employment status updates.
  */
-async function updateEmployeeStatus(
+async function updateEmployeeStatusWithConnection(
     employeeId: number,
-    employmentStatus: EmploymentStatus
+    employmentStatus: EmploymentStatus,
+    connection: PoolConnection
 ): Promise<Employee | null> {
-    return withTransaction(async (connection) => {
-        const [result] = await connection.execute<ResultSetHeader>(
-            `
-            UPDATE employee_profiles
-            SET employment_status = ?
-            WHERE employee_id = ?
-            `,
-            [employmentStatus, employeeId]
-        );
-
-        if (result.affectedRows === 0) {
-            return null;
-        }
-
-        return getEmployeeByIdWithConnection(employeeId, connection);
-    });
+    await connection.execute<ResultSetHeader>(
+        `
+        UPDATE employee_profiles
+        SET employment_status = ?
+        WHERE employee_id = ?
+        `,
+        [employmentStatus, employeeId]
+    );
+    return getEmployeeByIdWithConnection(employeeId, connection);
 }
 
 
@@ -317,52 +372,22 @@ export async function getEmployeeProfileByUserId(
  */
 export async function updateEmployee(
     employeeId: number,
-    input: UpdateEmployeeInput
+    input: UpdateEmployeeInput,
 ): Promise<Employee | null> {
-    return withTransaction(async (connection) => {
-        const fields: string[] = [];
-        const values: any[] = [];
+    return withConnection(async (connection) => {
+        return updateEmployeeWithConnection(employeeId, input, connection);
+    });
+}
 
-        if (input.jobRole !== undefined) {
-            fields.push("job_role = ?");
-            values.push(input.jobRole);
-        }
-
-        if (input.defaultShiftHours !== undefined) {
-            fields.push("default_shift_hours = ?");
-            values.push(input.defaultShiftHours);
-        }
-
-        if (input.hourlyRate !== undefined) {
-            fields.push("hourly_rate = ?");
-            values.push(input.hourlyRate);
-        }
-
-        if (input.employmentStatus !== undefined) {
-            fields.push("employment_status = ?");
-            values.push(input.employmentStatus);
-        }
-
-        if (fields.length === 0) {
-            return getEmployeeByIdWithConnection(employeeId, connection);
-        }
-
-        values.push(employeeId);
-
-        const [result] = await connection.execute<ResultSetHeader>(
-            `
-            UPDATE employee_profiles
-            SET ${fields.join(", ")}
-            WHERE employee_id = ?
-            `,
-            values
-        );
-
-        if (result.affectedRows === 0) {
-            return null;
-        }
-
-        return getEmployeeByIdWithConnection(employeeId, connection);
+/**
+ * Shared repository function for employment status updates.
+ */
+async function updateEmployeeStatus(
+    employeeId: number,
+    employmentStatus: EmploymentStatus
+): Promise<Employee | null> {
+    return withConnection(async (connection) => {
+        return updateEmployeeStatusWithConnection(employeeId, employmentStatus, connection);
     });
 }
 
@@ -377,6 +402,13 @@ export async function activateEmployee(
     return updateEmployeeStatus(employeeId, EMPLOYMENT_STATUS.ACTIVE);
 }
 
+export async function activateEmployeeWithConnection(
+    employeeId: number,
+    connection: PoolConnection
+): Promise<Employee | null> {
+    return updateEmployeeStatusWithConnection(employeeId, EMPLOYMENT_STATUS.ACTIVE, connection);
+}
+
 /**
  * ROUTE: PATCH /api/employees/:employeeId/deactivate
  *
@@ -388,6 +420,12 @@ export async function deactivateEmployee(
     return updateEmployeeStatus(employeeId, EMPLOYMENT_STATUS.INACTIVE);
 }
 
+export async function deactivateEmployeeWithConnection(
+    employeeId: number,
+    connection: PoolConnection
+): Promise<Employee | null> {
+    return updateEmployeeStatusWithConnection(employeeId, EMPLOYMENT_STATUS.INACTIVE, connection);
+}
 
 /**
  * ROUTE: DELETE /api/employees/:employeeId
