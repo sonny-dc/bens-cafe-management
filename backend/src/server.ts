@@ -103,7 +103,10 @@ app.use("/api/export-xml", xmlExportRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({
+    success: false,
+    message: 'Route not found' 
+  });
 });
 
 // Global error handler
@@ -113,5 +116,3 @@ app.listen(PORT, async () => {
   console.log(`Server ready at http://localhost:${PORT}`);
   testConnection();
 });
-
-

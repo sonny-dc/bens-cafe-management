@@ -142,7 +142,7 @@ async function getShiftByIdWithConnection(
     return mapShiftRow(row);
 }
 
-export async function hasActiveShiftByEmployeeWithConnection(
+export async function hasShiftInProgressByEmployeeWithConnection(
     connection: PoolConnection,
     employeeId: number
 ): Promise<boolean> {
@@ -163,7 +163,7 @@ export async function hasActiveShiftByEmployeeWithConnection(
     return rows.length > 0;
 }
 
-export async function getActiveShiftByEmployee(
+export async function getShiftInProgressByEmployee(
     employeeId: number
 ): Promise<Shift | null> {
     return withConnection(async (connection) => {
@@ -188,7 +188,7 @@ export async function getActiveShiftByEmployee(
     });
 }
 
-export async function getAllActiveShifts(): Promise<any[]> {
+export async function getAllInProgressShifts(): Promise<any[]> {
     return withConnection(async (connection) => {
         const [rows] = await connection.query<RowDataPacket[]>(
             `
@@ -372,7 +372,7 @@ export async function getStaffWeeklyPerformance(
 }
 
 export async function archiveShiftsByDateRange(employeeId: number, startDate: string, endDate: string): Promise<number> {
-    return withTransaction(async (connection) => {
+    return withConnection(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
             `
             UPDATE shift_sessions

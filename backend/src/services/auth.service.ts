@@ -4,31 +4,46 @@ import { verifyPassword } from '../utils/password-hash.js';
 import { USER_ROLES, ACCOUNT_STATUS, EMPLOYMENT_STATUS } from '../config/constants.js';
 import { withTransaction } from '../config/database.js';
 
+import {
+
+    // User Errors
+    InactiveUserError,
+
+    // Employee Errors
+    EmployeeNotFoundError,
+    InactiveEmployeeError,
+
+    // Auth Errors
+    InvalidCredentialsError,
+
+} from '../errors/index.js';
+
 export async function loginUser(
     loginInput: LoginInput
-): Promise<LoggedInUser | null> {
+): Promise<LoggedInUser> {
     return withTransaction(async (connection) => {
         const user = await userRepository.getUserByUsernameWithConnection(
             loginInput.username,
             connection
         );
-        if (!user) return null;
+        if (!user) throw new InvalidCredentialsError();
 
-        if (user.accountStatus !== ACCOUNT_STATUS.ACTIVE) throw new Error('This account is inactive.');
         const passwordMatch = await verifyPassword(
             loginInput.password,
             user.passwordHash
         );
-        if (!passwordMatch) return null;
-
+        if (!passwordMatch) throw new InvalidCredentialsError();
+        
+        if (user.accountStatus !== ACCOUNT_STATUS.ACTIVE) throw new InactiveUserError();
+        
         let employeeId: number | null = null;
         if (user.role === USER_ROLES.EMPLOYEE){
             const employee = await employeeRepository.getEmployeeByUserIdWithConnection(
                 user.userId,
                 connection
             );
-            if (!employee) throw new Error('Employee profile not found');
-            if (employee.employmentStatus !== EMPLOYMENT_STATUS.ACTIVE) throw new Error('Employee profile is inactive.');
+            if (!employee) throw new EmployeeNotFoundError('Employee profile not found');
+            if (employee.employmentStatus !== EMPLOYMENT_STATUS.ACTIVE) throw new InactiveEmployeeError('Employee profile is inactive');
             
             employeeId = employee.employeeId;
         }

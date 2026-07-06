@@ -70,26 +70,9 @@ export async function getMyEmployeeProfile(
     next: NextFunction
 ): Promise<void> {
     try {
-        const userId = req.session.user?.userId;
-
-        if (!userId) {
-            res.status(401).json({
-                success: false,
-                message: "Authentication required."
-            });
-            return;
-        }
+        const userId = req.session.user!.userId;
 
         const employee = await employeeService.getEmployeeProfileByUserId(userId);
-
-        if (!employee) {
-            res.status(404).json({
-                success: false,
-                message: "Employee profile not found."
-            });
-            return;
-        }
-
         res.status(200).json({
             success: true,
             message: "Employee profile retrieved successfully.",
@@ -110,13 +93,7 @@ export async function registerEmployee(
 ): Promise<void> {
     try {
         const employee = await employeeService.registerEmployee(req.body);
-        if (!employee) {
-            res.status(400).json({
-                success: false,
-                message: "Failed to register employee."
-            });
-            return;
-        }
+        
         res.status(201).json({
             success: true,
             message: "Employee registered successfully.",

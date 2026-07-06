@@ -1,4 +1,4 @@
-import { AppError } from './app-error.js';
+import { AppError } from './app-errors.js';
 
 export class EmployeeNotFoundError extends AppError {
     constructor(message = 'Employee not found'){
@@ -6,15 +6,21 @@ export class EmployeeNotFoundError extends AppError {
     }
 }
 
-export class EmployeeAlreadyExistsError extends AppError {
-    constructor(message = 'Employee already exists'){
+export class EmployeeAlreadyActiveError extends AppError {
+    constructor(message = 'Employee is already active') {
         super(message, 409);
     }
 }
 
-export class EmployeeStatusError extends AppError {
-    constructor(message = 'Employee status operation is not allowed'){
+export class EmployeeAlreadyInactiveError extends AppError {
+    constructor(message = 'Employee is already inactive') {
         super(message, 409);
+    }
+}
+
+export class InactiveEmployeeError extends AppError {
+    constructor(message = 'This employee is inactive') {
+        super(message, 403);
     }
 }
 

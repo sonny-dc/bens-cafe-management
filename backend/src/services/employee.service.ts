@@ -6,13 +6,20 @@ import { withTransaction } from "../config/database.js";
 import { hashPassword } from "../utils/password-hash.js";
 
 import {
+    // Employee Errors
     EmployeeNotFoundError,
+    EmployeeAlreadyActiveError,
+    EmployeeAlreadyInactiveError,
     EmployeeDeletionError,
-    EmployeeAlreadyExistsError,
-    EmployeeStatusError,
-    EmployeeUpdateError
-} from "../errors/index.js";
+    EmployeeUpdateError,
 
+    // User Errors
+    UserAlreadyExistsError,
+    UserDeletionError,
+
+    // Shift Errors
+    ShiftAlreadyInProgressError
+} from "../errors/index.js";
 
 /**
  * Registers an employee by creating a user account first,
@@ -34,7 +41,7 @@ export async function registerEmployee(
 
         const isExistingUser = await userRepository.getUserByUsernameWithConnection(input.username, connection);
         if (isExistingUser) {
-            throw new EmployeeAlreadyExistsError(`Username already exists`);
+            throw new UserAlreadyExistsError('Username already exists');
         }
 
         const user = await userRepository.createUserWithConnection({
@@ -118,27 +125,22 @@ export async function updateEmployee(
 
         if (input.employmentStatus === EMPLOYMENT_STATUS.INACTIVE) {
             if (employee.employmentStatus === EMPLOYMENT_STATUS.INACTIVE) {
-                throw new EmployeeStatusError(
+                throw new EmployeeAlreadyInactiveError(
                     'Cannot deactivate employee because they are already inactive'
                 );
             }
-
-            const hasActiveShift =
-                await shiftRepository.hasActiveShiftByEmployeeWithConnection(
-                    connection,
-                    employeeId
-                );
-
-            if (hasActiveShift) {
-                throw new EmployeeStatusError(
+            const hasShiftInProgress = await shiftRepository.hasShiftInProgressByEmployeeWithConnection(connection, employeeId);
+            if (hasShiftInProgress) {
+                throw new ShiftAlreadyInProgressError(
                     'Cannot deactivate employee with an active shift'
                 );
             }
+
         }
 
         if (input.employmentStatus === EMPLOYMENT_STATUS.ACTIVE) {
             if (employee.employmentStatus === EMPLOYMENT_STATUS.ACTIVE) {
-                throw new EmployeeStatusError(
+                throw new EmployeeAlreadyActiveError(
                     'Cannot activate employee because they are already active'
                 );
             }
@@ -172,7 +174,9 @@ export async function activateEmployee(employeeId: number): Promise<Employee> {
             throw new EmployeeNotFoundError();
         }
         if (employee.employmentStatus === EMPLOYMENT_STATUS.ACTIVE) {
-            throw new EmployeeStatusError('Cannot activate employee because they are already active');
+            throw new EmployeeAlreadyActiveError(
+                'Cannot activate employee because they are already active'
+            );
         }
         const activatedEmployee = await employeeRepository.activateEmployeeWithConnection(employeeId, connection);
         if (!activatedEmployee) {
@@ -193,12 +197,16 @@ export async function deactivateEmployee(employeeId: number): Promise<Employee> 
             throw new EmployeeNotFoundError();
         }
         if (employee.employmentStatus === EMPLOYMENT_STATUS.INACTIVE) {
-            throw new EmployeeStatusError('Cannot deactivate employee because they are already inactive');
+            throw new EmployeeAlreadyInactiveError(
+                'Cannot deactivate employee because they are already inactive'
+            );
         }
 
-        const hasActiveShift = await shiftRepository.hasActiveShiftByEmployeeWithConnection(connection, employeeId);
-        if (hasActiveShift) {
-            throw new EmployeeStatusError('Cannot deactivate employee with an active shift');
+        const hasShiftInProgress = await shiftRepository.hasShiftInProgressByEmployeeWithConnection(connection, employeeId);
+        if (hasShiftInProgress) {
+            throw new ShiftAlreadyInProgressError(
+                'Cannot deactivate employee with an active shift'
+            );
         }
 
         const deactivatedEmployee = await employeeRepository.deactivateEmployeeWithConnection(employeeId, connection);
@@ -225,7 +233,7 @@ export async function deleteEmployee(employeeId: number): Promise<void> {
         }
         const isUserDeleted = await userRepository.deleteUserByIdWithConnection(employee.userId, connection);
         if (!isUserDeleted) {
-            throw new EmployeeDeletionError(`Failed to delete user account for employee with ID ${employeeId}`);
+            throw new UserDeletionError(`Failed to delete user account for employee with ID ${employeeId}`);
         }
     });
 }

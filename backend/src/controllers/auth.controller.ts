@@ -1,32 +1,24 @@
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/index.js';
 import { SESSION_COOKIE_NAME } from '../config/constants.js';
+import {
+    // Auth Errors
+    SessionSaveError,
+    LogoutError
+} from '../errors/index.js';
 
 export async function login(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const user = await authService.loginUser(req.body);
-
-        if (!user) {
-            res.status(401).json({
-                success: false,
-                message: 'Invalid username or password.'
-            });
-            return;
-        }
-
         req.session.user = user;
 
         req.session.save((err) => {
             if (err) {
-                console.error('Session save error:', err);
-
-                res.status(500).json({
-                    success: false,
-                    message: 'Failed to save login session.'
-                });
+                next(new SessionSaveError('Failed to login. Please try again.'));
                 return;
             }
 
@@ -45,29 +37,19 @@ export async function login(
             });
         });
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : 'An unexpected error occurred while logging in.';
-
-        res.status(403).json({
-            success: false,
-            message: errorMessage
-        });
+        next(error);
     }
 }
 
 
 export async function logout(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     req.session.destroy((err) => {
         if (err) {
-            res.status(500).json({
-                success: false,
-                message: 'An error occurred while logging out.'
-            });
+            next(new LogoutError());
             return;
         }
 

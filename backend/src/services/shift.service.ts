@@ -9,14 +9,23 @@ import type {
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 import { SHIFT_STATUS } from '../config/constants.js';
 
+import {
+    ShiftNotFoundError,
+    ShiftAlreadyCompletedError,
+    ShiftUpdateError,
+    ShiftAlreadyInProgressError,
+    ShiftAccessDeniedError,
+    ShiftArchiveError
+ } from '../errors/index.js';
+
 export async function startShift(
     employeeId: number, 
     input: StartShiftInput
 ): Promise<Shift> {
-    // Check if the employee already has an active shift
-    const activeShift = await shiftRepository.getActiveShiftByEmployee(employeeId);
-    if (activeShift) {
-        throw new Error("Employee already has an active shift.");
+    // Check if the employee already has a shift in progress
+    const shiftInProgress = await shiftRepository.getShiftInProgressByEmployee(employeeId);
+    if (shiftInProgress) {
+        throw new ShiftAlreadyInProgressError();
     }
 
     // Create new shift
@@ -36,15 +45,15 @@ export async function endShift(
     const shift = await shiftRepository.getShiftById(shiftId);
 
     if (!shift) {
-        throw new Error("Shift not found.");
+        throw new ShiftNotFoundError();
     }
 
     if (shift.employeeId !== employeeId) {
-        throw new Error("You are not allowed to end this shift.");
+        throw new ShiftAccessDeniedError('You are not allowed to end this shift.');
     }
 
     if (shift.status === SHIFT_STATUS.COMPLETED) {
-        throw new Error("Shift is already completed.");
+        throw new ShiftAlreadyCompletedError();
     }
 
 
@@ -60,18 +69,22 @@ export async function endShift(
     );
 
     if (!endedShift) {
-        throw new Error("Failed to end shift.");
+        throw new ShiftUpdateError("Failed to end the shift.");
     }
 
     return endedShift;
 }
 
-export async function getActiveShift(employeeId: number): Promise<Shift | null> {
-    return shiftRepository.getActiveShiftByEmployee(employeeId);
+export async function getShiftInProgress(employeeId: number): Promise<Shift> {
+    const shift = await shiftRepository.getShiftInProgressByEmployee(employeeId);
+    if (!shift) {
+        throw new ShiftNotFoundError("No active shift found for this employee.");
+    }
+    return shift;
 }
 
-export async function getAllActiveShifts(): Promise<any[]> {
-    return shiftRepository.getAllActiveShifts();
+export async function getAllInProgressShifts(): Promise<any[]> {
+    return shiftRepository.getAllInProgressShifts();
 }
 
 export async function getShiftSummary(
@@ -86,8 +99,9 @@ export async function getStaffWeeklyPerformance(startDate: string, endDate: stri
 }
 
 export async function archiveShifts(employeeId: number, startDate: string, endDate: string): Promise<number> {
-    if (!startDate || !endDate) {
-        throw new Error("Start date and end date are required.");
+    const affectedRows = await shiftRepository.archiveShiftsByDateRange(employeeId, startDate, endDate);
+    if (affectedRows === 0) {
+        throw new ShiftArchiveError("No shifts were archived. Please check the provided date range and employee ID.");
     }
-    return shiftRepository.archiveShiftsByDateRange(employeeId, startDate, endDate);
+    return affectedRows;
 }

@@ -1,16 +1,19 @@
 import type { Request, Response, NextFunction } from 'express';
 import { USER_ROLES } from '../config/constants.js';
 
+import {
+    // Auth Errors
+    AuthenticationRequiredError,
+    ForbiddenError,
+} from '../errors/index.js';
+
 export function requireAuth(
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction
 ): void {
     if (!req.session || !req.session.user) {
-        res.status(401).json({
-            success: false,
-            message: 'Authentication required.'
-        });
+        next(new AuthenticationRequiredError());
         return;
     }
     next();
@@ -18,22 +21,16 @@ export function requireAuth(
 
 export function requireAdmin(
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction
 ): void {
     if (!req.session || !req.session.user) {
-        res.status(401).json({
-            success: false,
-            message: 'Authentication required.'
-        });
+        next(new AuthenticationRequiredError());
         return;
     }
 
     if (req.session.user.role !== USER_ROLES.ADMIN) {
-        res.status(403).json({
-            success: false,
-            message: 'Admin access required.'
-        });
+        next(new ForbiddenError('Admin access required'));
         return;
     }
 
@@ -42,23 +39,21 @@ export function requireAdmin(
 
 export function requireEmployee(
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction
 ): void {
     if (!req.session || !req.session.user) {
-        res.status(401).json({
-            success: false,
-            message: 'Authentication required.'
-        });
+        next(new AuthenticationRequiredError());
         return;
     }
-
     if (req.session.user.role !== USER_ROLES.EMPLOYEE) {
-        res.status(403).json({
-            success: false,
-            message: 'Employee access required.'
-        });
+        next(new ForbiddenError('Employee access required'));
         return;
     }
+    if (!req.session.user.employeeId) {
+        next(new ForbiddenError('Employee profile required'));
+        return;
+    }
+    
     next();
 }

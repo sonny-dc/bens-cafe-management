@@ -1,17 +1,13 @@
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { shiftService } from '../services/index.js';
 
-export async function startShift(req: Request, res: Response): Promise<void> {
+export async function startShift(
+    req: Request, 
+    res: Response,
+    next: NextFunction
+): Promise<void> {
     try {
-        const employeeId = req.session.user?.employeeId;
-
-        if (!employeeId) {
-            res.status(403).json({
-                success: false,
-                message: 'Employee profile required.'
-            });
-            return;
-        }
+        const employeeId = req.session.user?.employeeId!;
 
         const { openingCash } = req.body;
 
@@ -24,24 +20,17 @@ export async function startShift(req: Request, res: Response): Promise<void> {
             data: shift 
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while starting the shift.";
-        res.status(500).json({ 
-            success: false,
-            message: errorMessage 
-        });
+        next(error);
     }
 }
 
-export async function endShift(req: Request, res: Response): Promise<void> {
+export async function endShift(
+    req: Request, 
+    res: Response,
+    next: NextFunction
+): Promise<void> {
     try {
-        const employeeId = req.session.user?.employeeId;
-        if (!employeeId) {
-            res.status(403).json({
-                success: false,
-                message: 'Employee profile required.'
-            });
-            return;
-        }
+        const employeeId = req.session.user?.employeeId!;
 
         const shiftId = Number(req.params.shiftId);
         const { closingCash } = req.body;
@@ -56,35 +45,19 @@ export async function endShift(req: Request, res: Response): Promise<void> {
             data: shift
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while ending the shift.";
-        res.status(500).json({ 
-            success: false,
-            message: errorMessage 
-        });
+        next(error);
     }
 }
 
-export async function getMyActiveShift(req: Request, res: Response): Promise<void> {
+export async function getMyActiveShift(
+    req: Request, 
+    res: Response, 
+    next: NextFunction
+): Promise<void> {
     try {
-        const employeeId = req.session.user?.employeeId;
+        const employeeId = req.session.user?.employeeId!;
 
-        if (!employeeId) {
-            res.status(403).json({
-                success: false,
-                message: "Employee profile required."
-            });
-            return;
-        }
-
-        const shift = await shiftService.getActiveShift(employeeId);
-
-        if (!shift) {
-            res.status(404).json({
-                success: false,
-                message: "No active shift found."
-            });
-            return;
-        }
+        const shift = await shiftService.getShiftInProgress(employeeId);
 
         res.status(200).json({
             success: true,
@@ -92,30 +65,15 @@ export async function getMyActiveShift(req: Request, res: Response): Promise<voi
             data: shift
         });
     } catch (error) {
-        const errorMessage = error instanceof Error
-            ? error.message
-            : "An error occurred while getting the active shift.";
-
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        next(error);
     }
 }
 
-export async function getActiveShift(req: Request, res: Response): Promise<void> {
+export async function getActiveShift(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const employeeId = Number(req.params.employeeId);
 
-        const shift = await shiftService.getActiveShift(employeeId);
-
-        if (!shift) {
-            res.status(404).json({
-                success: false,
-                message: "No active shift found."
-            });
-            return;
-        }
+        const shift = await shiftService.getShiftInProgress(employeeId);
 
         res.status(200).json({
             success: true,
@@ -123,34 +81,31 @@ export async function getActiveShift(req: Request, res: Response): Promise<void>
             data: shift
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting the active shift.";
-        res.status(500).json({ 
-            success: false,
-            message: errorMessage 
-        });
+        next(error);
     }
 }
 
-export async function getAllActiveShifts(_req: Request, res: Response): Promise<void> {
+export async function getAllActiveShifts(
+    _req: Request, 
+    res: Response,
+    next: NextFunction
+): Promise<void> {
     try {
-        const shifts = await shiftService.getAllActiveShifts();
+        const shifts = await shiftService.getAllInProgressShifts();
         res.status(200).json({
             success: true,
             message: "All active shifts retrieved successfully.",
             data: shifts
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting all active shifts.";
-        res.status(500).json({ 
-            success: false,
-            message: errorMessage 
-        });
+        next(error);
     }
 }
 
 export async function getStaffWeeklyPerformance(
     req: Request, 
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const { start, end } = req.query;
@@ -159,14 +114,6 @@ export async function getStaffWeeklyPerformance(
             String(start), 
             String(end)
         );
-        
-        if (!performance || performance.length === 0) {
-            res.status(404).json({
-                success: false,
-                message: "No staff performance data found for the specified date range."
-            });
-            return;
-        }
 
         res.status(200).json({
             success: true,
@@ -174,26 +121,18 @@ export async function getStaffWeeklyPerformance(
             data: performance
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting staff weekly performance.";
-        res.status(500).json({ 
-            success: false,
-            message: errorMessage 
-        });
+        next(error);
     }
 }
 
 
-export async function getShiftSummary(req: Request, res: Response): Promise<void> {
+export async function getShiftSummary(
+    req: Request, 
+    res: Response, 
+    next: NextFunction
+): Promise<void> {
     try {
         const { start, end } = req.query;
-
-        if (!start || !end) {
-            res.status(400).json({
-                success: false,
-                message: "start and end query parameters are required (YYYY-MM-DD)."
-            });
-            return;
-        }
 
         const shifts = await shiftService.getShiftSummary(String(start), String(end));
         res.status(200).json({
@@ -202,25 +141,17 @@ export async function getShiftSummary(req: Request, res: Response): Promise<void
             data: shifts
         });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An error occurred while getting the shift summary.";
-        res.status(500).json({ 
-            success: false,
-            message: errorMessage 
-        });
+        next(error);
     }
 }
 
-export async function archiveShifts(req: Request, res: Response): Promise<void> {
+export async function archiveShifts(
+    req: Request, 
+    res: Response,
+    next: NextFunction
+): Promise<void> {
     try {
         const { employeeId, start, end } = req.body;
-
-        if (!employeeId || !start || !end) {
-            res.status(400).json({
-                success: false,
-                message: "employeeId, start, and end body parameters are required."
-            });
-            return;
-        }
 
         const archivedCount = await shiftService.archiveShifts(
             Number(employeeId),
@@ -234,14 +165,6 @@ export async function archiveShifts(req: Request, res: Response): Promise<void> 
             data: { count: archivedCount }
         });
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : "An error occurred while archiving shifts.";
-
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        next(error);
     }
 }
