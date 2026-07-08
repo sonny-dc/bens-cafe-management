@@ -81,7 +81,7 @@ export async function getPayrollEntryById(
 export async function createPayrollEntryWithConnection(
     input: CreatePayrollEntryRepositoryInput,
     connection: PoolConnection
-): Promise<PayrollEntry> {
+): Promise<PayrollEntry | null> {
     const [result] = await connection.execute<ResultSetHeader>(
         `
         INSERT INTO payroll_entries (sales_entry_id, employee_id, gross_pay, posted_at)
@@ -98,10 +98,6 @@ export async function createPayrollEntryWithConnection(
         result.insertId, 
         connection
     );
-    
-    if (payrollEntry === null) {
-        throw new Error("Failed to retrieve the newly created payroll entry.");
-    }
 
     return payrollEntry;
 }

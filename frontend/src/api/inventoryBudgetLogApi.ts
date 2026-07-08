@@ -2,12 +2,7 @@ import type { InventoryBudgetLog } from 'shared/models';
 
 import { apiFetch } from './apiFetch';
 import { getApiError } from './apiError';
-
-type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data?: T;
-};
+import type { ApiResponse } from './apiResponse';
 
 export const inventoryBudgetLogApi = {
   /**

@@ -97,7 +97,7 @@ export async function updateInventoryBudgetAccountWithConnection(
   input: UpdateInventoryBudgetAccountRepositoryInput,
   connection: PoolConnection
 ): Promise<InventoryBudgetAccount | null> {
-  const [result] = await connection.execute<ResultSetHeader>(
+  await connection.execute<ResultSetHeader>(
     `
     UPDATE inventory_budget_accounts
     SET current_balance = ?
@@ -108,10 +108,6 @@ export async function updateInventoryBudgetAccountWithConnection(
       input.budgetAccountId
     ]
   );
-
-  if (result.affectedRows === 0) {
-    return null;
-  }
 
   return getInventoryBudgetAccountByIdWithConnection(
     input.budgetAccountId,

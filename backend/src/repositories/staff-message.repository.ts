@@ -38,7 +38,7 @@ function mapRow(row: MessageRow): StaffMessage {
     };
 }
 
-export async function createStaffMessage(input: CreateStaffMessageInput): Promise<StaffMessage> {
+export async function createStaffMessage(input: CreateStaffMessageInput): Promise<StaffMessage | null> {
     return withTransaction(async (connection) => {
         const [result] = await connection.execute<ResultSetHeader>(
             `INSERT INTO staff_messages (employee_id, message_type, subject, message_text, message_status, posted_at)
@@ -56,8 +56,7 @@ export async function createStaffMessage(input: CreateStaffMessageInput): Promis
         );
 
         const row = rows[0];
-        if (!row) throw new Error('Message could not be retrieved after creation.');
-        return mapRow(row);
+        return row ? mapRow(row) : null;
     });
 }
 

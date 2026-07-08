@@ -85,7 +85,7 @@ async function getInventoryBudgetLogByIdWithConnection(
 export async function createInventoryBudgetLogWithConnection(
   input: CreateInventoryBudgetLogRepositoryInput,
   connection: PoolConnection
-): Promise<InventoryBudgetLog> {
+): Promise<InventoryBudgetLog | null> {
   const [result] = await connection.execute<ResultSetHeader>(
     `
     INSERT INTO inventory_budget_logs (
@@ -121,16 +121,12 @@ export async function createInventoryBudgetLogWithConnection(
     connection
   );
 
-  if (budgetLog === null) {
-    throw new Error('Failed to retrieve the newly created inventory budget log.');
-  }
-
   return budgetLog;
 }
 
 export async function createInventoryBudgetLog(
   input: CreateInventoryBudgetLogRepositoryInput
-): Promise<InventoryBudgetLog> {
+): Promise<InventoryBudgetLog | null> {
   return withConnection(async connection => {
     return createInventoryBudgetLogWithConnection(input, connection);
   });

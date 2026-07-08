@@ -5,11 +5,16 @@ import {
   MessageSquare, AlertTriangle, Info, Package, CheckCircle2, X, Receipt, ChevronDown, ChevronUp, Download, Trash2
 } from 'lucide-react';
 import { shiftSummaryApi } from '../../api/shiftSummaryApi';
-import { type ShiftSummaryItem, type InventoryRequestListItem, type StaffWeeklyPerformance  } from 'shared/models';
+import { shiftApi } from '../../api/shiftApi';
+import {
+  type ShiftSummaryItem,
+  type InventoryRequestListItem,
+  type StaffWeeklyPerformance,
+  type ActiveShiftItem
+} from 'shared/models';
 import { type Note, notesApi } from '../../api/notesApi';
 import { REQUEST_STATUS, MESSAGE_STATUS, type MessageType, MESSAGE_TYPES, type RequestStatus, SHIFT_STATUS } from 'shared/constants';
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
-import { apiFetch } from '../../api/apiFetch';
 import { formatDateToYYYYMMDD, getStoreWeekRange, DEFAULT_CLOSING_DAY, WEEKDAY_LABELS } from '../../utils/storeWeek.utils';
 import { getShiftProgressHours, formatIsoDateTimeToTime, formatIsoDateTimeToDateTime } from '../../utils/datetime.utils';
 
@@ -37,7 +42,7 @@ export function AdminStaffBoard() {
   const [confirmArchiveData, setConfirmArchiveData] = useState<any>(null);
 
   const [allShifts, setAllShifts] = useState<ShiftSummaryItem[]>([]);
-  const [activeShifts, setActiveShifts] = useState<any[]>([]);
+  const [activeShifts, setActiveShifts] = useState<ActiveShiftItem[]>([]);
   const [staffNotes, setStaffNotes] = useState<Note[]>([]);
   const [inventoryRequests, setInventoryRequests] = useState<InventoryRequestListItem[]>([]);
 
@@ -51,6 +56,13 @@ export function AdminStaffBoard() {
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
 
+  // Error State
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [noteActionError, setNoteActionError] = useState<string | null>(null);
+  const [inventoryActionError, setInventoryActionError] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+
+
   useEffect(() => {
     setShowAllStaffPerformance(false);
     fetchDashboardData();
@@ -60,13 +72,16 @@ export function AdminStaffBoard() {
   const fetchDashboardData = async () => {
     try {
       setIsLoadingDashboard(true);
-      // 1. Fetch History Summary
+      setDashboardError(null);
+      setNoteActionError(null);
+      setInventoryActionError(null);
+      
       const selectedWeek = getStoreWeekRange(new Date(), closingDay);
       setCurrentWeekRange(selectedWeek);
 
       const historyEnd = new Date(selectedWeek.endDate);
       const historyStart = new Date(selectedWeek.startDate);
-      historyStart.setDate(historyStart.getDate() - 28); // Fetch 4 weeks of history for context
+      historyStart.setDate(historyStart.getDate() - 28);
 
       const shiftData = await shiftSummaryApi.getSummary(
         formatDateToYYYYMMDD(historyStart),
@@ -82,25 +97,19 @@ export function AdminStaffBoard() {
 
       setStaffPerformance(performanceData);
 
-      // 2. Fetch Active Shifts
-      const activeRes = await apiFetch('/shifts/active/all');
-      if (!activeRes.ok) {
-        const error = await activeRes.json().catch(() => ({}));
-        throw new Error(error.message || error.error || 'Failed to fetch active shifts');
-      }
-      const activeJson = await activeRes.json();
-      setActiveShifts(activeJson.data || []);
 
-      // 3. Fetch Staff Notes
+      const activeShifts = await shiftApi.getAllActiveShifts();
+      setActiveShifts(activeShifts);
+
       const notes = await notesApi.getAllNotes();
       setStaffNotes(notes.filter((note) => note.messageStatus === MESSAGE_STATUS.NEW));
 
-      // 4. Fetch Inventory Requests
-      const pendingInventoryRequests = await inventoryRequestApi.getPendingRequestsSimplified();
-      setInventoryRequests(pendingInventoryRequests);
+      const pendingInventoryRequests =
+        await inventoryRequestApi.getPendingRequestsSimplified();
 
-    } catch (err) {
-      console.error(err);
+      setInventoryRequests(pendingInventoryRequests);
+    } catch (err: any) {
+      setDashboardError(err.message || 'Failed to load staff board data.');
     } finally {
       setIsLoadingDashboard(false);
     }
@@ -108,11 +117,15 @@ export function AdminStaffBoard() {
 
   const handleAcknowledgeNote = async (messageId: number) => {
     try {
+      setNoteActionError(null);
+
       await notesApi.markNoteAsAcknowledged(messageId);
-      setStaffNotes((prev) => 
-        prev.filter((note) => note.messageId !== messageId));
-    } catch (err) {
-      console.error(err);
+
+      setStaffNotes((prev) =>
+        prev.filter((note) => note.messageId !== messageId)
+      );
+    } catch (err: any) {
+      setNoteActionError(err.message || 'Failed to acknowledge staff note.');
     }
   };
 
@@ -122,13 +135,15 @@ export function AdminStaffBoard() {
     requestStatus: RequestStatus
   ) => {
     try {
+      setInventoryActionError(null);
+
       await inventoryRequestApi.updateRequestStatus(requestId, requestStatus);
 
       setInventoryRequests(prev =>
         prev.filter(request => request.requestId !== requestId)
       );
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setInventoryActionError(err.message || 'Failed to update inventory request.');
     }
   };
 
@@ -214,14 +229,23 @@ export function AdminStaffBoard() {
 
   const handleArchiveWeek = async () => {
     if (!confirmArchiveData) return;
+
     try {
       setIsArchiving(true);
-      await shiftSummaryApi.archiveWeek(confirmArchiveData.employeeId, confirmArchiveData.startDate, confirmArchiveData.endDate);
-      await fetchDashboardData(); // Refresh everything
+      setArchiveError(null);
+
+      await shiftSummaryApi.archiveWeek(
+        confirmArchiveData.employeeId,
+        confirmArchiveData.startDate,
+        confirmArchiveData.endDate
+      );
+
+      await fetchDashboardData();
+
       setExpandedWeekId(null);
       setConfirmArchiveData(null);
-    } catch (err) {
-      alert("Failed to archive shifts.");
+    } catch (err: any) {
+      setArchiveError(err.message || 'Failed to archive shifts.');
     } finally {
       setIsArchiving(false);
     }
@@ -259,9 +283,15 @@ export function AdminStaffBoard() {
                   Closes: {label}
                 </option>
               ))}
-</select>
+            </select>
         </div>
       </div>
+
+      {dashboardError && (
+          <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            {dashboardError}
+          </div>
+        )}
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         
@@ -285,7 +315,7 @@ export function AdminStaffBoard() {
                 <p className="text-sm text-gray-500 text-center py-4">No staff currently clocked in.</p>
               ) : (
                 activeShifts.map(staff => {
-                  const hoursElapsed = getShiftProgressHours(staff.startTime ?? staff.clockInTime);
+                  const hoursElapsed = getShiftProgressHours(staff.clockInTime);
                   return (
                     <div key={staff.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-50 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
@@ -416,6 +446,12 @@ export function AdminStaffBoard() {
                 <h2 className="font-semibold text-gray-900">Staff Notes Inbox</h2>
               </div>
             </div>
+
+            {noteActionError && (
+              <div className="mb-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+                {noteActionError}
+              </div>
+            )}
             
             <div className="flex-1 overflow-y-auto pr-2 space-y-3">
               {isLoadingDashboard ? (
@@ -461,6 +497,12 @@ export function AdminStaffBoard() {
               <Package size={18} className="text-[#4a6741]" />
               <h2 className="font-semibold text-gray-900">Inventory Requests</h2>
             </div>
+
+            {inventoryActionError && (
+              <div className="mb-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+                {inventoryActionError}
+              </div>
+            )}
             
             <div className="space-y-3">
               {isLoadingDashboard ? (
@@ -617,6 +659,7 @@ export function AdminStaffBoard() {
                                         disabled={isArchiving}
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          setArchiveError(null);
                                           setConfirmArchiveData(weekData);
                                         }}
                                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-lg transition-colors disabled:opacity-50"
@@ -666,6 +709,12 @@ export function AdminStaffBoard() {
               <p className="text-sm text-gray-500 mb-6 leading-relaxed">
                 This will remove the selected shifts from your current view.
               </p>
+
+              {archiveError && (
+                <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {archiveError}
+                </div>
+              )}
               
               <div className="flex flex-col gap-2">
                 <button 
@@ -680,7 +729,10 @@ export function AdminStaffBoard() {
                   )}
                 </button>
                 <button 
-                  onClick={() => setConfirmArchiveData(null)}
+                  onClick={() => {
+                    setArchiveError(null);
+                    setConfirmArchiveData(null);
+                  }}
                   disabled={isArchiving}
                   className="w-full py-2.5 bg-transparent hover:bg-gray-50 text-gray-600 text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
                 >

@@ -1,44 +1,48 @@
-import { type MessageType, type MessageStatus, MESSAGE_STATUS } from 'shared/constants';
+import {
+  type MessageType,
+  type MessageStatus,
+  MESSAGE_STATUS
+} from 'shared/constants';
+
 import type { StaffMessage } from 'shared/models';
+
 import { apiFetch } from './apiFetch';
+import { getApiError } from './apiError';
+import type { ApiResponse } from './apiResponse';
 
 export type { MessageType, MessageStatus };
 export type Note = StaffMessage;
-
-type ApiResponse<T> = {
-  data?: T;
-  error?: string;
-  message?: string;
-};
 
 export const notesApi = {
   async getMyNotes(): Promise<Note[]> {
     const res = await apiFetch('/staff-messages/my');
 
-    if (res.status === 404) {
-      return [];
-    }
-
     if (!res.ok) {
-      throw new Error('Could not load your notes. Check your connection.');
+      throw await getApiError(res, 'Could not load your notes.');
     }
 
     const json: ApiResponse<Note[]> = await res.json();
+
+    if (!json.success) {
+      throw new Error(json.message || 'Could not load your notes.');
+    }
+
     return json.data || [];
   },
 
   async getNotesByEmployee(employeeId: number): Promise<Note[]> {
     const res = await apiFetch(`/staff-messages/employee/${employeeId}`);
 
-    if (res.status === 404) {
-      return [];
-    }
-
     if (!res.ok) {
-      throw new Error('Could not load staff notes.');
+      throw await getApiError(res, 'Could not load staff notes.');
     }
 
     const json: ApiResponse<Note[]> = await res.json();
+
+    if (!json.success) {
+      throw new Error(json.message || 'Could not load staff notes.');
+    }
+
     return json.data || [];
   },
 
@@ -46,25 +50,38 @@ export const notesApi = {
     const res = await apiFetch('/staff-messages');
 
     if (!res.ok) {
-      throw new Error('Could not load staff notes.');
+      throw await getApiError(res, 'Could not load staff notes.');
     }
 
     const json: ApiResponse<Note[]> = await res.json();
+
+    if (!json.success) {
+      throw new Error(json.message || 'Could not load staff notes.');
+    }
+
     return json.data || [];
   },
 
-  async updateNoteStatus(messageId: number, status: MessageStatus): Promise<boolean> {
+  async updateNoteStatus(
+    messageId: number,
+    status: MessageStatus
+  ): Promise<boolean> {
     const res = await apiFetch(`/staff-messages/${messageId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     });
 
     if (!res.ok) {
-      throw new Error('Could not update note status.');
+      throw await getApiError(res, 'Could not update note status.');
     }
 
     const json: ApiResponse<{ success: boolean }> = await res.json();
-    return Boolean(json.data?.success);
+
+    if (!json.success || !json.data) {
+      throw new Error(json.message || 'Could not update note status.');
+    }
+
+    return Boolean(json.data.success);
   },
 
   async markNoteAsAcknowledged(messageId: number): Promise<boolean> {
@@ -86,14 +103,13 @@ export const notesApi = {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || err.message || 'Could not send your note. Please try again.');
+      throw await getApiError(res, 'Could not send your note. Please try again.');
     }
 
     const json: ApiResponse<Note> = await res.json();
 
-    if (!json.data) {
-      throw new Error('Could not send your note. Please try again.');
+    if (!json.success || !json.data) {
+      throw new Error(json.message || 'Could not send your note. Please try again.');
     }
 
     return json.data;

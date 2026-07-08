@@ -232,6 +232,39 @@ export async function createInventoryItem(
     });
 }
 
+export async function getInventoryItemByNameCategoryAndUnit(input: {
+    itemName: string;
+    category: InventoryItemCategory;
+    unit: string;
+}): Promise<InventoryItem | null> {
+  return withConnection(async connection => {
+    const [rows] = await connection.query<InventoryItemRow[]>(
+        `
+        SELECT
+            item_id,
+            item_name,
+            category,
+            unit,
+            stock_quantity,
+            low_threshold,
+            unit_cost,
+            status,
+            user_id,
+            created_at,
+            updated_at
+        FROM inventory_items
+        WHERE item_name = ?
+          AND category = ?
+          AND unit = ?
+        LIMIT 1
+        `,
+        [input.itemName, input.category, input.unit]
+    );
+    
+    return rows[0] ? mapInventoryItemRow(rows[0]) : null;
+  });
+}
+
 export async function getInventoryItemsByIdsForUpdateWithConnection(
   itemIds: number[],
   connection: PoolConnection
@@ -263,7 +296,7 @@ export async function updateInventoryItemStockWithConnection(
   },
   connection: PoolConnection
 ): Promise<InventoryItem | null> {
-  const [result] = await connection.execute<ResultSetHeader>(
+  await connection.execute<ResultSetHeader>(
     `
     UPDATE inventory_items
     SET
@@ -278,10 +311,6 @@ export async function updateInventoryItemStockWithConnection(
     ]
   );
 
-  if (result.affectedRows === 0) {
-    return null;
-  }
-
   return getInventoryItemByIdWithConnection(input.itemId, connection);
 }
 
@@ -292,7 +321,7 @@ export async function updateInventoryItem(
   input: UpdateInventoryItemRepositoryInput
 ): Promise<InventoryItem | null> {
     return withConnection(async connection => {
-      const [result] = await connection.execute<ResultSetHeader>(
+      await connection.execute<ResultSetHeader>(
         `
         UPDATE inventory_items
         SET
@@ -313,16 +342,11 @@ export async function updateInventoryItem(
           input.stockQuantity ?? null,
           input.lowThreshold ?? null,
           input.unitCost ?? null,
-          input.status ?? null,
+          input.status,
           input.userId ?? null,
           input.itemId
         ]
       );
-
-      if (result.affectedRows === 0) {
-        return null;
-      }
-
       return getInventoryItemByIdWithConnection(input.itemId, connection);
     });
 }

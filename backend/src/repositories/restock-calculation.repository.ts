@@ -103,7 +103,7 @@ export async function getRestockCalculationById(
 export async function createRestockCalculationWithConnection(
   input: CreateRestockCalculationRepositoryInput,
   connection: PoolConnection
-): Promise<RestockCalculation> {
+): Promise<RestockCalculation | null> {
   const [result] = await connection.execute<ResultSetHeader>(
     `
     INSERT INTO restock_calculations (
@@ -125,10 +125,6 @@ export async function createRestockCalculationWithConnection(
     connection
   );
 
-  if (restockCalculation === null) {
-    throw new Error('Failed to retrieve the newly created restock calculation.');
-  }
-
   return restockCalculation;
 }
 
@@ -140,7 +136,7 @@ export async function createRestockCalculationWithConnection(
  */
 export async function createRestockCalculation(
   input: CreateRestockCalculationRepositoryInput
-): Promise<RestockCalculation> {
+): Promise<RestockCalculation | null> {
   return withConnection(async connection => {
     return createRestockCalculationWithConnection(input, connection);
   });

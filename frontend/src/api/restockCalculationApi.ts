@@ -6,12 +6,7 @@ import type {
 
 import { apiFetch } from './apiFetch';
 import { getApiError } from './apiError';
-
-type ApiResponse<T> = {
-  success: boolean;
-  message: string;
-  data?: T;
-};
+import type { ApiResponse } from './apiResponse';
 
 export type ExecuteRestockCalculationResult = {
   restockCalculation: RestockCalculation;

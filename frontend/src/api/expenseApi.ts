@@ -1,14 +1,23 @@
 import { apiFetch } from './apiFetch';
+import { getApiError } from './apiError';
+import type { ApiResponse } from './apiResponse';
+
 import type { Expense } from 'shared/models';
 
 export const expenseApi = {
   async getAllExpenses(): Promise<Expense[]> {
     const res = await apiFetch('/expenses');
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || err.error || 'Failed to fetch expenses');
+      throw await getApiError(res, 'Failed to fetch expenses.');
     }
-    const json = await res.json();
+
+    const json: ApiResponse<Expense[]> = await res.json();
+
+    if (!json.success) {
+      throw new Error(json.message || 'Failed to fetch expenses.');
+    }
+
     return json.data || [];
   }
 };

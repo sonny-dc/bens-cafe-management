@@ -25,7 +25,6 @@ export interface CreateSalesEntryTransactionInput {
     cashSales: string;
     onlineCardSales: string;
     physicalCashCount: string | null;
-    userId: number | null;
     payrollEntries: CreatePayrollEntryInput[];
     expenses: CreateExpenseInput[];
 }

@@ -7,7 +7,8 @@ import type {
 import {
   INVENTORY_ITEM_STATUS,
   INVENTORY_BUDGET_TRANSACTION_TYPES,
-  INVENTORY_BUDGET_SOURCE_TYPES
+  INVENTORY_BUDGET_SOURCE_TYPES,
+  INVENTORY_ADJUSTMENT_TYPES
 } from '../config/constants.js';
 
 import { withTransaction } from '../config/database.js';
@@ -21,6 +22,29 @@ import {
   inventoryAdjustmentRepository,
   inventoryItemRepository
 } from '../repositories/index.js';
+
+import {
+  // General Error
+  AppError,
+
+  // Restock Errors
+  RestockCalculationNotFoundError,
+  RestockCalculationCreationError,
+  RestockCalculationExecutionError,
+
+  // Inventory Item Errors
+  InventoryItemNotFoundError,
+  InventoryItemUpdateError,
+
+  // Inventory Budget Account Errors
+  InventoryBudgetAccountInsufficientBalanceError,
+  InventoryBudgetAccountNotFoundError,
+  InventoryBudgetAccountUpdateError,
+
+  // Inventory Budget Log Errors
+  InventoryBudgetLogCreationError
+
+} from '../errors/index.js';
 
 function toDecimalString(value: number): string {
   return value.toFixed(2);
@@ -71,149 +95,168 @@ export async function executeRestockCalculation(
   restockCalculation: RestockCalculation;
   restockCalculationItems: RestockCalculationItemWithInventoryDetails[];
 }> {
-  return withTransaction(async connection => {
-    const postedAt = getCurrentAppDateTime();
-    const normalizedItems = normalizeRestockItems(input);
-    const itemIds = normalizedItems.map(item => item.itemId);
+  try {
+    return await withTransaction(async connection => {
+      const postedAt = getCurrentAppDateTime();
+      const normalizedItems = normalizeRestockItems(input);
+      const itemIds = normalizedItems.map(item => item.itemId);
 
-    const inventoryItems =
-      await inventoryItemRepository.getInventoryItemsByIdsForUpdateWithConnection(
-        itemIds,
-        connection
-      );
+      const inventoryItems =
+        await inventoryItemRepository.getInventoryItemsByIdsForUpdateWithConnection(
+          itemIds,
+          connection
+        );
 
-    if (inventoryItems.length !== itemIds.length) {
-      throw new Error('One or more inventory items were not found.');
-    }
-
-    const inventoryItemMap = new Map(
-      inventoryItems.map(item => [item.itemId, item])
-    );
-
-    let totalEstimatedCost = 0;
-
-    for (const item of normalizedItems) {
-      const inventoryItem = inventoryItemMap.get(item.itemId);
-
-      if (!inventoryItem) {
-        throw new Error('One or more inventory items were not found.');
+      if (inventoryItems.length !== itemIds.length) {
+        throw new InventoryItemNotFoundError('One or more inventory items were not found');
       }
 
-      totalEstimatedCost += item.quantityToBuy * Number(inventoryItem.unitCost);
-    }
-
-    const totalEstimatedCostString = toDecimalString(totalEstimatedCost);
-
-    const budgetAccount =
-      await inventoryBudgetAccountRepository.getInventoryBudgetAccountForUpdateWithConnection(
-        connection
+      const inventoryItemMap = new Map(
+        inventoryItems.map(item => [item.itemId, item])
       );
 
-    if (budgetAccount === null) {
-      throw new Error('Inventory budget account was not found.');
-    }
+      let totalEstimatedCost = 0;
 
-    const balanceBefore = Number(budgetAccount.currentBalance);
-    const balanceAfter = balanceBefore - totalEstimatedCost;
+      for (const item of normalizedItems) {
+        const inventoryItem = inventoryItemMap.get(item.itemId);
 
-    if (balanceAfter < 0) {
-      throw new Error('Insufficient inventory budget for this restock calculation.');
-    }
+        if (!inventoryItem) {
+          throw new InventoryItemNotFoundError();
+        }
 
-    const restockCalculation =
-      await restockCalculationRepository.createRestockCalculationWithConnection(
-        {
-          userId,
-          totalEstimatedCost: totalEstimatedCostString,
-          postedAt
-        },
-        connection
-      );
-
-    for (const item of normalizedItems) {
-      const inventoryItem = inventoryItemMap.get(item.itemId);
-
-      if (!inventoryItem) {
-        throw new Error('One or more inventory items were not found.');
+        totalEstimatedCost += item.quantityToBuy * Number(inventoryItem.unitCost);
       }
 
-      const oldQuantity = Number(inventoryItem.stockQuantity);
-      const quantityToBuy = item.quantityToBuy;
-      const newQuantity = oldQuantity + quantityToBuy;
+      const totalEstimatedCostString = toDecimalString(totalEstimatedCost);
 
-      const newStatus = getInventoryStatus(
-        newQuantity,
-        Number(inventoryItem.lowThreshold)
-      );
+      const budgetAccount = await inventoryBudgetAccountRepository.getInventoryBudgetAccountForUpdateWithConnection(connection);
 
-      await restockCalculationItemRepository.createRestockCalculationItemWithConnection(
+      if (budgetAccount === null) {
+        throw new InventoryBudgetAccountNotFoundError();
+      }
+
+      const balanceBefore = Number(budgetAccount.currentBalance);
+      const balanceAfter = balanceBefore - totalEstimatedCost;
+
+      if (balanceAfter < 0) {
+        throw new InventoryBudgetAccountInsufficientBalanceError();
+      }
+
+      const restockCalculation = await restockCalculationRepository.createRestockCalculationWithConnection(
+          {
+            userId,
+            totalEstimatedCost: totalEstimatedCostString,
+            postedAt
+          },
+          connection
+        );
+        
+      if (!restockCalculation) {
+        throw new RestockCalculationCreationError();
+      }
+
+      for (const item of normalizedItems) {
+        const inventoryItem = inventoryItemMap.get(item.itemId);
+
+        if (!inventoryItem) {
+          throw new InventoryItemNotFoundError();
+        }
+
+        const oldQuantity = Number(inventoryItem.stockQuantity);
+        const quantityToBuy = item.quantityToBuy;
+        const newQuantity = oldQuantity + quantityToBuy;
+
+        const newStatus = getInventoryStatus(
+          newQuantity,
+          Number(inventoryItem.lowThreshold)
+        );
+
+        await restockCalculationItemRepository.createRestockCalculationItemWithConnection(
+          {
+            calculationId: restockCalculation.calculationId,
+            itemId: inventoryItem.itemId,
+            quantityToBuy: toDecimalString(quantityToBuy),
+            unitCostSnapshot: inventoryItem.unitCost
+          },
+          connection
+        );
+
+        const inventoryItemUpdate = await inventoryItemRepository.updateInventoryItemStockWithConnection(
+          {
+            itemId: inventoryItem.itemId,
+            stockQuantity: toDecimalString(newQuantity),
+            status: newStatus
+          },
+          connection
+        );
+
+        if (!inventoryItemUpdate) {
+          throw new InventoryItemUpdateError();
+        }
+
+        await inventoryAdjustmentRepository.createInventoryAdjustmentWithConnection(
+          {
+            itemId: inventoryItem.itemId,
+            userId,
+            adjustmentType: INVENTORY_ADJUSTMENT_TYPES.ADD,
+            quantityChanged: toDecimalString(quantityToBuy),
+            oldQuantity: toDecimalString(oldQuantity),
+            newQuantity: toDecimalString(newQuantity),
+            reason: `Restock calculation #${restockCalculation.calculationId}`
+          },
+          connection
+        );
+      }
+
+      const updatedBudgetAccount = await inventoryBudgetAccountRepository.updateInventoryBudgetAccountWithConnection(
         {
-          calculationId: restockCalculation.calculationId,
-          itemId: inventoryItem.itemId,
-          quantityToBuy: toDecimalString(quantityToBuy),
-          unitCostSnapshot: inventoryItem.unitCost
+          budgetAccountId: 1,
+          currentBalance: toDecimalString(balanceAfter)
         },
         connection
       );
 
-      await inventoryItemRepository.updateInventoryItemStockWithConnection(
+      if (!updatedBudgetAccount) {
+        throw new InventoryBudgetAccountUpdateError();
+      }
+
+      const inventoryBudgetLog = await inventoryBudgetLogRepository.createInventoryBudgetLogWithConnection(
         {
-          itemId: inventoryItem.itemId,
-          stockQuantity: toDecimalString(newQuantity),
-          status: newStatus
+          budgetAccountId: 1,
+          transactionType: INVENTORY_BUDGET_TRANSACTION_TYPES.OUT,
+          amount: totalEstimatedCostString,
+          sourceType: INVENTORY_BUDGET_SOURCE_TYPES.RESTOCK_CALCULATION,
+          salesEntryId: null,
+          restockCalculationId: restockCalculation.calculationId,
+          balanceBefore: toDecimalString(balanceBefore),
+          balanceAfter: toDecimalString(balanceAfter),
+          userId: userId,
+          postedAt: postedAt
         },
         connection
       );
 
-      await inventoryAdjustmentRepository.createInventoryAdjustmentWithConnection(
-        {
-          itemId: inventoryItem.itemId,
-          userId,
-          adjustmentType: 'add',
-          quantityChanged: toDecimalString(quantityToBuy),
-          oldQuantity: toDecimalString(oldQuantity),
-          newQuantity: toDecimalString(newQuantity),
-          reason: `Restock calculation #${restockCalculation.calculationId}`
-        },
-        connection
-      );
+      if (!inventoryBudgetLog) {
+        throw new InventoryBudgetLogCreationError();
+      }
+
+      const restockCalculationItems =
+        await restockCalculationItemRepository.getRestockCalculationItemsByCalculationIdWithConnection(
+          restockCalculation.calculationId,
+          connection
+        );
+
+      return {
+        restockCalculation,
+        restockCalculationItems
+      };
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
     }
-
-    await inventoryBudgetAccountRepository.updateInventoryBudgetAccountWithConnection(
-      {
-        budgetAccountId: 1,
-        currentBalance: toDecimalString(balanceAfter)
-      },
-      connection
-    );
-
-    await inventoryBudgetLogRepository.createInventoryBudgetLogWithConnection(
-      {
-        budgetAccountId: 1,
-        transactionType: INVENTORY_BUDGET_TRANSACTION_TYPES.OUT,
-        amount: totalEstimatedCostString,
-        sourceType: INVENTORY_BUDGET_SOURCE_TYPES.RESTOCK_CALCULATION,
-        salesEntryId: null,
-        restockCalculationId: restockCalculation.calculationId,
-        balanceBefore: toDecimalString(balanceBefore),
-        balanceAfter: toDecimalString(balanceAfter),
-        userId: userId,
-        postedAt: postedAt
-      },
-      connection
-    );
-
-    const restockCalculationItems =
-      await restockCalculationItemRepository.getRestockCalculationItemsByCalculationIdWithConnection(
-        restockCalculation.calculationId,
-        connection
-      );
-
-    return {
-      restockCalculation,
-      restockCalculationItems
-    };
-  });
+    throw new RestockCalculationExecutionError();
+  }
 }
 
 export async function getAllRestockCalculations(): Promise<RestockCalculation[]> {
@@ -225,18 +268,14 @@ export async function getRestockCalculationById(
 ): Promise<{
   restockCalculation: RestockCalculation;
   restockCalculationItems: RestockCalculationItemWithInventoryDetails[];
-} | null> {
-  const restockCalculation =
-    await restockCalculationRepository.getRestockCalculationById(calculationId);
+}> {
+  const restockCalculation = await restockCalculationRepository.getRestockCalculationById(calculationId);
 
   if (restockCalculation === null) {
-    return null;
+    throw new RestockCalculationNotFoundError();
   }
 
-  const restockCalculationItems =
-    await restockCalculationItemRepository.getRestockCalculationItemsByCalculationId(
-      calculationId
-    );
+  const restockCalculationItems = await restockCalculationItemRepository.getRestockCalculationItemsByCalculationId(calculationId);
 
   return {
     restockCalculation,

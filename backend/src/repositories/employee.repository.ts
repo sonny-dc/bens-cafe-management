@@ -149,6 +149,28 @@ export async function getEmployeeByIdWithConnection(
     return mapEmployeeRow(row);
 }
 
+export async function getEmployeesByIdsWithConnection(
+    employeeIds: number[],
+    connection: PoolConnection
+): Promise<Employee[]> {
+    if (employeeIds.length === 0) {
+        return [];
+    }
+
+    const placeholders = employeeIds.map(() => '?').join(', ');
+
+    const [rows] = await connection.query<EmployeeRow[]>(
+        `
+        SELECT *
+        FROM employee_profiles
+        WHERE employee_id IN (${placeholders})
+        `,
+        employeeIds
+    );
+
+    return rows.map(mapEmployeeRow);
+}
+
 export async function getEmployeeByUserIdWithConnection(
     userId: number,
     connection: PoolConnection

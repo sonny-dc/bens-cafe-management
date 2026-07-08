@@ -1,25 +1,47 @@
-import type { Employee, EmployeeProfile, RegisterEmployeeInput, UpdateEmployeeInput } from 'shared/models';
+import type {
+  Employee,
+  EmployeeProfile,
+  RegisterEmployeeInput,
+  UpdateEmployeeInput
+} from 'shared/models';
+
 import { apiFetch } from './apiFetch';
 import { getApiError } from './apiError';
+import type { ApiResponse } from './apiResponse';
 
 export const employeeApi = {
   async getAllEmployees(): Promise<Employee[]> {
     const res = await apiFetch('/employees');
+
     if (!res.ok) {
       throw await getApiError(res, 'Failed to fetch employees');
     }
-    const json = await res.json();
-    return json.data;
+
+    const json: ApiResponse<Employee[]> = await res.json();
+
+    if (!json.success) {
+      throw new Error(json.message || 'Failed to fetch employees');
+    }
+
+    return json.data || [];
   },
+
   async getEmployeeProfiles(): Promise<EmployeeProfile[]> {
     const res = await apiFetch('/employees/profiles');
+
     if (!res.ok) {
       throw await getApiError(res, 'Failed to fetch employee profiles');
     }
-    const json = await res.json();
-    return json.data;
+
+    const json: ApiResponse<EmployeeProfile[]> = await res.json();
+
+    if (!json.success) {
+      throw new Error(json.message || 'Failed to fetch employee profiles');
+    }
+
+    return json.data || [];
   },
-  
+
   async getMyProfile(): Promise<EmployeeProfile> {
     const res = await apiFetch('/employees/me');
 
@@ -27,10 +49,15 @@ export const employeeApi = {
       throw await getApiError(res, 'Failed to fetch current employee profile');
     }
 
-    const json = await res.json();
+    const json: ApiResponse<EmployeeProfile> = await res.json();
+
+    if (!json.success || !json.data) {
+      throw new Error(json.message || 'Failed to fetch current employee profile');
+    }
+
     return json.data;
   },
-  
+
   async create(payload: RegisterEmployeeInput): Promise<EmployeeProfile> {
     const res = await apiFetch('/employees', {
       method: 'POST',
@@ -41,11 +68,19 @@ export const employeeApi = {
       throw await getApiError(res, 'Failed to create employee');
     }
 
-    const json = await res.json();
+    const json: ApiResponse<EmployeeProfile> = await res.json();
+
+    if (!json.success || !json.data) {
+      throw new Error(json.message || 'Failed to create employee');
+    }
+
     return json.data;
   },
-  
-  async update(employeeId: number, payload: UpdateEmployeeInput): Promise<EmployeeProfile> {
+
+  async update(
+    employeeId: number,
+    payload: UpdateEmployeeInput
+  ): Promise<EmployeeProfile> {
     const res = await apiFetch(`/employees/${employeeId}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
@@ -55,7 +90,12 @@ export const employeeApi = {
       throw await getApiError(res, 'Failed to update employee');
     }
 
-    const json = await res.json();
+    const json: ApiResponse<EmployeeProfile> = await res.json();
+
+    if (!json.success || !json.data) {
+      throw new Error(json.message || 'Failed to update employee');
+    }
+
     return json.data;
   },
 
@@ -68,7 +108,16 @@ export const employeeApi = {
       throw await getApiError(res, 'Failed to delete employee');
     }
 
+    const json: ApiResponse<{ success: boolean }> = await res.json().catch(() => ({
+      success: true,
+      message: 'Employee deleted successfully',
+      data: { success: true }
+    }));
+
+    if (!json.success) {
+      throw new Error(json.message || 'Failed to delete employee');
+    }
+
     return true;
   }
-}
-
+};

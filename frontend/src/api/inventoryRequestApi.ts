@@ -12,6 +12,7 @@ import {
 
 import { apiFetch } from './apiFetch';
 import { inventoryItemApi } from './inventoryItemApi';
+import { getApiError } from './apiError';
 
 type CreateInventoryRequestPayload = CreateInventoryRequestInput;
 
@@ -124,9 +125,13 @@ export const inventoryRequestApi = {
       body: JSON.stringify(payload)
     });
 
+    if (!res.ok) {
+      throw await getApiError(res, 'Failed to create inventory request.');
+    }
+
     const json: ApiResponse<InventoryRequest> = await res.json();
 
-    if (!res.ok || !json.success || !json.data) {
+    if (!json.success || !json.data) {
       throw new Error(json.message || 'Failed to create inventory request.');
     }
 
@@ -142,9 +147,13 @@ export const inventoryRequestApi = {
       body: JSON.stringify({ requestStatus })
     });
 
+    if (!res.ok) {
+      throw await getApiError(res, 'Failed to update inventory request status.');
+    }
+
     const json: ApiResponse<InventoryRequest> = await res.json();
 
-    if (!res.ok || !json.success || !json.data) {
+    if (!json.success || !json.data) {
       throw new Error(json.message || 'Failed to update inventory request status.');
     }
 

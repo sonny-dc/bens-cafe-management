@@ -29,6 +29,11 @@ export function requireAdmin(
         return;
     }
 
+    if (!req.session.user.userId) {
+        next(new AuthenticationRequiredError('Please sign in again'));
+        return;
+    }
+
     if (req.session.user.role !== USER_ROLES.ADMIN) {
         next(new ForbiddenError('Admin access required'));
         return;

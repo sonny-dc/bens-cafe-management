@@ -97,7 +97,7 @@ export async function getSalesEntryById(
 export async function createSalesEntryWithConnection(
     input: CreateSalesEntryInput,
     connection: PoolConnection
-): Promise<SalesEntry> {
+): Promise<SalesEntry | null> {
     const [result] = await connection.execute<ResultSetHeader>(
         `
         INSERT INTO sales_entries (
@@ -123,10 +123,6 @@ export async function createSalesEntryWithConnection(
         connection
     );
 
-    if (salesEntry === null) {
-        throw new Error("Failed to retrieve the newly created sales entry.");
-    }
-
     return salesEntry;
     
 }
@@ -135,7 +131,7 @@ export async function updateNetProfitWithConnection(
     salesEntryId: number,
     netProfit: string,
     connection: PoolConnection
-): Promise<SalesEntry> {
+): Promise<SalesEntry | null> {
     await connection.execute<ResultSetHeader>(
         `
         UPDATE sales_entries
@@ -150,8 +146,5 @@ export async function updateNetProfitWithConnection(
         connection
     );
 
-    if (updatedSalesEntry === null) {
-        throw new Error("Failed to retrieve the updated sales entry.");
-    }
     return updatedSalesEntry;
 }

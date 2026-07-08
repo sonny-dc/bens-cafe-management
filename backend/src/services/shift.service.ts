@@ -1,10 +1,11 @@
 import { shiftRepository } from '../repositories/index.js';
 import type { 
     Shift,
+    ActiveShiftItem,
     ShiftSummaryItem, 
     StaffWeeklyPerformance, 
     StartShiftInput, 
-    EndShiftInput 
+    EndShiftInput
 } from '../models/index.js';
 import { getCurrentAppDateTime } from '../utils/datetime.utils.js';
 import { SHIFT_STATUS } from '../config/constants.js';
@@ -83,7 +84,7 @@ export async function getShiftInProgress(employeeId: number): Promise<Shift> {
     return shift;
 }
 
-export async function getAllInProgressShifts(): Promise<any[]> {
+export async function getAllInProgressShifts(): Promise<ActiveShiftItem[]> {
     return shiftRepository.getAllInProgressShifts();
 }
 

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, Plus } from 'lucide-react';
 import { salesApi } from '../../api/salesApi';
 import { employeeApi } from '../../api/employeeApi';
+import { ApiError } from '../../api/apiError';
 import type { EmployeeProfile, EmployeePayroll, ExpenseFormItem } from 'shared/models';
 import { EMPLOYMENT_STATUS, EXPENSE_CATEGORIES, type ExpenseCategory } from 'shared/constants';
 
@@ -39,6 +40,9 @@ export function SalesEntry() {
 
   const [cashSales, setCashSales] = useState<number | ''>('');
   const [cardSales, setCardSales] = useState<number | ''>('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [employeeLoadError, setEmployeeLoadError] = useState<string | null>(null);
+
   const parsedCash = cashSales || 0;
   const parsedCard = cardSales || 0;
   const totalRevenue = parsedCash + parsedCard;
@@ -46,18 +50,29 @@ export function SalesEntry() {
   const [payroll, setPayroll] = useState<EmployeePayroll[]>([]);
 
   useEffect(() => {
-    employeeApi.getEmployeeProfiles().then(data => {
-      setPayroll(data.filter((e: EmployeeProfile) => e.employmentStatus === EMPLOYMENT_STATUS.ACTIVE).map((e: EmployeeProfile) => ({
-        id: e.employeeId,
-        name: e.fullName,
-        role: e.jobRole,
-        dailyRate: Number(e.dailyPay),
-        isChecked: false
-      })));
-    }).catch(console.error);
+    employeeApi.getEmployeeProfiles()
+      .then(data => {
+        setEmployeeLoadError(null);
+
+        setPayroll(
+          data
+            .filter((e: EmployeeProfile) => e.employmentStatus === EMPLOYMENT_STATUS.ACTIVE)
+            .map((e: EmployeeProfile) => ({
+              id: e.employeeId,
+              name: e.fullName,
+              role: e.jobRole,
+              dailyRate: Number(e.dailyPay),
+              isChecked: false
+            }))
+        );
+      })
+      .catch(err => {
+        setEmployeeLoadError(err.message || 'Failed to load employees.');
+      });
   }, []);
 
   const togglePayroll = (id: number) => {
+    setFormError(null);
     setPayroll(prev => prev.map(emp => emp.id === id ? { ...emp, isChecked: !emp.isChecked } : emp));
   };
   const totalPayroll = payroll.filter(e => e.isChecked).reduce((sum, e) => sum + e.dailyRate, 0);
@@ -71,6 +86,7 @@ export function SalesEntry() {
   const [customExpenseAmount, setCustomExpenseAmount] = useState('');
 
   const updateExpense = (formItemId: number, amount: string) => {
+    setFormError(null);
     setExpenses(prev =>
       prev.map(exp =>
         exp.formItemId === formItemId ? { ...exp, amount } : exp
@@ -87,14 +103,27 @@ export function SalesEntry() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+
+    setFormError(null);
+
+    if (employeeLoadError) {
+      setFormError(employeeLoadError);
+      return;
+    }
+    const selectedPayrollEntries = payroll.filter(p => p.isChecked);
+
+    if (selectedPayrollEntries.length === 0) {
+      setFormError('Please select at least one employee for payroll before saving the sales entry.');
+      return;
+    }
+
     try {
+      setIsSubmitting(true);
       await salesApi.createSalesEntryTransaction({
         cashSales: String(parsedCash),
         onlineCardSales: String(parsedCard),
         physicalCashCount: null,
-        userId: null,
-        payrollEntries: payroll.filter(p => p.isChecked).map(p => ({
+        payrollEntries: selectedPayrollEntries.map(p => ({
           employeeId: p.id,
           grossPay: String(p.dailyRate),
         })),
@@ -106,17 +135,34 @@ export function SalesEntry() {
             expenseCategory: exp.expenseCategory
           }))
       });
+
       setIsSuccess(true);
+
       setTimeout(() => {
         setIsSuccess(false);
         setStep(1);
-        setCashSales(''); setCardSales('');
+        setCashSales('');
+        setCardSales('');
         setPayroll(prev => prev.map(p => ({ ...p, isChecked: false })));
         setExpenses(defaultExpenseFormItems);
+        setFormError(null);
       }, 2000);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to submit sales entry');
+    } catch (err: any) {
+      if (err instanceof ApiError) {
+        const firstFormError = err.errors?.formErrors?.[0];
+        const payrollError = err.errors?.fieldErrors?.payrollEntries?.[0];
+
+        setFormError(
+          payrollError ||
+          firstFormError ||
+          err.message ||
+          'Failed to submit sales entry.'
+        );
+
+        return;
+      }
+
+      setFormError(err.message || 'Failed to submit sales entry.');
     } finally {
       setIsSubmitting(false);
     }
@@ -175,8 +221,23 @@ export function SalesEntry() {
         </div>
       </div>
 
-      <form onSubmit={step === 4 ? handleSubmit : (e) => { e.preventDefault(); setStep((s) => (s + 1) as Step); }} className="bg-transparent sm:bg-white rounded-none sm:rounded-[24px] border-none sm:border sm:border-[#e8dccb] p-2 sm:p-10 shadow-none sm:shadow-sm relative overflow-hidden pb-24 sm:pb-10">
-        
+      <form
+        onSubmit={
+          step === 4
+            ? handleSubmit
+            : (e) => {
+                e.preventDefault();
+                setFormError(null);
+                setStep((s) => (s + 1) as Step);
+              }
+        } className="bg-transparent sm:bg-white rounded-none sm:rounded-[24px] border-none sm:border sm:border-[#e8dccb] p-2 sm:p-10 shadow-none sm:shadow-sm relative overflow-hidden pb-24 sm:pb-10">
+      
+        {formError && (
+          <div className="mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            {formError}
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -198,7 +259,15 @@ export function SalesEntry() {
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Cash Sales</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">₱</span>
-                      <input type="number" step="0.01" min="0" value={cashSales} onChange={e => setCashSales(e.target.value ? parseFloat(e.target.value) : '')} placeholder="0.00"
+                      <input 
+                      type="number" 
+                      step="0.01" 
+                      min="0" 
+                      value={cashSales} 
+                      onChange={e => {
+                        setFormError(null);
+                        setCashSales(e.target.value ? parseFloat(e.target.value) : '');
+                      }} placeholder="0.00"
                         className="w-full pl-9 pr-4 py-3.5 bg-white border border-[#e8dccb] rounded-xl focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all placeholder-gray-400 text-gray-900" />
                     </div>
                   </div>
@@ -206,7 +275,15 @@ export function SalesEntry() {
                     <label className="block text-sm font-semibold text-gray-800 mb-2">Online / Card Sales</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">₱</span>
-                      <input type="number" step="0.01" min="0" value={cardSales} onChange={e => setCardSales(e.target.value ? parseFloat(e.target.value) : '')} placeholder="0.00"
+                      <input 
+                      type="number" 
+                      step="0.01" 
+                      min="0" 
+                      value={cardSales} 
+                      onChange={e => {
+                        setFormError(null);
+                        setCardSales(e.target.value ? parseFloat(e.target.value) : '');
+                      }} placeholder="0.00"
                         className="w-full pl-9 pr-4 py-3.5 bg-white border border-[#e8dccb] rounded-xl focus:border-[#4a6741] focus:ring-1 focus:ring-[#4a6741] outline-none transition-all placeholder-gray-400 text-gray-900" />
                     </div>
                   </div>
@@ -225,6 +302,12 @@ export function SalesEntry() {
                   <h2 className="text-2xl font-bold font-poppins text-gray-900">Step 2 — Payroll</h2>
                   <p className="text-gray-500 text-sm mt-1">Check the box if the staff member had a shift today.</p>
                 </div>
+
+                {employeeLoadError && (
+                  <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    {employeeLoadError}
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   {payroll.map(emp => (
@@ -359,7 +442,10 @@ export function SalesEntry() {
           {step > 1 ? (
             <button
               type="button"
-              onClick={() => setStep((s) => (s - 1) as Step)}
+              onClick={() => {
+                setFormError(null);
+                setStep((s) => (s - 1) as Step);
+              }}
               className="text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-1.5 px-3 py-2 -ml-3"
             >
               <ChevronLeft size={16} /> Back
@@ -373,7 +459,11 @@ export function SalesEntry() {
           <motion.button
             whileTap={{ scale: 0.98 }}
             type="submit"
-            disabled={isSubmitting || isSuccess || (step === 1 && !cashSales && !cardSales)}
+            disabled={
+              isSubmitting ||
+              isSuccess ||
+              (step === 1 && !cashSales && !cardSales)
+            }
             className={`px-6 py-3 rounded-xl font-semibold text-sm flex items-center justify-center transition-all
               ${isSuccess 
                 ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
@@ -402,7 +492,10 @@ export function SalesEntry() {
           {step > 1 ? (
             <button
               type="button"
-              onClick={() => setStep((s) => (s - 1) as Step)}
+              onClick={() => {
+                setFormError(null);
+                setStep((s) => (s - 1) as Step);
+              }}
               className="text-sm font-semibold text-gray-600 hover:text-gray-900 flex items-center gap-1.5 py-3 pr-4"
             >
               <ChevronLeft size={16} /> Back
@@ -412,7 +505,11 @@ export function SalesEntry() {
           <motion.button
             whileTap={{ scale: 0.98 }}
             type="submit"
-            disabled={isSubmitting || isSuccess || (step === 1 && !cashSales && !cardSales)}
+            disabled={
+              isSubmitting ||
+              isSuccess ||
+              (step === 1 && !cashSales && !cardSales)
+            }
             className={`px-6 py-4 rounded-xl font-semibold text-sm flex items-center justify-center transition-all flex-1 ml-auto max-w-[200px]
               ${isSuccess 
                 ? 'bg-emerald-500 text-white' 
@@ -524,6 +621,7 @@ export function SalesEntry() {
                 type="button"
                 disabled={!customExpenseAmount}
                 onClick={() => {
+                  setFormError(null);
                   setExpenses(prev => [
                     ...prev,
                     {

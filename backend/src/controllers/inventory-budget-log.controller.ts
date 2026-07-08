@@ -1,9 +1,10 @@
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { inventoryBudgetLogService } from '../services/index.js';
 
 export async function getInventoryBudgetLogs(
     _req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const budgetLogs =
@@ -15,35 +16,19 @@ export async function getInventoryBudgetLogs(
             data: budgetLogs
         });
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : 'An error occurred while fetching inventory budget logs.';
-
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        next(error);
     }
 }
 
 export async function getInventoryBudgetLogById(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ): Promise<void> {
     try {
         const budgetLogId = Number(req.params.budgetLogId);
 
-        const budgetLog =
-            await inventoryBudgetLogService.getInventoryBudgetLogById(budgetLogId);
-
-        if (!budgetLog) {
-            res.status(404).json({
-                success: false,
-                message: 'Inventory budget log not found.'
-            });
-            return;
-        }
+        const budgetLog = await inventoryBudgetLogService.getInventoryBudgetLogById(budgetLogId);
 
         res.status(200).json({
             success: true,
@@ -51,14 +36,6 @@ export async function getInventoryBudgetLogById(
             data: budgetLog
         });
     } catch (error) {
-        const errorMessage =
-            error instanceof Error
-                ? error.message
-                : 'An error occurred while fetching the inventory budget log.';
-
-        res.status(500).json({
-            success: false,
-            message: errorMessage
-        });
+        next(error);
     }
 }

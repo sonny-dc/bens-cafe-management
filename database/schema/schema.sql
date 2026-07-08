@@ -84,6 +84,9 @@ CREATE TABLE inventory_items (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
 
+  CONSTRAINT uq_inventory_items_name_category_unit
+  UNIQUE (item_name, category, unit),
+
   CONSTRAINT fk_inventory_items_user
     FOREIGN KEY (user_id) REFERENCES users(user_id)
     ON UPDATE CASCADE

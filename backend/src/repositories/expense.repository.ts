@@ -89,7 +89,7 @@ export async function getExpenseById(
 export async function createExpenseWithConnection(
     input: CreateExpenseRepositoryInput,
     connection: PoolConnection
-): Promise<Expense> {
+): Promise<Expense | null> {
     const [result] = await connection.execute<ResultSetHeader>(
         `
         INSERT INTO expenses (
@@ -116,8 +116,5 @@ export async function createExpenseWithConnection(
         connection, 
         insertedExpenseId
     );
-    if (expense === null) {
-        throw new Error('Failed to retrieve the newly created expense entry.');
-    }
     return expense;
 }

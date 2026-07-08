@@ -7,6 +7,7 @@ import type {
 import type {
     Shift,
     ShiftSummaryItem,
+    ActiveShiftItem,
     StaffWeeklyPerformance,
     StartShiftRepositoryInput,
     EndShiftRepositoryInput
@@ -66,6 +67,14 @@ type ShiftSummaryRow = RowDataPacket & {
     updated_at: Date | null;
 };
 
+type ActiveShiftRow = RowDataPacket & {
+    id: number;
+    employeeId: number;
+    name: string;
+    role: string;
+    clockInTime: Date;
+};
+
 // Helper Functions
 function mapShiftRow(row: ShiftSessionRow): Shift {
     return {
@@ -82,6 +91,18 @@ function mapShiftRow(row: ShiftSessionRow): Shift {
         status: row.shift_status,
         createdAt: row.created_at,
         updatedAt: row.updated_at
+    };
+}
+
+function mapActiveShiftRow(row: ActiveShiftRow): ActiveShiftItem {
+    return {
+        id: row.id,
+        employeeId: row.employeeId,
+        name: row.name,
+        role: row.role,
+        clockInTime: row.clockInTime instanceof Date
+            ? row.clockInTime.toISOString()
+            : String(row.clockInTime)
     };
 }
 
@@ -188,9 +209,9 @@ export async function getShiftInProgressByEmployee(
     });
 }
 
-export async function getAllInProgressShifts(): Promise<any[]> {
+export async function getAllInProgressShifts(): Promise<ActiveShiftItem[]> {
     return withConnection(async (connection) => {
-        const [rows] = await connection.query<RowDataPacket[]>(
+        const [rows] = await connection.query<ActiveShiftRow[]>(
             `
             SELECT 
                 s.shift_id as id,
@@ -206,7 +227,7 @@ export async function getAllInProgressShifts(): Promise<any[]> {
             `,
             [SHIFT_STATUS.IN_PROGRESS]
         );
-        return rows as any[];
+        return rows.map(mapActiveShiftRow);
     });
 }
 
