@@ -92,8 +92,12 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
       const data = await inventoryItemApi.getList();
       setInventoryItems(data);
-    } catch (err: any) {
-      setInventoryError(err.message || 'Failed to load inventory items.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setInventoryError(error.message);
+      } else {
+        setInventoryError('Failed to load inventory items.');
+      }
     } finally {
       setIsLoadingItems(false);
     }
@@ -110,8 +114,12 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
       setBudgetAccount(account);
       setBudgetLogs(logs);
-    } catch (err: any) {
-      setBudgetError(err.message || 'Failed to load inventory budget.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setBudgetError(error.message);
+      } else {
+        setBudgetError('Failed to load inventory budget.');
+      }
     } finally {
       setIsLoadingBudget(false);
     }
@@ -221,8 +229,12 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
       await fetchInventoryItems();
 
       setDeletingItem(null);
-    } catch (err: any) {
-      setDeleteError(err.message || 'Failed to delete item.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setDeleteError(error.message);
+      } else {
+        setDeleteError('Failed to delete item.');
+      }
     } finally {
       setIsDeletingItem(false);
     }
@@ -289,8 +301,12 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    } catch (err: any) {
-      setRestockError(err.message || 'Failed to execute restock.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setRestockError(error.message);
+      } else {
+        setRestockError('Failed to execute restock.');
+      }
     } finally {
       setExecuting(false);
     }
@@ -874,15 +890,27 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
                         setShowAddModal(false);
                         setEditingItem(null);
-                      } catch (err: any) {
-                        if (err instanceof ApiError) {
-                          setFieldErrors(err.errors?.fieldErrors || {});
+                      } catch (error) {
+                        if (error instanceof ApiError) {
+                          setFieldErrors(error.errors?.fieldErrors || {});
 
-                          const firstFormError = err.errors?.formErrors?.[0];
-                          setFormError(firstFormError || err.message || 'Failed to save inventory item.');
+                          const firstFormError = error.errors?.formErrors?.[0];
+
+                          setFormError(
+                            firstFormError ||
+                            error.message ||
+                            'Failed to save inventory item.'
+                          );
+
                           return;
                         }
-                        setFormError(err.message || 'Failed to save inventory item.');
+
+                        if (error instanceof Error) {
+                          setFormError(error.message);
+                          return;
+                        }
+
+                        setFormError('Failed to save inventory item.');
                       } finally {
                         setIsSavingItem(false);
                       }

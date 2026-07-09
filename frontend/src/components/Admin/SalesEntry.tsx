@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, Plus } from 'lucide-react';
 import { salesApi } from '../../api/salesApi';
@@ -66,8 +66,12 @@ export function SalesEntry() {
             }))
         );
       })
-      .catch(err => {
-        setEmployeeLoadError(err.message || 'Failed to load employees.');
+      .catch(error => {
+        if (error instanceof Error) {
+          setEmployeeLoadError(error.message);
+        } else {
+          setEmployeeLoadError('Failed to load employees.');
+        }
       });
   }, []);
 
@@ -101,7 +105,7 @@ export function SalesEntry() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     setFormError(null);
@@ -147,22 +151,27 @@ export function SalesEntry() {
         setExpenses(defaultExpenseFormItems);
         setFormError(null);
       }, 2000);
-    } catch (err: any) {
-      if (err instanceof ApiError) {
-        const firstFormError = err.errors?.formErrors?.[0];
-        const payrollError = err.errors?.fieldErrors?.payrollEntries?.[0];
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const firstFormError = error.errors?.formErrors?.[0];
+        const payrollError = error.errors?.fieldErrors?.payrollEntries?.[0];
 
         setFormError(
           payrollError ||
           firstFormError ||
-          err.message ||
+          error.message ||
           'Failed to submit sales entry.'
         );
 
         return;
       }
 
-      setFormError(err.message || 'Failed to submit sales entry.');
+      if (error instanceof Error) {
+        setFormError(error.message);
+        return;
+      }
+
+      setFormError('Failed to submit sales entry.');
     } finally {
       setIsSubmitting(false);
     }

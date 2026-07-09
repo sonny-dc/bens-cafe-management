@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Lock, User } from 'lucide-react';
-import { type UserRole, USER_ROLES } from 'shared/constants';
-import { API_BASE_URL } from '../../config/api';
+import { type UserRole } from 'shared/constants';
+import { authApi } from '../../api/authApi';
 
 interface LoginProps {
   onLogin: (role: UserRole) => void;
@@ -14,49 +14,30 @@ export function Login({ onLogin }: LoginProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!username || !password) {
+    if (!username.trim() || !password.trim()) {
       setError('Please enter both username and password.');
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          username,
-          password
-        })
+      setIsLoading(true);
+
+      const role = await authApi.login({
+        username: username.trim(),
+        password
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        setError(result.message || 'Invalid username or password.');
-        return;
-      }
-      const userRole = result.data.user.role;
-      if (
-        userRole !== USER_ROLES.ADMIN &&
-        userRole !== USER_ROLES.EMPLOYEE
-      ) {
-        setError('Invalid user role.');
-        return;
-      }
-
-      onLogin(userRole);
+      onLogin(role);
     } catch (error) {
-      console.error(error);
-      setError('Invalid username or password.');
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to sign in. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

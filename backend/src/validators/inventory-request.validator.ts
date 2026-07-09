@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { positiveInt, nonNegativeDecimalString } from './common.validator.js';
+import { positiveInt, positiveDecimalStringGreaterThanZero } from './common.validator.js';
 import { REQUEST_STATUS } from '../config/constants.js'; 
 
 export const inventoryRequestIdParamSchema = z.object({
@@ -8,7 +8,7 @@ export const inventoryRequestIdParamSchema = z.object({
 
 export const createInventoryRequestSchema = z.object({
     itemId: positiveInt,
-    requestedQuantity: nonNegativeDecimalString,
+    requestedQuantity: positiveDecimalStringGreaterThanZero,
     requestedUnit: z.string().trim().min(1, 'requestedUnit must not be empty').max(20, 'requestedUnit must not exceed 20 characters'),
     reason: z.string().trim().min(1, 'reason must not be empty').max(255, 'reason must not exceed 255 characters'),
     userId: positiveInt.optional()

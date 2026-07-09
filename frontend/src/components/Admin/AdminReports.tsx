@@ -18,6 +18,7 @@ import { salesApi } from '../../api/salesApi';
 import { shiftSummaryApi } from '../../api/shiftSummaryApi';
 import { expenseApi } from '../../api/expenseApi';
 import type { SalesEntry, ShiftSummaryItem, Expense } from 'shared/models';
+import { SHIFT_STATUS } from 'shared/constants';
 import { CsvExportButton } from './CsvExportButton';
 import { 
   formatIsoDateTimeToTime, 
@@ -72,8 +73,12 @@ export function AdminReports() {
       setError(null);
       const data = await salesApi.getAllSalesEntries();
       setSalesEntries(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load sales data');
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to load sales data');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -86,8 +91,12 @@ export function AdminReports() {
       const { start, end } = getWeekRange();
       const data = await shiftSummaryApi.getSummary(start, end);
       setShifts(data);
-    } catch (err: any) {
-      setShiftError(err.message || 'Failed to load shift data');
+    } catch (error) {
+      if (error instanceof Error) {
+        setShiftError(error.message);
+      } else {
+        setShiftError('Failed to load shift data');
+      }
     } finally {
       setIsLoadingShifts(false);
     }
@@ -99,8 +108,12 @@ export function AdminReports() {
       setExpenseError(null);
       const data = await expenseApi.getAllExpenses();
       setExpenses(data);
-    } catch (err: any) {
-      setExpenseError(err.message || 'Failed to load expense data');
+    } catch (error) {
+      if (error instanceof Error) {
+        setExpenseError(error.message);
+      } else {
+        setExpenseError('Failed to load expense data');
+      }
     } finally {
       setIsLoadingExpenses(false);
     }
@@ -166,7 +179,7 @@ export function AdminReports() {
 
 
 
-  const completedShifts = shifts.filter(s => s.status === 'completed');
+  const completedShifts = shifts.filter(s => s.status === SHIFT_STATUS.COMPLETED);
   const sortedShifts = [...shifts].sort(
     (a, b) => String(b.startTime).localeCompare(String(a.startTime))
   );
@@ -547,7 +560,7 @@ export function AdminReports() {
                     </tr>
                   ) : (
                     paginatedShifts.map(shift => {
-                      const isCompleted = shift.status === 'completed';
+                      const isCompleted = shift.status === SHIFT_STATUS.COMPLETED;
                       return (
                         <tr
                           key={shift.shiftId}

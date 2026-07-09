@@ -108,8 +108,12 @@ export function AdminStaffBoard() {
         await inventoryRequestApi.getPendingRequestsSimplified();
 
       setInventoryRequests(pendingInventoryRequests);
-    } catch (err: any) {
-      setDashboardError(err.message || 'Failed to load staff board data.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setDashboardError(error.message);
+      } else {
+        setDashboardError('Failed to load staff board data.');
+      }
     } finally {
       setIsLoadingDashboard(false);
     }
@@ -124,8 +128,12 @@ export function AdminStaffBoard() {
       setStaffNotes((prev) =>
         prev.filter((note) => note.messageId !== messageId)
       );
-    } catch (err: any) {
-      setNoteActionError(err.message || 'Failed to acknowledge staff note.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setNoteActionError(error.message);
+      } else {
+        setNoteActionError('Failed to acknowledge staff note.');
+      }
     }
   };
 
@@ -142,8 +150,12 @@ export function AdminStaffBoard() {
       setInventoryRequests(prev =>
         prev.filter(request => request.requestId !== requestId)
       );
-    } catch (err: any) {
-      setInventoryActionError(err.message || 'Failed to update inventory request.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setInventoryActionError(error.message);
+      } else {
+        setInventoryActionError('Failed to update inventory request.');
+      }
     }
   };
 
@@ -244,8 +256,12 @@ export function AdminStaffBoard() {
 
       setExpandedWeekId(null);
       setConfirmArchiveData(null);
-    } catch (err: any) {
-      setArchiveError(err.message || 'Failed to archive shifts.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setArchiveError(error.message);
+      } else {
+        setArchiveError('Failed to archive shifts.');
+      }
     } finally {
       setIsArchiving(false);
     }
@@ -673,7 +689,7 @@ export function AdminStaffBoard() {
                                         className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-white bg-[#4a6741] hover:bg-[#3a5233] shadow-sm rounded-lg transition-colors"
                                       >
                                         <Download size={14} />
-                                        Export to Excel
+                                        Export to CSV
                                       </button>
                                     </div>
                                   </div>

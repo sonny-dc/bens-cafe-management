@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Search, Plus, Edit2, X, ShieldCheck, CircleDot } from 'lucide-react';
 import { employeeApi } from '../../api/employeeApi';
 import  { type EmployeeProfile, type UpdateEmployeeInput } from 'shared/models';
 import { EMPLOYMENT_STATUS, type EmploymentStatus } from 'shared/constants';
 import { ApiError } from '../../api/apiError';
-import { getClientErrorMessage } from '../../utils/error.utils';
+import { getClientErrorMessage } from '../../api/apiError';
 
 export function StaffRegistry() {
   const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
@@ -18,6 +18,9 @@ export function StaffRegistry() {
 
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Error states
+  const [employeeListError, setEmployeeListError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const getFieldError = (field: string) => fieldErrors[field]?.[0];
@@ -29,16 +32,22 @@ export function StaffRegistry() {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
+      setEmployeeListError(null);
+
       const data = await employeeApi.getEmployeeProfiles();
       setEmployees(data);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      if (error instanceof Error) {
+        setEmployeeListError(error.message);
+      } else {
+        setEmployeeListError('Failed to load employees.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -86,7 +95,7 @@ export function StaffRegistry() {
     }
   };
 
-  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleEditSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editingEmployee) return;
 
@@ -124,8 +133,27 @@ export function StaffRegistry() {
 
       await fetchEmployees();
       setEditingEmployee(null);
-    } catch (err) {
-      setFormError(getClientErrorMessage(err, 'Failed to update employee'));
+    } catch (error) {
+      const fallbackMessage = 'Failed to update employee';
+      const errorMessage = getClientErrorMessage(error, fallbackMessage);
+
+      if (error instanceof ApiError) {
+        const backendFieldErrors = error.errors?.fieldErrors || {};
+        const hasFieldErrors = Object.keys(backendFieldErrors).length > 0;
+
+        setFieldErrors(backendFieldErrors);
+
+        if (hasFieldErrors) {
+          setFormError(null);
+          return;
+        }
+
+        const firstFormError = error.errors?.formErrors?.[0];
+        setFormError(firstFormError || errorMessage);
+        return;
+      }
+
+      setFormError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -169,6 +197,11 @@ export function StaffRegistry() {
           Add New Employee
         </button>
       </div>
+      {employeeListError && (
+        <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          {employeeListError}
+        </div>
+      )}
 
       {/* Main Table */}
       <motion.div 
@@ -377,8 +410,8 @@ export function StaffRegistry() {
                     setFieldErrors({});
                     setShowAddModal(false);
                   }} 
-                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-
-                  bold rounded-xl transition-colors"
+                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm 
+                  font-bold rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
@@ -428,7 +461,7 @@ export function StaffRegistry() {
                 </button>
               </div>
 
-              <form onSubmit={handleEditSubmit} className="p-6 space-y-5">
+              <form onSubmit={handleEditSubmit} noValidate className="p-6 space-y-5">
                 {formError && (
                   <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                     {formError}
@@ -436,12 +469,41 @@ export function StaffRegistry() {
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="jobRole" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
-                    <input required name="jobRole" type="text" id="jobRole" defaultValue={editingEmployee.jobRole} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    <label htmlFor="edit-jobRole" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
+                    <input 
+                    required
+                    name="jobRole" 
+                    type="text" 
+                    id="edit-jobRole" 
+                    defaultValue={editingEmployee.jobRole} 
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm 
+                              text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 
+                              focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    {getFieldError('jobRole') && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {getFieldError('jobRole')}
+                      </p>
+                    )}
+                    
                   </div>
                   <div>
-                    <label htmlFor="hourlyRate" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
-                    <input required name="hourlyRate" type="number" step="0.01" min="0" id="hourlyRate" defaultValue={Number(editingEmployee.hourlyRate)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    <label htmlFor="edit-hourlyRate" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Hourly Rate (₱)</label>
+                    <input 
+                    required 
+                    name="hourlyRate" 
+                    type="number" 
+                    step="0.01" 
+                    min="0" 
+                    id="edit-hourlyRate" 
+                    defaultValue={Number(editingEmployee.hourlyRate)} 
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl 
+                    text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 
+                    focus:ring-[#4a6741]/20 outline-none transition-all" />
+                    {getFieldError('hourlyRate') && (
+                      <p className="mt-1 text-xs font-medium text-red-600">
+                        {getFieldError('hourlyRate')}
+                      </p>
+                    )}
                   </div>
                 </div>
 

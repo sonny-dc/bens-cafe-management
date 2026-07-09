@@ -16,6 +16,7 @@ import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { notesApi } from '../../api/notesApi';
 import { inventoryBudgetAccountApi } from '../../api/inventoryBudgetAccountApi';
 import type { SalesEntry, InventoryRequestListItem, StaffMessage, ActiveShiftItem } from 'shared/models';
+import { REQUEST_STATUS, MESSAGE_STATUS } from 'shared/constants';
 import { formatIsoDateTimeToTime, formatIsoDateTimeToDateTime } from '../../utils/datetime.utils';
 
 const fmt = (n: number) =>
@@ -73,8 +74,12 @@ export function AdminDashboard() {
       if (budgetData) {
         setBudget(budgetData.currentBalance);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data');
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to load dashboard data');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +92,7 @@ export function AdminDashboard() {
   }, [sales]);
 
   const pendingRequests = useMemo(() => {
-    return inventoryReqs.filter(r => r.requestStatus === 'pending');
+    return inventoryReqs.filter(r => r.requestStatus === REQUEST_STATUS.PENDING);
   }, [inventoryReqs]);
 
 
@@ -252,7 +257,7 @@ export function AdminDashboard() {
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-gray-900 font-poppins">Recent Staff Messages</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {notes.filter(n => n.messageStatus !== 'acknowledged').slice(0, 3).map(note => (
+          {notes.filter(n => n.messageStatus !== MESSAGE_STATUS.ACKNOWLEDGED).slice(0, 3).map(note => (
             <div key={note.messageId} className="bg-white p-5 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors cursor-default">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -267,7 +272,7 @@ export function AdminDashboard() {
               </div>
               <p className="text-sm font-bold text-gray-900 mb-1 font-poppins">{note.subject || note.messageType}</p>
               <p className="text-xs text-gray-500 line-clamp-2">{note.messageText}</p>
-              {(note.messageStatus === 'new' || note.messageStatus === 'unread' as any) && (
+              {(note.messageStatus === MESSAGE_STATUS.NEW) && (
                 <div className="mt-4">
                   <span className="inline-block px-2 py-1 bg-red-50 text-red-600 text-[10px] font-bold rounded-md">
                     UNREAD
@@ -276,7 +281,7 @@ export function AdminDashboard() {
               )}
             </div>
           ))}
-          {notes.filter(n => n.messageStatus !== 'acknowledged').length === 0 && (
+          {notes.filter(n => n.messageStatus !== MESSAGE_STATUS.ACKNOWLEDGED).length === 0 && (
             <div className="col-span-3 p-8 bg-white border border-gray-100 rounded-2xl text-center text-gray-400">
               <MessageSquare size={24} className="mx-auto mb-2 opacity-50" />
               <p className="text-sm font-medium">No new messages</p>

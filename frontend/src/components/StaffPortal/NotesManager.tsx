@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ElementType, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PenLine, Send, AlertTriangle, Info, MessageSquare, CheckCircle2, AlertCircle } from 'lucide-react';
 import { notesApi, type Note, type MessageType } from '../../api/notesApi';
@@ -10,7 +10,7 @@ const CATEGORIES: {
   value: MessageType;
   label: string;
   description: string;
-  icon: React.ElementType;
+  icon: ElementType;
   activeClasses: string;
 }[] = [
   {
@@ -40,15 +40,14 @@ function getCategoryMeta(type: MessageType) {
   return CATEGORIES.find(c => c.value === type) ?? CATEGORIES[0]!;
 }
 
-
-
-
 export function NotesManager() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [subject, setSubject] = useState('');
   const [messageText, setMessageText] = useState('');
@@ -59,7 +58,7 @@ export function NotesManager() {
   const loadNotes = async () => {
     try {
       setIsLoading(true);
-      setError(null);
+      setLoadError(null);
 
       const data = await notesApi.getMyNotes();
 
@@ -71,41 +70,50 @@ export function NotesManager() {
           return dateB.localeCompare(dateA);
         })
       );
-    } catch (err: any) {
-      setError(err.message || 'Could not load your notes.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setLoadError(error.message);
+      } else {
+        setLoadError('Could not load your notes.');
+      }
+
       setNotes([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
 
-  if (!messageText.trim()) return;
+    if (!messageText.trim()) return;
 
-  try {
-    setIsSending(true);
-    setError(null);
+    try {
+      setIsSending(true);
+      setSubmitError(null);
 
-    const newNote = await notesApi.createNote({
+      const newNote = await notesApi.createNote({
         messageType,
         subject: subject.trim() ? subject.trim() : null,
         messageText: messageText.trim()
       });
 
-        setNotes(prev => [newNote, ...prev]);
-        setSubject('');
-        setMessageText('');
-        setMessageType(MESSAGE_TYPES.GENERAL);
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3500);
-      } catch (err: any) {
-        setError(err.message || 'Something went wrong. Please try again.');
-      } finally {
-        setIsSending(false);
+      setNotes(prev => [newNote, ...prev]);
+      setSubject('');
+      setMessageText('');
+      setMessageType(MESSAGE_TYPES.GENERAL);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3500);
+    } catch (error) {
+      if (error instanceof Error) {
+        setSubmitError(error.message);
+      } else {
+        setSubmitError('Something went wrong. Please try again.');
       }
-    };
+    } finally {
+      setIsSending(false);
+    }
+  };
 
 
   return (
@@ -121,7 +129,7 @@ export function NotesManager() {
 
         {/* Error */}
         <AnimatePresence>
-          {error && (
+          {submitError && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -131,7 +139,7 @@ export function NotesManager() {
               <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-500" />
               <div>
                 <p className="font-semibold text-red-700 mb-0.5">Could not send note</p>
-                <p className="text-red-600">{error}</p>
+                <p className="text-red-600">{submitError}</p>
               </div>
             </motion.div>
           )}
@@ -233,6 +241,23 @@ export function NotesManager() {
             )}
           </div>
 
+          <AnimatePresence>
+            {loadError && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm"
+              >
+                <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-500" />
+                <div>
+                  <p className="font-semibold text-red-700 mb-0.5">Could not load notes</p>
+                  <p className="text-red-600">{loadError}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-10 gap-3">
               <div className="w-6 h-6 border-[3px] border-[#4a6741] border-t-transparent rounded-full animate-spin" />
@@ -240,7 +265,7 @@ export function NotesManager() {
             </div>
           )}
 
-          {!isLoading && notes.length === 0 && (
+          {!isLoading && !loadError && notes.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center mb-3">
                 <MessageSquare size={20} className="text-gray-400" />

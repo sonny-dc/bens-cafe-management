@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Send, Package, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { inventoryRequestApi } from '../../api/inventoryRequestApi';
 import { inventoryItemApi } from '../../api/inventoryItemApi';
+import { ApiError } from '../../api/apiError';
 import { REQUEST_STATUS } from 'shared/constants';
 import type { StaffInventoryRequest, InventoryItemOption } from 'shared/models';
 import { formatIsoDateTimeToShortDateTime } from '../../utils/datetime.utils';
@@ -14,6 +15,8 @@ export function InventoryManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const getFieldError = (field: string) => fieldErrors[field]?.[0];
   const [success, setSuccess] = useState(false);
 
   // Form State
@@ -36,14 +39,18 @@ export function InventoryManager() {
       ]);
       setItems(fetchedItems);
       setRequests(fetchedRequests);
-    } catch (err: any) {
-      setError('Could not load inventory data.');
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Could not load inventory data.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleItemSelect = (e: ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setError(null); // Clear any previous error when selecting an item
     setSelectedItemId(val === '' ? '' : Number(val));
@@ -59,13 +66,14 @@ export function InventoryManager() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (selectedItemId === '' || !quantity.trim() || !unit.trim() || !reason.trim()) return;
     
     try {
       setIsSending(true);
       setError(null);
+      setFieldErrors({});
       
       const newReq = await inventoryRequestApi.createRequest({
           itemId: selectedItemId,
@@ -82,8 +90,6 @@ export function InventoryManager() {
       };
 
       setRequests(prev => [newReqWithItemName, ...prev]);
-
-
       
       // Reset form
       setSelectedItemId('');
@@ -93,8 +99,28 @@ export function InventoryManager() {
       
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3500);
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const backendFieldErrors = error.errors?.fieldErrors || {};
+        const hasFieldErrors = Object.keys(backendFieldErrors).length > 0;
+
+        setFieldErrors(backendFieldErrors);
+
+        if (hasFieldErrors) {
+          setError(null);
+          return;
+        }
+
+        const firstFormError = error.errors?.formErrors?.[0];
+        setError(firstFormError || error.message || 'Something went wrong. Please try again.');
+        return;
+      }
+
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     } finally {
       setIsSending(false);
     }
@@ -143,7 +169,7 @@ export function InventoryManager() {
           )}
         </AnimatePresence>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
           {/* Item Selection */}
           <div>
             <label htmlFor="item" className="block text-sm font-semibold text-gray-700 mb-2">Item</label>
@@ -178,25 +204,31 @@ export function InventoryManager() {
                   e => {
                     setQuantity(e.target.value);
                     setError(null);
+                    setFieldErrors({});
                   }
                 }
                 placeholder="e.g. 2"
                 required
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black"
               />
+              {getFieldError('requestedQuantity') && (
+                <p className="mt-1 text-xs font-medium text-red-600">
+                  {getFieldError('requestedQuantity')}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Unit</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Unit
+              </label>
+
               <input
                 type="text"
                 value={unit}
-                onChange={e => {
-                  setUnit(e.target.value);
-                  setError(null);
-                }}
-                placeholder="e.g. Cartons"
-                required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black"
+                readOnly
+                placeholder="Auto-filled after selecting an item"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-100 
+                text-sm text-gray-600 cursor-not-allowed outline-none"
               />
             </div>
           </div>

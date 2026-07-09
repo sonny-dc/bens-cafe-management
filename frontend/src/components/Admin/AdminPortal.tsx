@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ElementType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, LayoutDashboard, Calculator, ClipboardList, Package, BarChart3, Users, Menu } from 'lucide-react';
 import { SalesEntry } from './SalesEntry';
@@ -10,7 +10,7 @@ import { AdminDashboard } from './AdminDashboard';
 
 type Tab = 'dashboard' | 'sales' | 'staff_board' | 'inventory' | 'reports' | 'staff_registry';
 
-const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
+const tabs: { id: Tab; label: string; icon: ElementType }[] = [
   { id: 'dashboard',      label: 'Dashboard',      icon: LayoutDashboard },
   { id: 'sales',          label: 'Sales Entry',    icon: Calculator },
   { id: 'staff_board',    label: 'Staff Board',    icon: ClipboardList },

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Square, CheckCircle2, AlertCircle, Clock, TrendingUp } from 'lucide-react';
-import { shiftApi, type Shift } from '../../api/shiftApi';
+import { shiftApi } from '../../api/shiftApi';
 import { formatIsoDateTimeToTime } from '../../utils/datetime.utils';
+import { type Shift } from 'shared/models';
 
 export function ShiftManager() {
 
@@ -20,34 +21,46 @@ export function ShiftManager() {
     try {
       setIsLoading(true);
       setError(null);
+
       setShift(await shiftApi.getMyActiveShift());
-    } catch (err: any) {
-      setError(err.message || 'Failed to load shift');
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to load shift');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleStartShift = async (e: React.FormEvent) => {
+  const handleStartShift = async (e: FormEvent) => {
     e.preventDefault();
     if (!openingCash) return;
     try {
       setIsLoading(true);
       setError(null);
+
       setShift(await shiftApi.startShift(openingCash));
       setOpeningCash('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to start shift');
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to start shift');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEndShiftFormSubmit = (e: React.FormEvent) => {
+  const handleEndShiftFormSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!shift || !closingCash) return;
-    // Show confirmation if there's a variance
+
     const variance = Number(closingCash) - Number(shift.openingCash);
+
     if (variance !== 0) {
       setShowConfirm(true);
       return;
@@ -57,16 +70,23 @@ export function ShiftManager() {
 
   const submitEndShift = async () => {
     if (!shift || !closingCash) return;
+
     try {
       setIsLoading(true);
       setError(null);
+
       await shiftApi.endShift(shift.shiftId, closingCash);
+
       setShift(null);
       setIsEndingShift(false);
       setShowConfirm(false);
       setClosingCash('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to end shift');
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to end shift');
+      }
     } finally {
       setIsLoading(false);
     }

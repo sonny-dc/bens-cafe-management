@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ElementType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Clock, MessageSquare, ShoppingCart } from 'lucide-react';
 import { ShiftManager } from './ShiftManager';
@@ -9,7 +9,7 @@ import { employeeApi } from '../../api/employeeApi';
 
 type Tab = 'shift' | 'notes' | 'inventory';
 
-const tabs: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
+const tabs: { id: Tab; label: string; icon: ElementType; badge?: number }[] = [
   { id: 'shift',     label: 'My Shift',           icon: Clock },
   { id: 'notes',     label: 'Notes & Messages',   icon: MessageSquare },
   { id: 'inventory', label: 'Inventory Requests', icon: ShoppingCart },
@@ -22,16 +22,26 @@ interface StaffPortalProps {
 export function StaffPortal({ onLogout }: StaffPortalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('shift');
   const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
+        setProfileError(null);
+        
         const profile = await employeeApi.getMyProfile();
         setEmployeeProfile(profile);
-      } catch {
+      } catch (error) {
         setEmployeeProfile(null);
+
+        if (error instanceof Error) {
+          setProfileError(error.message);
+        } else {
+          setProfileError('Failed to load staff profile.');
+        }
       }
     };
+
     loadProfile();
   }, []);
   const fullName = employeeProfile?.fullName?.trim() || 'Staff';
@@ -105,6 +115,12 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
           <h1 className="text-3xl font-bold font-poppins text-gray-900 mb-1">Good morning, {firstName}</h1>
           <p className="text-gray-500">Here's your workspace for today.</p>
         </motion.div>
+
+        {profileError && (
+          <div className="mb-6 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            {profileError}
+          </div>
+        )}
 
         {/* Tab bar */}
         <motion.div
