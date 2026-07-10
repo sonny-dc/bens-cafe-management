@@ -544,7 +544,7 @@ export function AdminStaffBoard() {
           {/* Staff Notes Inbox */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-[340px] flex flex-col"
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col"
           >
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-50 shrink-0">
               <div className="flex items-center gap-2">
@@ -569,11 +569,13 @@ export function AdminStaffBoard() {
               </div>
             )}
             
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+            <div className="max-h-[250px] overflow-y-auto pr-2 space-y-3">
               {isLoadingDashboard ? (
                 <LoadingState label="Loading staff notes..." />
               ) : staffNotes.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">No new messages from staff.</p>
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No new messages from staff.
+                </p>
               ) : (
                 staffNotes.map(note => {
                   const style = getNoteStyle(note.messageType);
@@ -699,7 +701,7 @@ export function AdminStaffBoard() {
           {/* Pending Inventory Requests */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:h-[340px] flex flex-col"
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col"
           >
             <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-gray-50 shrink-0">
               <div className="flex items-center gap-2">
@@ -724,7 +726,7 @@ export function AdminStaffBoard() {
               </div>
             )}
             
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+            <div className="max-h-[250px] overflow-y-auto pr-2 space-y-3">
               {isLoadingDashboard ? (
                 <LoadingState label="Loading inventory requests..." />
               ) : inventoryRequests.length === 0 ? (
@@ -933,7 +935,7 @@ export function AdminStaffBoard() {
                 {expandedPanel === 'notes' ? (
                   <div className="space-y-3">
                     {staffNotes.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-8">
+                      <p className="text-sm text-gray-500 text-center py-4">
                         No new messages from staff.
                       </p>
                     ) : (
