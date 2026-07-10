@@ -39,3 +39,23 @@ export async function getInventoryBudgetLogById(
         next(error);
     }
 }
+
+export async function getInventoryBudgetLogSummaryById(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    try {
+        const budgetLogId = Number(req.params.budgetLogId);
+
+        const budgetLogDetail = await inventoryBudgetLogService.getInventoryBudgetLogSummaryById(budgetLogId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Inventory budget log summary fetched successfully.',
+            data: budgetLogDetail
+        });
+    } catch (error) {
+        next(error);
+    }
+}

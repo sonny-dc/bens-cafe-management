@@ -12,6 +12,10 @@ import type {
   CreateRestockCalculationItemRepositoryInput
 } from '../models/index.js';
 
+import {
+  type InventoryItemCategory
+} from '../config/constants.js';
+
 type RestockCalculationItemRow = RowDataPacket & {
   calculation_item_id: number;
   calculation_id: number;
@@ -26,6 +30,7 @@ type RestockCalculationItemWithInventoryDetailsRow = RowDataPacket & {
   calculation_id: number;
   item_id: number | null;
   item_name: string | null;
+  category: InventoryItemCategory | null;
   unit: string | null;
   quantity_to_buy: string;
   unit_cost_snapshot: string;
@@ -53,6 +58,7 @@ function mapRestockCalculationItemWithInventoryDetailsRow(
     calculationId: row.calculation_id,
     itemId: row.item_id,
     itemName: row.item_name,
+    category: row.category,
     unit: row.unit,
     quantityToBuy: row.quantity_to_buy,
     unitCostSnapshot: row.unit_cost_snapshot,
@@ -60,7 +66,7 @@ function mapRestockCalculationItemWithInventoryDetailsRow(
   };
 }
 
-async function getRestockCalculationItemByIdWithConnection(
+export async function getRestockCalculationItemByIdWithConnection(
   calculationItemId: number,
   connection: PoolConnection
 ): Promise<RestockCalculationItem | null> {
@@ -134,6 +140,7 @@ export async function getRestockCalculationItemsByCalculationIdWithConnection(
       rci.calculation_id,
       rci.item_id,
       ii.item_name,
+      ii.category,
       ii.unit,
       rci.quantity_to_buy,
       rci.unit_cost_snapshot,

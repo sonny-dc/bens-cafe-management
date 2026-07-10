@@ -29,6 +29,7 @@ export interface InventoryRequestListItem {
   itemName: string;
   quantity: string;
   requestedBy: string;
+  reason: string;
   requestStatus: RequestStatus;
   postedAt: Date;
 }

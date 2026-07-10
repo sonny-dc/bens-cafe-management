@@ -1,5 +1,6 @@
 import type { Expense, CreateExpenseInput } from './expense.model.js';
-import type { PayrollEntry, CreatePayrollEntryInput } from './payroll-entry.model.js';
+import type { PayrollEntry, CreatePayrollEntryInput, PayrollEntryWithEmployeeDetails } from './payroll-entry.model.js';
+import type { InventoryBudgetLog } from './inventory-budget-log.model.js';
 
 export interface SalesEntry {
     salesEntryId: number;
@@ -33,4 +34,11 @@ export interface CreateSalesEntryTransactionResult {
     salesEntry: SalesEntry;
     payrollEntries: PayrollEntry[];
     expenses: Expense[];
+}
+
+export interface SalesEntrySummary {
+    salesEntry: SalesEntry;
+    payrollEntries: PayrollEntryWithEmployeeDetails[];
+    expenses: Expense[];
+    budgetLog: InventoryBudgetLog;
 }

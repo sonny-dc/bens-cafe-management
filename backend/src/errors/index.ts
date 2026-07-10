@@ -1,4 +1,4 @@
-export * from './app-errors.js';
+export * from './app.errors.js';
 export * from './employee.errors.js';
 export * from './auth.errors.js';
 export * from './user.errors.js';
@@ -10,3 +10,4 @@ export * from './expense.errors.js';
 export * from './payroll-entry.errors.js';
 export * from './sales-entry.errors.js';
 export * from './staff-message.errors.js';
+export * from './restock-calculation-item.errors.js';

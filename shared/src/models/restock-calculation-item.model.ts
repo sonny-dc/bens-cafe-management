@@ -1,3 +1,4 @@
+import { type InventoryItemCategory } from "../constants/app.constants.js";
 export interface RestockCalculationItem {
   calculationItemId: number;
   calculationId: number;
@@ -12,6 +13,7 @@ export interface RestockCalculationItemWithInventoryDetails {
   calculationId: number;
   itemId: number | null;
   itemName: string | null;
+  category: InventoryItemCategory | null;
   unit: string | null;
   quantityToBuy: string;
   unitCostSnapshot: string;

@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 export class StaffMessageNotFoundError extends AppError {
     constructor(message = 'Staff message not found.') {

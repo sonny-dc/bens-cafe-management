@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 export class SalesEntryNotFoundError extends AppError {
     constructor(message = 'Sales entry not found.') {

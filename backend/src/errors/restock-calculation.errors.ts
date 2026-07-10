@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 export class RestockCalculationNotFoundError extends AppError {
     constructor(message: string = 'Restock calculation not found') {

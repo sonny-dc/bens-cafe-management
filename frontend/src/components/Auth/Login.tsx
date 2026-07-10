@@ -81,37 +81,53 @@ export function Login({ onLogin }: LoginProps) {
 
               {/* Username */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                     <User size={18} className="text-gray-400" />
                   </div>
+
                   <input
+                    id="username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="admin_user"
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black placeholder:text-gray-400"
+                    placeholder=" "
+                    className="peer w-full rounded-xl border border-gray-200 bg-gray-50 px-4 pb-3.5 pl-11 pt-4 text-sm text-black outline-none transition-all placeholder-transparent focus:border-[#4a6741] focus:bg-white focus:ring-2 focus:ring-[#4a6741]/20"
                   />
+
+                  <label
+                    htmlFor="username"
+                    className="pointer-events-none absolute left-11 top-1/2 -translate-y-1/2 bg-transparent text-sm text-gray-400 transition-all duration-200
+                    peer-focus:left-4 peer-focus:top-0 peer-focus:bg-white peer-focus:px-1 peer-focus:text-xs peer-focus:font-semibold peer-focus:text-[#4a6741]
+                    peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-semibold peer-[:not(:placeholder-shown)]:text-[#4a6741]"
+                  >
+                    Username
+                  </label>
                 </div>
               </div>
 
               {/* Password */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-semibold text-gray-700">Password</label>
-                </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                     <Lock size={18} className="text-gray-400" />
                   </div>
+
                   <input
+                    id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all text-sm text-black placeholder:text-gray-400"
+                    placeholder=" "
+                    className="peer w-full rounded-xl border border-gray-200 bg-gray-50 px-4 pb-3.5 pl-11 pt-4 text-sm text-black outline-none transition-all placeholder-transparent focus:border-[#4a6741] focus:bg-white focus:ring-2 focus:ring-[#4a6741]/20"
                   />
+
+                  <label
+                    htmlFor="password"
+                    className="pointer-events-none absolute left-11 top-1/2 -translate-y-1/2 bg-transparent text-sm text-gray-400 transition-all duration-200 peer-focus:left-4 peer-focus:top-0 peer-focus:bg-white peer-focus:px-1 peer-focus:text-xs peer-focus:font-semibold peer-focus:text-[#4a6741] peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-1 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-semibold peer-[:not(:placeholder-shown)]:text-[#4a6741]"
+                  >
+                    Password
+                  </label>
                 </div>
               </div>
 

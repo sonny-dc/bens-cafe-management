@@ -9,10 +9,10 @@ import { employeeApi } from '../../api/employeeApi';
 
 type Tab = 'shift' | 'notes' | 'inventory';
 
-const tabs: { id: Tab; label: string; icon: ElementType; badge?: number }[] = [
-  { id: 'shift',     label: 'My Shift',           icon: Clock },
-  { id: 'notes',     label: 'Notes & Messages',   icon: MessageSquare },
-  { id: 'inventory', label: 'Inventory Requests', icon: ShoppingCart },
+const tabs: { id: Tab; label: string; mobileLabel: string; icon: ElementType; badge?: number }[] = [
+  { id: 'shift', label: 'My Shift', mobileLabel: 'Shift', icon: Clock },
+  { id: 'notes', label: 'Notes & Messages', mobileLabel: 'Notes', icon: MessageSquare },
+  { id: 'inventory', label: 'Inventory Requests', mobileLabel: 'Requests', icon: ShoppingCart },
 ];
 
 interface StaffPortalProps {
@@ -127,35 +127,49 @@ export function StaffPortal({ onLogout }: StaffPortalProps) {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.35 }}
-          className="flex gap-1 mb-8 border-b border-gray-200 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="mb-8 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm"
         >
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors
-                  ${isActive ? 'text-[#4a6741]' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <Icon size={15} className="hidden sm:block" />
-                {tab.label}
-                {tab.badge && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full 
-                    ${isActive ? 'bg-[#4a6741] text-white' : 'bg-gray-200 text-gray-600'}`}>
-                    {tab.badge}
+          <div className="grid grid-cols-3 gap-1">
+            {tabs.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:text-sm ${
+                    isActive
+                      ? 'bg-[#4a6741] text-white'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  }`}
+                >
+                  <Icon size={15} className="shrink-0" />
+
+                  <span className="truncate sm:hidden">
+                    {tab.mobileLabel}
                   </span>
-                )}
-                {isActive && (
-                  <motion.div
-                    layoutId="tab-underline"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4a6741] rounded-full"
-                  />
-                )}
-              </button>
-            );
-          })}
+
+                  <span className="hidden truncate sm:inline">
+                    {tab.label}
+                  </span>
+
+                  {tab.badge && (
+                    <span
+                      className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </motion.div>
 
         {/* Tab content */}

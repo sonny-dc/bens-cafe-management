@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 export class InventoryItemNotFoundError extends AppError {
     constructor(message: string = 'Inventory item not found') {

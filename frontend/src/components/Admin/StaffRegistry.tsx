@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, Plus, Edit2, X, ShieldCheck, CircleDot } from 'lucide-react';
+import { Users, Search, Plus, Edit2, X, ShieldCheck, CircleDot, ChevronDown } from 'lucide-react';
 import { employeeApi } from '../../api/employeeApi';
 import  { type EmployeeProfile, type UpdateEmployeeInput } from 'shared/models';
 import { EMPLOYMENT_STATUS, type EmploymentStatus } from 'shared/constants';
@@ -167,10 +167,10 @@ export function StaffRegistry() {
   });
 
   return (
-    <div className="space-y-6 -mx-4">
+    <div className="space-y-6">
       {/* Header & Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="relative w-full sm:w-96">
+      <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="relative w-full md:w-96">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
             <Search size={18} className="text-gray-400" />
           </div>
@@ -191,7 +191,7 @@ export function StaffRegistry() {
             setFieldErrors({});
             setShowAddModal(true)
           }}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-sm hover:shadow transition-all"
+          className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-sm hover:shadow transition-all"
         >
           <Plus size={18} />
           Add New Employee
@@ -202,11 +202,109 @@ export function StaffRegistry() {
           {employeeListError}
         </div>
       )}
+      {/* Mobile Staff Cards */}
+      <div className="md:hidden space-y-3">
+        {isLoading ? (
+          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-10 text-center shadow-sm">
+            <div className="mx-auto mb-3 h-6 w-6 animate-spin rounded-full border-[3px] border-[#4a6741] border-t-transparent" />
+            <p className="text-xs font-medium text-gray-400">
+              Loading staff registry...
+            </p>
+          </div>
+        ) : filteredEmployees.length === 0 ? (
+          <div className="rounded-2xl border border-gray-100 bg-white px-4 py-10 text-center shadow-sm">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50">
+              <Users size={24} className="text-gray-400" />
+            </div>
+            <p className="text-sm font-semibold text-gray-900">
+              No employees found
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              Try adjusting your search or add a new employee.
+            </p>
+          </div>
+        ) : (
+          filteredEmployees.map(emp => {
+            const isActive = emp.employmentStatus === EMPLOYMENT_STATUS.ACTIVE;
+
+            return (
+              <div
+                key={emp.employeeId}
+                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#4a6741]/10 text-sm font-bold text-[#4a6741]">
+                      {emp.fullName?.charAt(0) || 'U'}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-gray-900">
+                        {emp.fullName}
+                      </p>
+                      <p className="truncate text-xs text-gray-500">
+                        @{emp.username}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="shrink-0 whitespace-nowrap text-sm font-bold text-gray-900">
+                    ₱{Number(emp.hourlyRate).toFixed(2)}
+                    <span className="ml-1 text-xs font-medium text-gray-400">
+                      /hr
+                    </span>
+                  </p>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex items-center gap-2 text-xs text-gray-500">
+                    <span className="truncate font-medium text-gray-700">
+                      {emp.jobRole}
+                    </span>
+
+                    <span className="text-gray-300">·</span>
+
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1 font-bold ${
+                        isActive ? 'text-green-600' : 'text-gray-500'
+                      }`}
+                    >
+                      <CircleDot
+                        size={9}
+                        className={
+                          isActive
+                            ? 'text-green-500 animate-pulse'
+                            : 'text-gray-400'
+                        }
+                      />
+                      {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setFormError(null);
+                      setFieldErrors({});
+                      setEditingEmployee(emp);
+                    }}
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-[#4a6741]/10 hover:text-[#4a6741]"
+                    title="Edit Employee"
+                    aria-label={`Edit ${emp.fullName}'s details`}
+                  >
+                    <Edit2 size={15} />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
 
       {/* Main Table */}
       <motion.div 
-        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -307,9 +405,9 @@ export function StaffRegistry() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
             >
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#4a6741]/10 text-[#4a6741] flex items-center justify-center">
                     <ShieldCheck size={20} />
@@ -333,7 +431,7 @@ export function StaffRegistry() {
                 </button>
               </div>
 
-              <form onSubmit={handleAddSubmit} noValidate className="p-6 space-y-5">
+              <form onSubmit={handleAddSubmit} noValidate className="p-4 sm:p-6 space-y-5 overflow-y-auto">
                 {formError && (
                   <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                     {formError}
@@ -349,7 +447,7 @@ export function StaffRegistry() {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="username" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Username</label>
                     <input required name="username" type="text" id="username" placeholder="e.g. msantos" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all" />
@@ -404,18 +502,17 @@ export function StaffRegistry() {
                   </div>
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-4 flex flex-col-reverse sm:flex-row gap-3 border-t border-gray-100">
                   <button type="button" onClick={() => {
                     setFormError(null);
                     setFieldErrors({});
                     setShowAddModal(false);
                   }} 
-                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm 
-                  font-bold rounded-xl transition-colors"
+                  className="w-full sm:flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
-                  <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                  <button type="submit" disabled={isSubmitting} className="w-full sm:flex-1 px-4 py-3 bg-[#4a6741] hover:bg-[#3a5233] text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                     {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Create Employee'}
                   </button>
                 </div>
@@ -436,9 +533,9 @@ export function StaffRegistry() {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
             >
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                     <Edit2 size={20} />
@@ -461,13 +558,13 @@ export function StaffRegistry() {
                 </button>
               </div>
 
-              <form onSubmit={handleEditSubmit} noValidate className="p-6 space-y-5">
+              <form onSubmit={handleEditSubmit} noValidate className="p-4 sm:p-6 space-y-5 overflow-y-auto">
                 {formError && (
                   <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                     {formError}
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="edit-jobRole" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Job Role</label>
                     <input 
@@ -508,22 +605,41 @@ export function StaffRegistry() {
                 </div>
 
                 <div>
-                  <label htmlFor="employmentStatus" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Employment Status</label>
-                  <select name="employmentStatus" title='Employment Status' id="employmentStatus" defaultValue={editingEmployee.employmentStatus} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all">
-                    <option value={EMPLOYMENT_STATUS.ACTIVE}>Active</option>
-                    <option value={EMPLOYMENT_STATUS.INACTIVE}>Inactive</option>
-                  </select>
+                  <label
+                    htmlFor="employmentStatus"
+                    className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2"
+                  >
+                    Employment Status
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      name="employmentStatus"
+                      title="Employment Status"
+                      id="employmentStatus"
+                      defaultValue={editingEmployee.employmentStatus}
+                      className="w-full appearance-none px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-xl text-sm text-black focus:bg-white focus:border-[#4a6741] focus:ring-2 focus:ring-[#4a6741]/20 outline-none transition-all cursor-pointer"
+                    >
+                      <option value={EMPLOYMENT_STATUS.ACTIVE}>Active</option>
+                      <option value={EMPLOYMENT_STATUS.INACTIVE}>Inactive</option>
+                    </select>
+
+                    <ChevronDown
+                      size={16}
+                      className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    />
+                  </div>
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-4 flex flex-col-reverse sm:flex-row gap-3 border-t border-gray-100">
                   <button type="button" onClick={() => {
                     setFormError(null);
                     setFieldErrors({});
                     setEditingEmployee(null);
-                  }} className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
+                  }} className="w-full sm:flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-colors">
                     Cancel
                   </button>
-                  <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                  <button type="submit" disabled={isSubmitting} className="w-full sm:flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                     {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Save Changes'}
                   </button>
                 </div>

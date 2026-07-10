@@ -14,13 +14,17 @@ const router = Router();
 
 router.use(requireAdmin);
 
-// GET /api/inventory-budget-logs
 router.get(
     '/',
     inventoryBudgetLogController.getInventoryBudgetLogs
 );
 
-// GET /api/inventory-budget-logs/:budgetLogId
+router.get(
+    '/:budgetLogId/summary',
+    validate(inventoryBudgetLogIdParamSchema, REQUEST_TYPES.PARAMS),
+    inventoryBudgetLogController.getInventoryBudgetLogSummaryById
+);
+
 router.get(
     '/:budgetLogId',
     validate(inventoryBudgetLogIdParamSchema, REQUEST_TYPES.PARAMS),

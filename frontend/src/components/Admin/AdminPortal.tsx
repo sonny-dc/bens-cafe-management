@@ -26,10 +26,12 @@ interface AdminPortalProps {
 export function AdminPortal({ onLogout }: AdminPortalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [inventorySubTitle, setInventorySubTitle] = useState('Stock Overview');
+  const [reportsSubTitle, setReportsSubTitle] = useState('Sales History');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isContentScrolled, setIsContentScrolled] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-[#2a2a2a] font-sans">
+    <div className="h-screen overflow-hidden flex bg-[#2a2a2a] font-sans">
       
       {/* ── Sidebar Overlay for Mobile ── */}
       {isMobileMenuOpen && (
@@ -93,12 +95,20 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
       </aside>
 
       {/* ── Main Content Area (Right) ── */}
-      <main className="flex-1 bg-[#f2f4f6] w-full min-w-0">
+      <main className="flex-1 bg-[#f2f4f6] w-full min-w-0 min-h-0">
         {/* The rounded white container */}
-        <div className="bg-white rounded-none lg:rounded-tl-[40px] h-full w-full shadow-2xl overflow-hidden flex flex-col">
-          
+        <div className="bg-white rounded-none lg:rounded-tl-[40px] h-full w-full shadow-2xl overflow-hidden flex flex-col min-h-0">          
           {/* Top Bar inside content */}
-          <header className="h-16 lg:h-20 px-4 lg:px-8 flex items-center justify-between border-b border-gray-100 shrink-0">
+          <motion.header
+            initial={{ y: -12, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className={`sticky top-0 h-16 lg:h-20 px-4 lg:px-8 flex items-center justify-between shrink-0 z-30 bg-white/75 backdrop-blur-md border-b transition-all duration-300 ease-out ${
+              isContentScrolled
+                ? 'border-gray-200 shadow-sm'
+                : 'border-gray-100 shadow-none'
+            }`}
+          >
             <div className="flex items-center gap-2 lg:gap-3 text-sm font-medium">
               <button 
                 title="Open menu"
@@ -120,6 +130,12 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
                   <span className="text-gray-400">{inventorySubTitle}</span>
                 </>
               )}
+              {activeTab === 'reports' && reportsSubTitle && (
+                <>
+                  <span className="text-gray-300">/</span>
+                  <span className="text-gray-400">{reportsSubTitle}</span>
+                </>
+              )}
             </div>
             
             <div className="flex items-center gap-3">
@@ -131,10 +147,15 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
                 <p className="text-[11px] text-[#789e81]">Manager</p>
               </div>
             </div>
-          </header>
+          </motion.header>
 
           {/* Scrollable body */}
-          <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+          <div
+            onScroll={e => {
+              setIsContentScrolled(e.currentTarget.scrollTop > 8);
+            }}
+            className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-8 scroll-smooth"
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
@@ -149,7 +170,9 @@ export function AdminPortal({ onLogout }: AdminPortalProps) {
                 {activeTab === 'staff_board' && <AdminStaffBoard />}
                 {activeTab === 'staff_registry' && <StaffRegistry />}
                 {activeTab === 'inventory' && <AdminInventory onSubTitleChange={setInventorySubTitle} />}
-                {activeTab === 'reports' && <AdminReports />}
+                {activeTab === 'reports' && (
+                  <AdminReports onSubTitleChange={setReportsSubTitle} />
+                )}
                 
                 {activeTab !== 'dashboard' && activeTab !== 'sales' && activeTab !== 'staff_board' && activeTab !== 'staff_registry' && activeTab !== 'inventory' && activeTab !== 'reports' && (
                   <div className="flex flex-col items-center justify-center text-center h-[50vh] text-gray-400">

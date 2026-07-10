@@ -181,7 +181,7 @@ export function SalesEntry() {
     <div className="w-full max-w-3xl mx-auto pb-20">
       
       {/* Desktop Progress Indicator */}
-      <div className="hidden sm:flex items-center justify-center mb-10 overflow-x-auto hide-scrollbar py-2 w-full px-4">
+      <div className="hidden sm:flex items-center justify-center mb-10 py-2 w-full px-4">
         {(['Revenue', 'Payroll', 'Expenses', 'Summary'] as const).map((label, idx) => {
           const stepNum = (idx + 1) as Step;
           const isCompleted = step > stepNum;

@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 export class ShiftNotFoundError extends AppError {
     constructor(message = 'Shift not found') {

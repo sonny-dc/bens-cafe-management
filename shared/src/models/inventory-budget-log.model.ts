@@ -1,7 +1,10 @@
-import type {
-  InventoryBudgetTransactionType,
-  InventoryBudgetSourceType
+import {
+  type InventoryBudgetTransactionType,
+  type InventoryBudgetSourceType,
+  INVENTORY_BUDGET_SOURCE_TYPES
 } from '../constants/index.js';
+import type { SalesEntrySummary } from './sales-entry.model.js';
+import type { RestockCalculationSummary } from './restock-calculation.model.js';
 
 export interface InventoryBudgetLog {
   budgetLogId: number;
@@ -29,3 +32,17 @@ export interface CreateInventoryBudgetLogRepositoryInput {
   userId: number | null;
   postedAt?: string;
 }
+
+export interface SalesEntryBudgetLogSummary {
+  sourceType: typeof INVENTORY_BUDGET_SOURCE_TYPES.SALES_ENTRY;
+  summary: SalesEntrySummary;
+}
+
+export interface RestockCalculationBudgetLogSummary {
+  sourceType: typeof INVENTORY_BUDGET_SOURCE_TYPES.RESTOCK_CALCULATION;
+  summary: RestockCalculationSummary;
+}
+
+export type InventoryBudgetLogSummary =
+  | SalesEntryBudgetLogSummary
+  | RestockCalculationBudgetLogSummary;

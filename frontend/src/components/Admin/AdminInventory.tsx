@@ -1,9 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, type ElementType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertTriangle, CheckCircle2, Calculator,
   ArrowUpRight, ArrowDownRight, RefreshCw, Plus,
-  Trash2, Search, ChevronLeft, ChevronRight, X, Calendar, Edit2, ChevronDown
+  Trash2, Search, ChevronLeft, ChevronRight, X, Calendar, Edit2, ChevronDown,
+  Eye, FileText,
+  Package
 } from 'lucide-react';
 import { inventoryItemApi } from '../../api/inventoryItemApi';
 import { restockCalculationApi } from '../../api/restockCalculationApi';
@@ -18,7 +20,13 @@ import {
   INVENTORY_BUDGET_SOURCE_TYPES,
   type InventoryItemCategory
 } from 'shared/constants';
-import type { InventoryItemListItem, InventoryBudgetLog, CreateRestockCalculationInput, InventoryBudgetAccount } from 'shared/models';
+import type {
+  InventoryItemListItem, 
+  InventoryBudgetLog, 
+  CreateRestockCalculationInput,
+  InventoryBudgetAccount,
+  InventoryBudgetLogSummary
+} from 'shared/models';
 import { ApiError } from '../../api/apiError';
 
 const ROWS_PER_PAGE = 6;
@@ -41,6 +49,22 @@ function getBudgetLogDescription(log: InventoryBudgetLog): string {
   return 'Inventory budget transaction';
 }
 
+const money = (value: string | number) =>
+  `₱${Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`;
+
+const tabs: {
+  id: Tab;
+  label: string;
+  mobileLabel: string;
+  icon: ElementType;
+}[] = [
+  { id: 'stock', label: 'Stock Overview', mobileLabel: 'Items', icon: Package },
+  { id: 'restock', label: 'Restock Planner', mobileLabel: 'Restock', icon: Calculator },
+  { id: 'audit', label: 'Budget Log', mobileLabel: 'Budget', icon: FileText },
+];
 
 export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subtitle: string) => void }) {
   const [tab, setTab] = useState<Tab>('stock');
@@ -61,6 +85,10 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   const [budgetLogs, setBudgetLogs] = useState<InventoryBudgetLog[]>([]);
   const [isLoadingBudget, setIsLoadingBudget] = useState(false);
   const [budgetError, setBudgetError] = useState<string | null>(null);
+
+  const [selectedBudgetLogSummary, setSelectedBudgetLogSummary] = useState<InventoryBudgetLogSummary | null>(null);
+  const [isLoadingBudgetLogSummary, setIsLoadingBudgetLogSummary] = useState(false);
+  const [budgetLogSummaryError, setBudgetLogSummaryError] = useState<string | null>(null);
 
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -84,6 +112,11 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   const [showSuccess, setShowSuccess] = useState(false);
   const [restockSearch, setRestockSearch] = useState('');
   const [restockCategoryFilter, setRestockCategoryFilter] = useState('all');
+
+  const handleTabChange = (nextTab: Tab) => {
+    setTab(nextTab);
+    setSearch('');
+  };
 
   const fetchInventoryItems = async () => {
     try {
@@ -184,6 +217,11 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
       id: log.budgetLogId,
       amount: Number(log.amount),
       transactionType: log.transactionType,
+      sourceType: log.sourceType,
+      salesEntryId: log.salesEntryId,
+      restockCalculationId: log.restockCalculationId,
+      balanceBefore: log.balanceBefore,
+      balanceAfter: log.balanceAfter,
       description: getBudgetLogDescription(log),
       postedAt: String(log.postedAt)
     }));
@@ -312,11 +350,32 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
     }
   };
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: 'stock', label: 'Stock Overview' },
-    { id: 'restock', label: 'Restock Planner' },
-    { id: 'audit', label: 'Budget Log' },
-  ];
+  const handleViewBudgetLogSummary = async (budgetLogId: number) => {
+    try {
+      setIsLoadingBudgetLogSummary(true);
+      setBudgetLogSummaryError(null);
+      setSelectedBudgetLogSummary(null);
+
+      const summary = await inventoryBudgetLogApi.getSummaryById(budgetLogId);
+
+      setSelectedBudgetLogSummary(summary);
+    } catch (error) {
+      if (error instanceof Error) {
+        setBudgetLogSummaryError(error.message);
+      } else {
+        setBudgetLogSummaryError('Failed to load budget log summary.');
+      }
+    } finally {
+      setIsLoadingBudgetLogSummary(false);
+    }
+  };
+
+  const closeBudgetLogSummaryModal = () => {
+    if (isLoadingBudgetLogSummary) return;
+
+    setSelectedBudgetLogSummary(null);
+    setBudgetLogSummaryError(null);
+  };
 
   useEffect(() => {
     const label = tabs.find(t => t.id === tab)?.label || '';
@@ -326,10 +385,13 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
   return (
     <div>
       {/* ── Header ── */}
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Inventory Management</p>
-          <div className="flex items-baseline gap-4">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-4 md:mb-6">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+            Inventory Management
+          </p>
+
+          <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
             {isLoadingBudget ? (
               <h2 className="text-lg font-bold font-poppins text-gray-400">
                 Loading budget...
@@ -340,53 +402,96 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
               </h2>
             )}
 
-            <span className="text-xs text-gray-400">available restock budget</span>
+            <span className="text-xs text-gray-400">
+              available restock budget
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {lowCount > 0 && (
+              <span className="inline-flex w-fit items-center gap-1 rounded-md bg-orange-50 px-2 py-0.5 text-xs font-semibold text-orange-600">
+                <AlertTriangle size={11} />
+                {lowCount} low stock
+              </span>
+            )}
 
             {budgetError && (
               <span className="text-xs font-medium text-red-500">
                 {budgetError}
               </span>
             )}
-            {lowCount > 0 && (
-              <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
-                {lowCount} low stock
-              </span>
-            )}
           </div>
         </div>
 
-        <div className="flex gap-1 border-b border-gray-200 overflow-x-auto hide-scrollbar whitespace-nowrap">
-          {tabs.map(t => (
-            <button
-              key={t.id}
-              onClick={() => { setTab(t.id); setSearch(''); }}
-              className={`px-4 py-2 text-sm font-medium transition-all border-b-2 -mb-px
-                ${tab === t.id
-                  ? 'border-[#4a6741] text-[#4a6741]'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'}`}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Desktop Tabs */}
+        <div className="hidden md:block rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
+          <div className="grid grid-cols-3 gap-1">
+            {tabs.map(t => {
+              const Icon = t.icon;
+              const isActive = tab === t.id;
+
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => handleTabChange(t.id)}
+                  className={`flex min-w-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'bg-[#4a6741] text-white'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  }`}
+                >
+                  <Icon size={15} className="shrink-0" />
+                  <span className="truncate">{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Tabs */}
+      <div className="md:hidden mb-4 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
+        <div className="grid grid-cols-3 gap-1">
+          {tabs.map(t => {
+            const Icon = t.icon;
+            const isActive = tab === t.id;
+
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => handleTabChange(t.id)}
+                className={`flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-bold transition-colors ${
+                  isActive
+                    ? 'bg-[#4a6741] text-white'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+              >
+                <Icon size={15} className="shrink-0" />
+                <span className="truncate">{t.mobileLabel}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* ── Search & Filters (stock & audit only) ── */}
       {(tab === 'stock' || tab === 'audit') && (
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4 flex-wrap">
           {tab === 'stock' ? (
-            <div className="relative">
+            <div className="relative w-full md:w-auto">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
               <input
                 type="text"
                 value={search}
                 onChange={e => handleSearch(e.target.value)}
                 placeholder="Search items..."
-                className="w-56 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#4a6741] text-black placeholder:text-gray-300 transition-colors"
+                className="w-full md:w-56 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#4a6741] text-black placeholder:text-gray-300 transition-colors"
               />
             </div>
           ) : (
-            <div className="relative flex items-center">
+            <div className="relative flex items-center w-full md:w-auto">
               <Calendar size={15} className="absolute left-3 text-gray-400 pointer-events-none" />
               <input
                 type={auditDateFilter ? "date" : "text"}
@@ -400,7 +505,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                 }}
                 value={auditDateFilter}
                 onChange={e => { setAuditDateFilter(e.target.value); setAuditPage(1); }}
-                className="h-[38px] pl-9 pr-3 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all w-40 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full text-gray-900 placeholder:text-gray-400"
+                className="h-[38px] pl-9 pr-3 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all w-full md:w-40 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full text-gray-900 placeholder:text-gray-400"
               />
             </div>
           )}
@@ -411,7 +516,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                 title='Filter by category'
                 value={categoryFilter}
                 onChange={e => { setCategoryFilter(e.target.value); setStockPage(1); }}
-                className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
+                className="w-full md:w-44 h-[38px] pl-3 pr-12 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
               >
                 <option value="all">All Categories</option>
                 {categories.map(category => (
@@ -425,7 +530,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                 title='Filter by status'
                 value={statusFilter}
                 onChange={e => { setStatusFilter(e.target.value); setStockPage(1); }}
-                className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
+                className="w-full md:w-44 h-[38px] pl-3 pr-12 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
               >
                 <option value="all">All Status</option>
                 <option value="ok">In Stock</option>
@@ -440,7 +545,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
               title='Filter by type'
               value={auditTypeFilter}
               onChange={e => { setAuditTypeFilter(e.target.value); setAuditPage(1); }}
-              className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
+              className="w-full md:w-44 h-[38px] pl-3 pr-12 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
             >
               <option value="all">All Transactions</option>
               <option value={INVENTORY_BUDGET_TRANSACTION_TYPES.IN}>Income (IN)</option>
@@ -465,7 +570,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                setFieldErrors({});
                setShowAddModal(true); 
               }}
-              className="ml-auto flex items-center gap-2 bg-[#4a6741] text-white px-4 h-[38px] rounded-lg text-sm font-medium hover:bg-[#3d5536] transition-colors"
+              className="w-full md:w-auto md:ml-auto flex items-center justify-center gap-2 bg-[#4a6741] text-white px-4 h-[38px] rounded-lg text-sm font-medium hover:bg-[#3d5536] transition-colors"
             >
               <Plus size={16} /> Add Item
             </button>
@@ -486,7 +591,114 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
           {/* ═══ STOCK OVERVIEW ═══ */}
           {tab === 'stock' && (
             <div>
-              <div className="border border-gray-200 rounded-xl overflow-x-auto">
+              {/* Mobile Stock Cards */}
+              <div className="md:hidden space-y-3">
+                {isLoadingItems && (
+                  <LoadingState label="Loading inventory items..." />
+                )}
+
+                {!isLoadingItems && inventoryError && (
+                  <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    {inventoryError}
+                  </div>
+                )}
+
+                {!isLoadingItems && !inventoryError && pagedStock.length === 0 && (
+                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-8 text-center text-sm text-gray-400">
+                    No items found
+                  </div>
+                )}
+
+                {!isLoadingItems && !inventoryError && pagedStock.map(item => {
+                  const isOut = item.stockQty === 0;
+                  const isLow = !isOut && item.stockQty <= item.threshold;
+
+                  return (
+                    <div
+                      key={item.itemId}
+                      className="rounded-xl border border-gray-200 bg-white p-4"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold text-gray-900">
+                            {item.itemName}
+                          </p>
+                          <p className="mt-0.5 text-xs text-gray-400">
+                            {INVENTORY_ITEM_CATEGORY_LABELS[item.category]}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold
+                            ${isOut
+                              ? 'bg-red-50 text-red-600'
+                              : isLow
+                                ? 'bg-orange-50 text-orange-600'
+                                : 'bg-emerald-50 text-emerald-600'}`}
+                        >
+                          {isOut || isLow ? <AlertTriangle size={10} /> : <CheckCircle2 size={10} />}
+                          {isOut ? 'OUT' : isLow ? 'LOW' : 'OK'}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <div className="rounded-lg bg-gray-50 p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Stock
+                          </p>
+                          <p className={`mt-1 text-sm font-bold ${isOut ? 'text-red-600' : 'text-gray-900'}`}>
+                            {item.stockQty}{' '}
+                            <span className="font-normal text-gray-400">
+                              {item.unit}
+                            </span>
+                          </p>
+                        </div>
+
+                        <div className="rounded-lg bg-gray-50 p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Unit Cost
+                          </p>
+                          <p className="mt-1 text-sm font-bold text-gray-900">
+                            ₱{item.unitCost.toFixed(2)}
+                            <span className="font-normal text-gray-400">
+                              {' '} / {item.unit}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingItem(item);
+                            setFormError(null);
+                            setFieldErrors({});
+                            setShowAddModal(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#4a6741]/10 px-3 py-2 text-xs font-bold text-[#4a6741] transition-colors hover:bg-[#4a6741]/15"
+                          title="Edit"
+                        >
+                          <Edit2 size={14} />
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setDeletingItem(item);
+                            setDeleteError(null);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition-colors hover:bg-red-100"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="hidden md:block border border-gray-200 rounded-xl overflow-x-auto">
                 <table className="w-full text-sm text-left min-w-[600px]">
                   <thead>
                     <tr className="bg-gray-50 text-[11px] text-gray-500 uppercase tracking-wider">
@@ -590,7 +802,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                 <div className="lg:col-span-3">
                   {/* Search + Filter */}
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
                     <div className="relative flex-1">
                       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
                       <input
@@ -605,7 +817,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       title='Filter by category'
                       value={restockCategoryFilter}
                       onChange={e => {setRestockCategoryFilter(e.target.value); setRestockError(null);}}
-                      className="h-[38px] pl-3 pr-8 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
+                      className="w-full md:w-44 h-[38px] pl-3 pr-12 border border-gray-200 rounded-lg text-sm text-gray-500 bg-white cursor-pointer outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all"
                     >
                       <option value="all">All Categories</option>
                       {categories.map(category => (
@@ -652,9 +864,11 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       const isOut = item.stockQty === 0;
                       const isLow = !isOut && item.stockQty <= item.threshold;
                       return (
-                        <div key={item.itemId}
-                          className={`flex items-center justify-between p-3.5 rounded-xl border transition-colors
-                          ${inCart ? 'border-[#4a6741]/30 bg-[#f7faf6]' : 'border-gray-200 hover:border-gray-300'}`}>
+                        <div
+                          key={item.itemId}
+                          className={`flex flex-col gap-3 md:flex-row md:items-center md:justify-between p-3.5 rounded-xl border transition-colors
+                          ${inCart ? 'border-[#4a6741]/30 bg-[#f7faf6]' : 'border-gray-200 hover:border-gray-300'}`}
+                        >
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-medium text-gray-900">{item.itemName}</p>
@@ -666,7 +880,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                             </p>
                           </div>
                           {inCart ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-between gap-2 md:justify-end">
                               <span className="text-xs font-medium text-[#4a6741]">{inCart.quantityToBuy} {item.unit} added</span>
                               <button title="Remove from cart" onClick={() => setCart(prev => prev.filter(c => c.itemId !== item.itemId))}
                                 className="text-gray-300 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
@@ -684,10 +898,10 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                               setRestockError(null);
                               addToCart(item, parsedQty);
                               (e.target as HTMLFormElement).reset();
-                            }} className="flex items-center gap-2">
+                            }} className="flex w-full items-center gap-2 md:w-auto md:justify-end">
                               <input name="qty" type="text" placeholder="Qty" required
                                 title="Enter quantity"
-                                className="w-16 px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#4a6741] text-black placeholder:text-gray-400" />
+                                className="w-full md:w-16 px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#4a6741] text-black placeholder:text-gray-400" />
                               <button type="submit" title="Add to cart" className="p-1.5 text-[#4a6741] hover:bg-[#4a6741]/10 rounded-lg transition-colors">
                                 <Plus size={16} />
                               </button>
@@ -801,7 +1015,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                  className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
                 >
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h3 className="font-semibold text-gray-900">{editingItem ? 'Edit Item' : 'Add New Item'}</h3>
@@ -823,7 +1037,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
                   <form
                     noValidate
-                    className="p-6 space-y-4"
+                    className="p-6 space-y-4 overflow-y-auto"
                     onSubmit={async e => {
                       e.preventDefault();
 
@@ -932,7 +1146,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
                           Category
@@ -943,7 +1157,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                             title="Category"
                             name="category"
                             defaultValue={editingItem?.category || INVENTORY_ITEM_CATEGORIES.BEVERAGE_INGREDIENTS}
-                            className="w-full h-[38px] px-3 pr-9 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all bg-white appearance-none text-gray-900 cursor-pointer"
+                            className="w-full h-[38px] pl-3 pr-12 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#4a6741]/30 focus:border-[#4a6741]/50 transition-all bg-white appearance-none text-gray-900 cursor-pointer"
                           >
                             {categories.map(category => (
                               <option key={category} value={category}>
@@ -954,7 +1168,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
                           <ChevronDown
                             size={16}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                            className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                           />
                         </div>
 
@@ -976,7 +1190,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Initial Stock</label>
                         <input name="stock" required type="text" placeholder="0" defaultValue={editingItem?.stockQty}
@@ -1009,7 +1223,7 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-6">
+                    <div className="pt-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-100 mt-6">
                       <button 
                         type="button" 
                         disabled={isSavingItem} 
@@ -1020,13 +1234,13 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                           setFormError(null);
                           setFieldErrors({});
                         }}
-                        className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        className="w-full md:w-auto px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={isSavingItem}
-                        className="px-4 py-2 text-sm font-medium text-white bg-[#4a6741] hover:bg-[#3d5536] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-[#4a6741] hover:bg-[#3d5536] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSavingItem ? 'Saving...' : editingItem ? 'Save Changes' : 'Add Item'}
                       </button>
@@ -1106,7 +1320,72 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
           {/* ═══ BUDGET AUDIT LOG ═══ */}
           {tab === 'audit' && (
             <div>
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
+              {/* Mobile Budget Log Cards */}
+              <div className="md:hidden space-y-3">
+                {isLoadingBudget && (
+                  <LoadingState label="Loading budget logs..." />
+                )}
+
+                {!isLoadingBudget && budgetError && (
+                  <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    {budgetError}
+                  </div>
+                )}
+
+                {!isLoadingBudget && !budgetError && pagedLogs.length === 0 && (
+                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-8 text-center text-sm text-gray-400">
+                    No transactions found
+                  </div>
+                )}
+
+                {!isLoadingBudget && !budgetError && pagedLogs.map(log => {
+                  const isIn = log.transactionType === INVENTORY_BUDGET_TRANSACTION_TYPES.IN;
+
+                  return (
+                    <div
+                      key={log.id}
+                      className="min-h-[140px] rounded-xl border border-gray-200 bg-white p-4 flex flex-col"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold leading-snug text-gray-900">
+                            {log.description}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-bold whitespace-nowrap ${
+                            isIn
+                              ? 'bg-emerald-50 text-emerald-600'
+                              : 'bg-red-50 text-red-600'
+                          }`}
+                        >
+                          {isIn ? '+' : '-'}₱{log.amount.toLocaleString()}
+                          {isIn ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}
+                        </span>
+                      </div>
+
+                      <div className="mt-auto flex items-center justify-between gap-3 border-t border-gray-100 pt-3">
+                        <p className="text-xs text-gray-400">
+                          {formatIsoDateTimeToDateTime(String(log.postedAt))}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => handleViewBudgetLogSummary(log.id)}
+                          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-[#4a6741]/10 px-3 py-2 text-xs font-bold text-[#4a6741] transition-colors hover:bg-[#4a6741]/15"
+                          title="View budget log summary"
+                          aria-label="View budget log summary"
+                        >
+                          <Eye size={14} />
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="hidden md:block border border-gray-200 rounded-xl overflow-hidden">
                 <table className="w-full text-sm text-left">
                   <thead>
                     <tr className="bg-gray-50 text-[11px] text-gray-500 uppercase tracking-wider">
@@ -1114,12 +1393,13 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
                       <th className="px-5 py-3 font-semibold">Type</th>
                       <th className="px-5 py-3 font-semibold">Description</th>
                       <th className="px-5 py-3 font-semibold text-right">Amount</th>
+                      <th className="px-5 py-3 font-semibold text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {isLoadingBudget && (
                       <tr>
-                        <td colSpan={4}>
+                        <td colSpan={5}>
                           <LoadingState label="Loading budget logs..." />
                         </td>
                       </tr>
@@ -1127,34 +1407,60 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
                     {!isLoadingBudget && budgetError && (
                       <tr>
-                        <td colSpan={4} className="px-5 py-10 text-center text-red-500 text-sm">
+                        <td colSpan={5} className="px-5 py-10 text-center text-red-500 text-sm">
                           {budgetError}
                         </td>
                       </tr>
                     )}
                     {!isLoadingBudget && !budgetError && pagedLogs.map(log => {
                       const isIn = log.transactionType === INVENTORY_BUDGET_TRANSACTION_TYPES.IN;
+
                       return (
                         <tr key={log.id} className="hover:bg-gray-50/60">
                           <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">
                             {formatIsoDateTimeToDateTime(String(log.postedAt))}
                           </td>
+
                           <td className="px-5 py-3">
-                            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md
-                              ${isIn ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                            <span
+                              className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                                isIn
+                                  ? 'bg-emerald-50 text-emerald-600'
+                                  : 'bg-red-50 text-red-600'
+                              }`}
+                            >
                               {isIn ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
                               {log.transactionType}
                             </span>
                           </td>
-                          <td className="px-5 py-3 text-gray-700">{log.description}</td>
-                          <td className={`px-5 py-3 text-right font-semibold ${isIn ? 'text-emerald-600' : 'text-red-600'}`}>
+
+                          <td className="px-5 py-3 text-gray-700">
+                            {log.description}
+                          </td>
+
+                          <td
+                            className={`px-5 py-3 text-right font-semibold whitespace-nowrap ${
+                              isIn ? 'text-emerald-600' : 'text-red-600'
+                            }`}
+                          >
                             {isIn ? '+' : '-'}₱{log.amount.toLocaleString()}
+                          </td>
+
+                          <td className="px-5 py-3 text-right">
+                            <button
+                              onClick={() => handleViewBudgetLogSummary(log.id)}
+                              className="p-1.5 text-gray-400 hover:text-[#4a6741] hover:bg-[#4a6741]/10 rounded-lg transition-colors"
+                              title="View budget log summary"
+                              aria-label="View budget log summary"
+                            >
+                              <Eye size={15} />
+                            </button>
                           </td>
                         </tr>
                       );
                     })}
                     {!isLoadingBudget && !budgetError && pagedLogs.length === 0 && (
-                      <tr><td colSpan={4} className="px-5 py-10 text-center text-gray-400 text-sm">No transactions found</td></tr>
+                      <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-400 text-sm">No transactions found</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -1168,6 +1474,451 @@ export function AdminInventory({ onSubTitleChange }: { onSubTitleChange?: (subti
 
         </motion.div>
       </AnimatePresence>
+      <AnimatePresence>
+        {(selectedBudgetLogSummary || isLoadingBudgetLogSummary || budgetLogSummaryError) && (
+          <BudgetLogSummaryModal
+            summary={selectedBudgetLogSummary}
+            isLoading={isLoadingBudgetLogSummary}
+            error={budgetLogSummaryError}
+            onClose={closeBudgetLogSummaryModal}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Budget Log Summary Modal Component ───
+function BudgetLogSummaryModal({
+  summary,
+  isLoading,
+  error,
+  onClose
+}: {
+  summary: InventoryBudgetLogSummary | null;
+  isLoading: boolean;
+  error: string | null;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 10 }}
+        className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+      >
+        {isLoading && (
+          <div className="p-10">
+            <LoadingState label="Loading budget log summary..." />
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <div>
+                <h3 className="font-semibold text-gray-900 font-poppins">
+                  Budget Log Summary
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Unable to load transaction details
+                </p>
+              </div>
+              <button
+                title="Close"
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {error}
+              </div>
+            </div>
+          </>
+        )}
+
+        {!isLoading && !error && summary?.sourceType === INVENTORY_BUDGET_SOURCE_TYPES.SALES_ENTRY && (
+          <SalesEntryBudgetSummaryView summary={summary} onClose={onClose} />
+        )}
+
+        {!isLoading && !error && summary?.sourceType === INVENTORY_BUDGET_SOURCE_TYPES.RESTOCK_CALCULATION && (
+          <RestockCalculationBudgetSummaryView summary={summary} onClose={onClose} />
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Sales Entry Budget Summary View Component ───
+function SalesEntryBudgetSummaryView({
+  summary,
+  onClose
+}: {
+  summary: Extract<InventoryBudgetLogSummary, { sourceType: typeof INVENTORY_BUDGET_SOURCE_TYPES.SALES_ENTRY }>;
+  onClose: () => void;
+}) {
+  const { salesEntry, payrollEntries, expenses, budgetLog } = summary.summary;
+
+  return (
+    <>
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div>
+          <h3 className="font-semibold text-gray-900 font-poppins">
+            Sales Entry Allocation Details
+          </h3>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Sales Entry #{salesEntry.salesEntryId} · {formatIsoDateTimeToDateTime(String(salesEntry.postedAt))}
+          </p>
+        </div>
+
+        <button
+          title="Close"
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      <div className="p-6 max-h-[65vh] overflow-y-auto space-y-6">
+        <section>
+          <h4 className="text-sm font-bold text-gray-900 font-poppins mb-3">
+            Revenue Summary
+          </h4>
+
+          <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 sm:divide-x divide-y sm:divide-y-0 divide-gray-100">
+              <div className="p-4">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Cash Sales
+                </p>
+                <p className="text-lg font-bold text-gray-900 mt-1">
+                  {money(salesEntry.cashSales)}
+                </p>
+              </div>
+
+              <div className="p-4">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Online / Card Sales
+                </p>
+                <p className="text-lg font-bold text-gray-900 mt-1">
+                  {money(salesEntry.onlineCardSales)}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 p-4 bg-gray-50/60 flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-700">
+                Total Revenue
+              </span>
+              <span className="text-lg font-bold text-[#4a6741]">
+                {money(salesEntry.totalRevenue)}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h4 className="text-sm font-bold text-gray-900 font-poppins mb-3">
+            Payroll Entries
+          </h4>
+
+          <div className="md:hidden space-y-3">
+            {payrollEntries.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-white p-4 text-sm text-gray-400">
+                No payroll entries
+              </div>
+            ) : (
+              payrollEntries.map(entry => (
+                <div
+                  key={entry.payrollEntryId}
+                  className="rounded-xl border border-gray-100 bg-white p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {entry.employeeName}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {entry.jobRole}
+                      </p>
+                    </div>
+
+                    <p className="shrink-0 text-sm font-bold text-gray-900">
+                      {money(entry.grossPay)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="hidden md:block border border-gray-100 rounded-xl overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="bg-gray-50 text-[11px] text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 font-semibold">Employee</th>
+                  <th className="px-4 py-3 font-semibold">Role</th>
+                  <th className="px-4 py-3 font-semibold text-right">Gross Pay</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {payrollEntries.map(entry => (
+                  <tr key={entry.payrollEntryId}>
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {entry.employeeName}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {entry.jobRole}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                      {money(entry.grossPay)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section>
+          <h4 className="text-sm font-bold text-gray-900 font-poppins mb-3">
+            Expenses
+          </h4>
+
+          <div className="md:hidden space-y-3">
+            {expenses.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-white p-4 text-sm text-gray-400">
+                No expenses recorded
+              </div>
+            ) : (
+              expenses.map(expense => (
+                <div
+                  key={expense.expenseId}
+                  className="rounded-xl border border-gray-100 bg-white p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 capitalize">
+                        {expense.expenseCategory
+                          ? expense.expenseCategory.replaceAll('_', ' ')
+                          : 'Uncategorized'}
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-400 leading-relaxed">
+                        {expense.description?.trim() || 'No description'}
+                      </p>
+                    </div>
+
+                    <p className="shrink-0 text-sm font-bold text-gray-900">
+                      {money(expense.amount)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="hidden md:block border border-gray-100 rounded-xl overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="bg-gray-50 text-[11px] text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 font-semibold">Category</th>
+                  <th className="px-4 py-3 font-semibold">Description</th>
+                  <th className="px-4 py-3 font-semibold text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {expenses.length === 0 ? (
+                  <tr>
+                    <td className="px-4 py-3 text-gray-400">—</td>
+                    <td className="px-4 py-3 text-gray-400">—</td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-400">
+                      —
+                    </td>
+                  </tr>
+                ) : (
+                  expenses.map(expense => (
+                    <tr key={expense.expenseId}>
+                      <td className="px-4 py-3 text-gray-700 capitalize">
+                        {expense.expenseCategory
+                          ? expense.expenseCategory.replaceAll('_', ' ')
+                          : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {expense.description?.trim() || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                        {money(expense.amount)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div className="px-6 py-4 border-t border-gray-100 bg-white flex justify-end">
+        <div className="w-full sm:w-80 bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-2">
+          <SummaryRow label="Net Profit" value={money(salesEntry.netProfit)} />
+          <SummaryRow label="Budget Added" value={money(budgetLog.amount)} valueClassName="text-emerald-600" />
+          <SummaryRow label="Balance Before" value={money(budgetLog.balanceBefore)} />
+          <SummaryRow label="Balance After" value={money(budgetLog.balanceAfter)} valueClassName="text-[#4a6741]" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Restock Calculation Budget Summary View Component ───
+function RestockCalculationBudgetSummaryView({
+  summary,
+  onClose
+}: {
+  summary: Extract<InventoryBudgetLogSummary, { sourceType: typeof INVENTORY_BUDGET_SOURCE_TYPES.RESTOCK_CALCULATION }>;
+  onClose: () => void;
+}) {
+  const { restockCalculation, items, budgetLog } = summary.summary;
+
+  return (
+    <>
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div>
+          <h3 className="font-semibold text-gray-900 font-poppins">
+            Restock Calculation Details
+          </h3>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Calculation #{restockCalculation.calculationId} · {formatIsoDateTimeToDateTime(String(restockCalculation.postedAt))}
+          </p>
+        </div>
+
+        <button
+          title="Close"
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      <div className="p-6 max-h-[65vh] overflow-y-auto space-y-6">
+        <section>
+          <h4 className="text-sm font-bold text-gray-900 font-poppins mb-3">
+            Restocked Items
+          </h4>
+
+          <div className="md:hidden space-y-3">
+            {items.map(item => (
+              <div
+                key={item.calculationItemId}
+                className="rounded-xl border border-gray-100 bg-white p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {item.itemName || 'Deleted item'}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      {item.category
+                        ? INVENTORY_ITEM_CATEGORY_LABELS[item.category]
+                        : 'Uncategorized'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      {item.quantityToBuy} {item.unit || ''} × {money(item.unitCostSnapshot)}
+                    </p>
+                  </div>
+
+                  <p className="shrink-0 text-sm font-bold text-gray-900">
+                    {money(item.estimatedCost)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block border border-gray-100 rounded-xl overflow-hidden">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="bg-gray-50 text-[11px] text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 font-semibold">Item</th>
+                  <th className="px-4 py-3 font-semibold text-right">Quantity</th>
+                  <th className="px-4 py-3 font-semibold text-right">Unit Cost</th>
+                  <th className="px-4 py-3 font-semibold text-right">Line Cost</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {items.map(item => (
+                  <tr key={item.calculationItemId}>
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {item.itemName || 'Deleted item'}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-700">
+                      {item.quantityToBuy} {item.unit || ''}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-700">
+                      {money(item.unitCostSnapshot)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                      {money(item.estimatedCost)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+          <h4 className="text-sm font-bold text-gray-900 font-poppins mb-1">
+            Notes
+          </h4>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            This transaction deducted inventory budget and increased stock quantities
+            based on the finalized restock cart.
+          </p>
+        </section>
+      </div>
+
+      <div className="px-6 py-4 border-t border-gray-100 bg-white flex justify-end">
+        <div className="w-full sm:w-80 bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-2">
+          <SummaryRow label="Total Cost" value={money(restockCalculation.totalEstimatedCost)} valueClassName="text-red-600" />
+          <SummaryRow label="Balance Before" value={money(budgetLog.balanceBefore)} />
+          <SummaryRow label="Balance After" value={money(budgetLog.balanceAfter)} valueClassName="text-[#4a6741]" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Summary Row Component ───
+function SummaryRow({
+  label,
+  value,
+  valueClassName = 'text-gray-900'
+}: {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 text-sm">
+      <span className="text-gray-500">{label}</span>
+      <span className={`font-bold ${valueClassName}`}>{value}</span>
     </div>
   );
 }
@@ -1209,7 +1960,7 @@ function Pagination({ current, total, onChange, count }: { current: number; tota
   );
 }
 
-// ── Loading State Component ───
+// ─── Loading State Component ───
 function LoadingState({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-10 gap-3">

@@ -32,7 +32,7 @@ function mapRestockCalculationRow(
   };
 }
 
-async function getRestockCalculationByIdWithConnection(
+export async function getRestockCalculationByIdWithConnection(
   calculationId: number,
   connection: PoolConnection
 ): Promise<RestockCalculation | null> {

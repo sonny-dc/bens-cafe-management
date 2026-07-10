@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ElementType } from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
@@ -44,7 +44,22 @@ function getWeekRange() {
   return { start: toDateStr(monday), end: toDateStr(sunday) };
 }
 
-export function AdminReports() {
+const reportTabs: {
+  id: 'sales' | 'shifts' | 'expenses';
+  label: string;
+  mobileLabel: string;
+  icon: ElementType;
+}[] = [
+  { id: 'sales', label: 'Sales History', mobileLabel: 'Sales', icon: Receipt },
+  { id: 'shifts', label: 'Shift History', mobileLabel: 'Shifts', icon: Timer },
+  { id: 'expenses', label: 'Expense History', mobileLabel: 'Expenses', icon: Banknote },
+];
+
+export function AdminReports({
+  onSubTitleChange
+}: {
+  onSubTitleChange?: (subtitle: string) => void;
+}) {
   const [salesEntries, setSalesEntries] = useState<SalesEntry[]>([]);
   const [shifts, setShifts] = useState<ShiftSummaryItem[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -61,6 +76,11 @@ export function AdminReports() {
   const [shiftsPage, setShiftsPage] = useState(1);
   const [expensesPage, setExpensesPage] = useState(1);
   const itemsPerPage = 6;
+
+  useEffect(() => {
+    const label = reportTabs.find(tab => tab.id === reportTab)?.label || '';
+    onSubTitleChange?.(label);
+  }, [reportTab, onSubTitleChange]);
 
   useEffect(() => {
     fetchSalesData();
@@ -214,14 +234,8 @@ export function AdminReports() {
 
   const totalExpensesPages = Math.max(1, Math.ceil(sortedExpenses.length / itemsPerPage));
 
-  const reportTabs = [
-    { id: 'sales' as const, label: 'Sales History' },
-    { id: 'shifts' as const, label: 'Shift History' },
-    { id: 'expenses' as const, label: 'Expense History' },
-  ];
-
   return (
-    <div className="space-y-5 -mx-4">
+    <div className="space-y-5">
       {/* ── Header Row ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-gray-100">
         <div>
@@ -299,20 +313,36 @@ export function AdminReports() {
       </div>
 
       {/* ── Tab Switcher ── */}
-      <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit overflow-x-auto hide-scrollbar whitespace-nowrap">
-        {reportTabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setReportTab(tab.id)}
-            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${
-              reportTab === tab.id
-                ? 'bg-white text-gray-900 border border-gray-200'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="rounded-2xl border border-gray-200 bg-white p-1 shadow-sm sm:inline-block">
+        <div className="grid grid-cols-3 gap-1">
+          {reportTabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = reportTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setReportTab(tab.id)}
+                className={`flex min-w-0 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:text-sm ${
+                  isActive
+                    ? 'bg-[#4a6741] text-white'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+              >
+                <Icon size={15} className="shrink-0" />
+
+                <span className="truncate sm:hidden">
+                  {tab.mobileLabel}
+                </span>
+
+                <span className="hidden truncate sm:inline">
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Sales History Table ── */}
@@ -337,7 +367,78 @@ export function AdminReports() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile Sales Cards */}
+          <div className="md:hidden space-y-3 p-4">
+            {isLoading ? (
+              <div className="rounded-xl border border-gray-100 bg-white px-4 py-10 text-center">
+                <div className="mx-auto mb-3 h-5 w-5 animate-spin rounded-full border-[3px] border-[#4a6741] border-t-transparent" />
+                <p className="text-sm font-medium text-gray-400">
+                  Loading sales history...
+                </p>
+              </div>
+            ) : filteredSales.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-white px-4 py-10 text-center">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-50">
+                  <Receipt size={18} className="text-gray-300" />
+                </div>
+                <p className="text-sm font-semibold text-gray-900">
+                  No sales entries found
+                </p>
+                <p className="mt-1 text-xs text-gray-400">
+                  No records for the selected period.
+                </p>
+              </div>
+            ) : (
+              paginatedSales.map(entry => (
+                <div
+                  key={entry.salesEntryId}
+                  className="rounded-xl border border-gray-100 bg-white p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900">
+                        {formatIsoDateTimeToDate(String(entry.postedAt))}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        {formatIsoDateTimeToTime(String(entry.postedAt))}
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-bold text-emerald-600">
+                        ₱{fmt(Number(entry.totalRevenue))}
+                      </p>
+                      <p className="mt-0.5 text-[11px] font-medium text-gray-400">
+                        Total Revenue
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                        Cash Sales
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-gray-900">
+                        ₱{fmt(Number(entry.cashSales))}
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                        Online/Card
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-gray-900">
+                        ₱{fmt(Number(entry.onlineCardSales))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="bg-gray-50/60 border-b border-gray-100">
@@ -464,37 +565,101 @@ export function AdminReports() {
           className="space-y-4"
         >
           {/* Shift summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-gray-100">
-              <div className="flex items-start justify-between">
+          <div>
+            {/* Mobile Summary */}
+            <div className="sm:hidden rounded-2xl border border-gray-100 bg-white p-4">
+              <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Total Shifts</p>
-                  <h3 className="text-2xl font-bold text-gray-900 font-poppins">{shifts.length}</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                    Shift Summary
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-400">
+                    This week's shift activity
+                  </p>
                 </div>
-                <div className="flex items-center justify-center text-[#3b2f2f]">
-                  <Timer size={24} />
+
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3b2f2f]/10 text-[#3b2f2f]">
+                  <Timer size={18} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-xl bg-gray-50 p-3 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    Total
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-gray-900 font-poppins">
+                    {shifts.length}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-emerald-50 p-3 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70">
+                    Done
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-emerald-700 font-poppins">
+                    {completedShifts.length}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-amber-50 p-3 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600/70">
+                    Active
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-amber-700 font-poppins">
+                    {shifts.length - completedShifts.length}
+                  </p>
                 </div>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Completed</p>
-                  <h3 className="text-2xl font-bold text-gray-900 font-poppins">{completedShifts.length}</h3>
-                </div>
-                <div className="flex items-center justify-center text-[#3b2f2f]">
-                  <TrendingUp size={24} />
+
+            {/* Desktop Summary */}
+            <div className="hidden sm:grid grid-cols-3 gap-4">
+              <div className="bg-white p-5 rounded-2xl border border-gray-100">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Total Shifts
+                    </p>
+                    <h3 className="text-2xl font-bold text-gray-900 font-poppins">
+                      {shifts.length}
+                    </h3>
+                  </div>
+                  <div className="flex items-center justify-center text-[#3b2f2f]">
+                    <Timer size={24} />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="bg-white p-5 rounded-2xl border border-gray-100">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">In Progress</p>
-                  <h3 className="text-2xl font-bold text-gray-900 font-poppins">{shifts.length - completedShifts.length}</h3>
+
+              <div className="bg-white p-5 rounded-2xl border border-gray-100">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Completed
+                    </p>
+                    <h3 className="text-2xl font-bold text-gray-900 font-poppins">
+                      {completedShifts.length}
+                    </h3>
+                  </div>
+                  <div className="flex items-center justify-center text-[#3b2f2f]">
+                    <TrendingUp size={24} />
+                  </div>
                 </div>
-                <div className="flex items-center justify-center text-[#3b2f2f]">
-                  <Clock size={24} />
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-gray-100">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      In Progress
+                    </p>
+                    <h3 className="text-2xl font-bold text-gray-900 font-poppins">
+                      {shifts.length - completedShifts.length}
+                    </h3>
+                  </div>
+                  <div className="flex items-center justify-center text-[#3b2f2f]">
+                    <Clock size={24} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -522,8 +687,121 @@ export function AdminReports() {
                 </span>
               )}
             </div>
+            {/* Mobile Shift Cards */}
+            <div className="md:hidden space-y-3 p-4">
+              {isLoadingShifts ? (
+                <div className="rounded-xl border border-gray-100 bg-white px-4 py-10 text-center">
+                  <div className="mx-auto mb-3 h-5 w-5 animate-spin rounded-full border-[3px] border-[#4a6741] border-t-transparent" />
+                  <p className="text-sm font-medium text-gray-400">
+                    Loading shift history...
+                  </p>
+                </div>
+              ) : sortedShifts.length === 0 ? (
+                <div className="rounded-xl border border-gray-100 bg-white px-4 py-10 text-center">
+                  <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-50">
+                    <Timer size={18} className="text-gray-300" />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    No shifts found
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    No shift records for this week.
+                  </p>
+                </div>
+              ) : (
+                paginatedShifts.map(shift => {
+                  const isCompleted = shift.status === SHIFT_STATUS.COMPLETED;
 
-            <div className="overflow-x-auto">
+                  return (
+                    <div
+                      key={shift.shiftId}
+                      className="rounded-xl border border-gray-100 bg-white p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-gray-900">
+                            {shift.fullName}
+                          </p>
+                          <p className="mt-0.5 text-xs text-gray-400">
+                            {shift.jobRole}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ${
+                            isCompleted
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
+                          {isCompleted ? 'Completed' : 'In Progress'}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                          Time
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-gray-900">
+                          {formatIsoDateTimeToTime(String(shift.startTime))}
+                          <span className="text-gray-400">
+                            {' '}–{' '}
+                            {shift.endTime
+                              ? formatIsoDateTimeToTime(String(shift.endTime))
+                              : ''}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <div className="rounded-lg bg-gray-50 p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Duration
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {formatShiftDurationDisplay(
+                              String(shift.startTime),
+                              shift.endTime ? String(shift.endTime) : null
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="rounded-lg bg-gray-50 p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Date
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {formatIsoDateTimeToDate(String(shift.shiftDate))}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <div className="rounded-lg bg-gray-50 p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Opening Cash
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            ₱{fmt(Number(shift.openingCash))}
+                          </p>
+                        </div>
+
+                        <div className="rounded-lg bg-gray-50 p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Closing Cash
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {isCompleted ? `₱${fmt(Number(shift.closingCash))}` : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="bg-gray-50/60 border-b border-gray-100">
@@ -695,7 +973,64 @@ export function AdminReports() {
             )}
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile Expense Cards */}
+          <div className="md:hidden space-y-3 p-4">
+            {isLoadingExpenses ? (
+              <div className="rounded-xl border border-gray-100 bg-white px-4 py-10 text-center">
+                <div className="mx-auto mb-3 h-5 w-5 animate-spin rounded-full border-[3px] border-[#4a6741] border-t-transparent" />
+                <p className="text-sm font-medium text-gray-400">
+                  Loading expense history...
+                </p>
+              </div>
+            ) : sortedExpenses.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-white px-4 py-10 text-center">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-50">
+                  <Banknote size={18} className="text-gray-300" />
+                </div>
+                <p className="text-sm font-semibold text-gray-900">
+                  No expenses found
+                </p>
+                <p className="mt-1 text-xs text-gray-400">
+                  No expense records for this period.
+                </p>
+              </div>
+            ) : (
+              paginatedExpenses.map(expense => (
+                <div
+                  key={expense.expenseId}
+                  className="min-h-[150px] rounded-xl border border-gray-100 bg-white p-5 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-gray-700">
+                        {expense.expenseCategory.replace('_', ' ')}
+                      </span>
+
+                      <p className="shrink-0 text-sm font-bold text-red-600">
+                        ₱{fmt(Number(expense.amount))}
+                      </p>
+                    </div>
+
+                    <p className="mt-4 text-sm font-semibold leading-relaxed text-gray-900 break-words">
+                      {expense.description || 'No description'}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-3">
+                    <p className="text-xs font-medium text-gray-400">
+                      {formatIsoDateTimeToDate(String(expense.postedAt))}
+                    </p>
+
+                    <p className="text-xs font-medium text-gray-400">
+                      {formatIsoDateTimeToTime(String(expense.postedAt))}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="bg-gray-50/60 border-b border-gray-100">

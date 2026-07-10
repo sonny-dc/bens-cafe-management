@@ -1,4 +1,4 @@
-import type { InventoryBudgetLog } from 'shared/models';
+import type { InventoryBudgetLog, InventoryBudgetLogSummary } from 'shared/models';
 
 import { apiFetch } from './apiFetch';
 import { getApiError } from './apiError';
@@ -45,5 +45,21 @@ export const inventoryBudgetLogApi = {
     }
 
     return json.data;
+  },
+  async getSummaryById(budgetLogId: number): Promise<InventoryBudgetLogSummary> {
+    const res = await apiFetch(`/inventory-budget-logs/${budgetLogId}/summary`);
+
+    if (!res.ok) {
+      throw await getApiError(res, 'Failed to fetch inventory budget log summary.');
+    }
+
+    const json: ApiResponse<InventoryBudgetLogSummary> = await res.json();
+
+    if (!json.success || !json.data) {
+      throw new Error(json.message || 'Failed to fetch inventory budget log summary.');
+    }
+
+    return json.data;
   }
+  
 };

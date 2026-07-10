@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 // =================================
 // Inventory Budget Account Errors
@@ -29,6 +29,12 @@ export class InventoryBudgetAccountUpdateError extends AppError {
 export class InventoryBudgetLogNotFoundError extends AppError {
     constructor(message: string = 'Inventory budget log not found') {
         super(message, 404);
+    }
+}
+
+export class InventoryBudgetLogSourceNotFound extends AppError {
+    constructor(message: string = 'Inventory budget log source is invalid or incomplete') {
+        super(message, 500, false);
     }
 }
 

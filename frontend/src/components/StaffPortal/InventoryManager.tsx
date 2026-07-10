@@ -24,6 +24,7 @@ export function InventoryManager() {
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState('');
   const [reason, setReason] = useState('');
+  const [expandedRequestIds, setExpandedRequestIds] = useState<number[]>([]);
 
   useEffect(() => {
     loadData();
@@ -124,6 +125,20 @@ export function InventoryManager() {
     } finally {
       setIsSending(false);
     }
+  };
+
+  const toggleExpandedRequest = (requestId: number) => {
+    setExpandedRequestIds(prev =>
+      prev.includes(requestId)
+        ? prev.filter(id => id !== requestId)
+        : [...prev, requestId]
+    );
+  };
+
+  const shouldShowViewMore = (text?: string | null, maxLength = 140) => {
+    if (!text) return false;
+
+    return text.includes('\n') || text.length > maxLength;
   };
 
   return (
@@ -319,10 +334,36 @@ export function InventoryManager() {
                       </div>
                     </div>
                     
-                    <p className="text-sm font-bold text-gray-900 mb-0.5">
-                      {req.itemName || `Item #${req.itemId ?? 'N/A'}`} <span className="text-gray-500 font-normal">x {req.requestedQuantity} {req.requestedUnit}</span>
+                    <p className="mb-0.5 break-words text-sm font-bold text-gray-900 [overflow-wrap:anywhere]">
+                      {req.itemName || `Item #${req.itemId ?? 'N/A'}`}{' '}
+                      <span className="font-normal text-gray-500">
+                        x {req.requestedQuantity} {req.requestedUnit}
+                      </span>
                     </p>
-                    <p className="text-xs text-gray-600 italic">"{req.reason}"</p>
+
+                    {req.reason && (
+                      <>
+                        <p
+                          className={`whitespace-pre-line break-words text-xs italic leading-relaxed text-gray-600 [overflow-wrap:anywhere] ${
+                            expandedRequestIds.includes(req.requestId)
+                              ? ''
+                              : 'line-clamp-3'
+                          }`}
+                        >
+                          "{req.reason}"
+                        </p>
+
+                        {shouldShowViewMore(req.reason) && (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpandedRequest(req.requestId)}
+                            className="mt-2 text-[11px] font-bold text-[#4a6741] transition-colors hover:text-[#3a5233]"
+                          >
+                            {expandedRequestIds.includes(req.requestId) ? 'View less' : 'View more'}
+                          </button>
+                        )}
+                      </>
+                    )}
                   </motion.div>
                 );
               })}

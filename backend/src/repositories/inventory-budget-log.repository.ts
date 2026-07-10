@@ -48,7 +48,7 @@ function mapInventoryBudgetLogRow(
   };
 }
 
-async function getInventoryBudgetLogByIdWithConnection(
+export async function getInventoryBudgetLogByIdWithConnection(
   budgetLogId: number,
   connection: PoolConnection
 ): Promise<InventoryBudgetLog | null> {

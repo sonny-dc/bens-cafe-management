@@ -52,6 +52,7 @@ export function NotesManager() {
   const [subject, setSubject] = useState('');
   const [messageText, setMessageText] = useState('');
   const [messageType, setMessageType] = useState<MessageType>(MESSAGE_TYPES.GENERAL);
+  const [expandedNoteIds, setExpandedNoteIds] = useState<number[]>([]);
 
   useEffect(() => { loadNotes(); }, []);
 
@@ -115,6 +116,19 @@ export function NotesManager() {
     }
   };
 
+  const toggleExpandedNote = (messageId: number) => {
+    setExpandedNoteIds(prev =>
+      prev.includes(messageId)
+        ? prev.filter(id => id !== messageId)
+        : [...prev, messageId]
+    );
+  };
+
+  const shouldShowViewMore = (text?: string | null, maxLength = 140) => {
+    if (!text) return false;
+
+    return text.includes('\n') || text.length > maxLength;
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -314,10 +328,31 @@ export function NotesManager() {
                     </div>
                     {/* Subject (if present) */}
                     {note.subject && (
-                      <p className="text-sm font-semibold text-gray-900 mb-0.5">{note.subject}</p>
+                      <p className="mb-0.5 break-words text-sm font-semibold text-gray-900 [overflow-wrap:anywhere]">
+                        {note.subject}
+                      </p>
                     )}
+
                     {/* Message */}
-                    <p className="text-sm text-gray-700 leading-relaxed">{note.messageText}</p>
+                    <p
+                      className={`whitespace-pre-line break-words text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere] ${
+                        expandedNoteIds.includes(note.messageId)
+                          ? ''
+                          : 'line-clamp-3'
+                      }`}
+                    >
+                      {note.messageText}
+                    </p>
+
+                    {shouldShowViewMore(note.messageText) && (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandedNote(note.messageId)}
+                        className="mt-2 text-[11px] font-bold text-[#4a6741] transition-colors hover:text-[#3a5233]"
+                      >
+                        {expandedNoteIds.includes(note.messageId) ? 'View less' : 'View more'}
+                      </button>
+                    )}
                   </motion.div>
                 );
               })}

@@ -33,6 +33,7 @@ type InventoryRequestListItemRow = RowDataPacket & {
     item_name: string;
     quantity: string;
     requested_by: string;
+    reason: string;
     request_status: RequestStatus;
     posted_at: Date;
 }
@@ -51,6 +52,7 @@ const simplifiedInventoryRequestFieldsByEmployeeId =
                 i.item_name,
                 CONCAT(r.requested_quantity, ' ', r.requested_unit) as quantity,
                 u.full_name as requested_by,
+                r.reason,
                 r.request_status,
                 r.posted_at
                 FROM inventory_requests r
@@ -69,6 +71,7 @@ const simplifiedInventoryRequestFields =
                 i.item_name,
                 CONCAT(r.requested_quantity, ' ', r.requested_unit) as quantity,
                 u.full_name as requested_by,
+                r.reason,
                 r.request_status,
                 r.posted_at
                 FROM inventory_requests r
@@ -86,6 +89,7 @@ const simplifiedInventoryRequestFieldsById =
                 i.item_name,
                 CONCAT(r.requested_quantity, ' ', r.requested_unit) as quantity,
                 u.full_name as requested_by,
+                r.reason,
                 r.request_status,
                 r.posted_at
                 FROM inventory_requests r
@@ -131,6 +135,7 @@ function mapInventoryRequestListItemRow(row: InventoryRequestListItemRow): Inven
         itemName: row.item_name,
         quantity: row.quantity,
         requestedBy: row.requested_by,
+        reason: row.reason,
         requestStatus: row.request_status,
         postedAt: row.posted_at
     };

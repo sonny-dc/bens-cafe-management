@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 export class ExpenseNotFoundError extends AppError {
     constructor(message = 'Expense not found.') {

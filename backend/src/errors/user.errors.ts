@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 export class UserNotFoundError extends AppError {
     constructor(message = 'User not found') {

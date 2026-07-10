@@ -1,6 +1,7 @@
 import {
     type CreatePayrollEntryRepositoryInput,
-    type PayrollEntry 
+    type PayrollEntry,
+    type PayrollEntryWithEmployeeDetails
 } from "../models/index.js";
 
 import type {
@@ -19,6 +20,11 @@ type PayrollEntryRow = RowDataPacket & {
     created_at: Date;
 };
 
+type PayrollEntryWithEmployeeDetailsRow = PayrollEntryRow & {
+    employee_name: string;
+    job_role: string;
+};
+
 function mapPayrollEntryRow(row: PayrollEntryRow): PayrollEntry {
     return {
         payrollEntryId: row.payroll_id,
@@ -27,6 +33,21 @@ function mapPayrollEntryRow(row: PayrollEntryRow): PayrollEntry {
         grossPay: row.gross_pay,
         postedAt: row.posted_at,
         createdAt: row.created_at,
+    };
+}
+
+function mapPayrollEntryWithEmployeeDetailsRow(
+    row: PayrollEntryWithEmployeeDetailsRow
+): PayrollEntryWithEmployeeDetails {
+    return {
+        payrollEntryId: row.payroll_id,
+        salesEntryId: row.sales_entry_id,
+        employeeId: row.employee_id,
+        grossPay: row.gross_pay,
+        postedAt: row.posted_at,
+        createdAt: row.created_at,
+        employeeName: row.employee_name,
+        jobRole: row.job_role
     };
 }
 
@@ -73,6 +94,34 @@ export async function getPayrollEntryById(
     return withConnection(async (connection) => {
         return getPayrollEntriesByIdWithConnection(payrollEntryId, connection);
     });
+}
+
+export async function getPayrollEntriesWithEmployeeDetailsBySalesEntryIdWithConnection(
+    salesEntryId: number,
+    connection: PoolConnection
+): Promise<PayrollEntryWithEmployeeDetails[]> {
+    const [rows] = await connection.query<PayrollEntryWithEmployeeDetailsRow[]>(
+        `
+        SELECT
+            pe.payroll_id,
+            pe.sales_entry_id,
+            pe.employee_id,
+            pe.gross_pay,
+            pe.posted_at,
+            pe.created_at,
+            u.full_name AS employee_name,
+            ep.job_role
+        FROM payroll_entries pe
+        JOIN employee_profiles ep
+            ON ep.employee_id = pe.employee_id
+        JOIN users u
+            ON u.user_id = ep.user_id
+        WHERE pe.sales_entry_id = ?
+        ORDER BY pe.payroll_id ASC
+        `,
+        [salesEntryId]
+    );
+    return rows.map(mapPayrollEntryWithEmployeeDetailsRow);
 }
 
 /**

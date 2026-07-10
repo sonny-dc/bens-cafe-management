@@ -1,3 +1,6 @@
+import type { RestockCalculationItemWithInventoryDetails } from './restock-calculation-item.model.js';
+import type { InventoryBudgetLog } from './inventory-budget-log.model.js';
+
 export interface RestockCalculation {
   calculationId: number;
   userId: number | null;
@@ -29,4 +32,10 @@ export interface RestockCalculationItemInput {
 
 export interface CreateRestockCalculationInput {
   items: RestockCalculationItemInput[];
+}
+
+export interface RestockCalculationSummary {
+  restockCalculation: RestockCalculation;
+  items: RestockCalculationItemWithInventoryDetails[];
+  budgetLog: InventoryBudgetLog;
 }

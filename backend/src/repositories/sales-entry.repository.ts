@@ -42,7 +42,7 @@ function mapSalesEntryRow(row: SalesEntryRow): SalesEntry {
  * Internal repository helper for fetching one sales entry using
  * an existing database connection.
  */
-async function getSalesEntryByIdWithConnection(
+export async function getSalesEntryByIdWithConnection(
     salesEntryId: number,
     connection: PoolConnection
 ): Promise<SalesEntry | null> {

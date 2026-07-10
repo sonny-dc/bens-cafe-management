@@ -38,8 +38,8 @@ function mapExpenseRow(row: ExpenseRow): Expense {
 }
 
 async function getExpenseByIdWithConnection(
-    connection: PoolConnection,
-    expenseId: number
+    expenseId: number,
+    connection: PoolConnection
 ): Promise<Expense | null> {
     const [rows] = await connection.query<ExpenseRow[]>(
         `
@@ -55,6 +55,23 @@ async function getExpenseByIdWithConnection(
         return null;
     }
     return mapExpenseRow(row);
+}
+
+export async function getExpensesBySalesEntryIdWithConnection(
+    salesEntryId: number,
+    connection: PoolConnection
+): Promise<Expense[]> {
+    const [rows] = await connection.query<ExpenseRow[]>(
+        `
+        SELECT *
+        FROM expenses
+        WHERE sales_entry_id = ?
+        ORDER BY expense_id ASC
+        `,
+        [salesEntryId]
+    );
+
+    return rows.map(mapExpenseRow);
 }
 
 /**
@@ -79,7 +96,7 @@ export async function getExpenseById(
     expenseId: number
 ): Promise<Expense | null> {
     return withConnection(async (connection) => {
-        return getExpenseByIdWithConnection(connection, expenseId);
+        return getExpenseByIdWithConnection(expenseId, connection);
     });
 }
 
@@ -113,8 +130,8 @@ export async function createExpenseWithConnection(
     );
     const insertedExpenseId = result.insertId;
     const expense = await getExpenseByIdWithConnection(
-        connection, 
-        insertedExpenseId
+        insertedExpenseId,
+        connection
     );
     return expense;
 }

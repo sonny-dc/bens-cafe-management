@@ -7,6 +7,11 @@ export interface PayrollEntry {
     createdAt: Date;
 }
 
+export interface PayrollEntryWithEmployeeDetails extends PayrollEntry {
+    employeeName: string;
+    jobRole: string;
+}
+
 export interface CreatePayrollEntryRepositoryInput {
     salesEntryId: number;
     employeeId: number;

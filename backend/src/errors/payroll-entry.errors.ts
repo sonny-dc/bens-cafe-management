@@ -1,4 +1,4 @@
-import { AppError } from './app-errors.js';
+import { AppError } from './app.errors.js';
 
 export class PayrollEntryNotFoundError extends AppError {
     constructor(message = 'Payroll entry not found.') {
