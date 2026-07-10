@@ -15,11 +15,11 @@ const createRateLimitHandler = (message: string) => {
 }
 
 /**
- * General rate limiter for all routes, allowing 250 requests per 15 minutes.
+ * General rate limiter for all routes, allowing 1000 requests per 15 minutes.
  */
 const generalRateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    limit: 250, 
+    limit: 1000, 
     standardHeaders: true,
     legacyHeaders: false,
     handler: createRateLimitHandler('Too many requests, please try again after 15 minutes.'),

@@ -13,6 +13,6 @@ export const dbOptions = {
   password: process.env.DB_PASSWORD as string,
   database: process.env.DB_NAME as string,
   ssl: {
-    rejectUnauthorized: false // Required for Aiven cloud database SSL
+    rejectUnauthorized: false
   }
 };
