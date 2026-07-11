@@ -112,6 +112,71 @@ export function formatIsoDateTimeToDateTime(
 }
 
 /**
+ * Formats a datetime using a relative label for today and yesterday.
+ *
+ * Examples:
+ * - Today's date -> "Today · 1:49 PM"
+ * - Yesterday's date -> "Yesterday · 8:30 AM"
+ * - Older date -> "July 1, 2026 · 1:49 PM"
+ *
+ * This follows the existing datetime utility behavior and does not apply
+ * timezone conversion to string inputs.
+ */
+export function formatIsoDateTimeToRelativeDateTime(
+  value: string | Date | null | undefined
+): string {
+  if (!value) {
+    return '';
+  }
+
+  const text = value instanceof Date
+    ? value.toISOString()
+    : String(value).trim();
+
+  const match =
+    /(\d{4})-(\d{2})-(\d{2})T?[\sT]?(\d{2}):(\d{2})/.exec(text);
+
+  if (!match) {
+    return text;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = match[5];
+
+  const today = new Date();
+
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  const isToday =
+    year === today.getFullYear() &&
+    month === today.getMonth() + 1 &&
+    day === today.getDate();
+
+  const isYesterday =
+    year === yesterday.getFullYear() &&
+    month === yesterday.getMonth() + 1 &&
+    day === yesterday.getDate();
+
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+  const displayTime = `${displayHour}:${minute} ${period}`;
+
+  if (isToday) {
+    return `Today · ${displayTime}`;
+  }
+
+  if (isYesterday) {
+    return `Yesterday · ${displayTime}`;
+  }
+
+  return `${monthNames[month - 1]} ${day}, ${year} · ${displayTime}`;
+}
+
+/**
  * Formats a datetime value into a human-readable string with the short date and time.
  * Example:
  * - "2026-07-01T13:49:57.000Z" -> "July 1, 1:49 PM"

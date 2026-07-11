@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
   Package,
@@ -8,7 +8,9 @@ import {
   Clock,
   User,
   AlertCircle,
-  Receipt
+  Receipt,
+  Eye,
+  X
 } from 'lucide-react';
 import { salesApi } from '../../api/salesApi';
 import { shiftApi } from '../../api/shiftApi';
@@ -40,6 +42,8 @@ export function AdminDashboard() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPendingRequestsExpanded, setIsPendingRequestsExpanded] =
+  useState(false);
 
   // Auto-refresh for live duration and data
   const [, setTick] = useState(0);
@@ -215,43 +219,220 @@ export function AdminDashboard() {
 
         {/* ── Pending Requests ── */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900 font-poppins">Pending Requests</h3>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="min-w-0 truncate text-lg font-bold text-gray-900 font-poppins">
+              Pending Requests
+            </h3>
+
+           <div className="flex shrink-0 items-center gap-2">
+            {pendingRequests.length > 2 && (
+              <span className="text-[11px] font-bold text-gray-500">
+                {pendingRequests.length - 2} more
+              </span>
+            )}
+
+            <motion.button
+              type="button"
+              whileHover={
+                pendingRequests.length > 0
+                  ? { scale: 1.04 }
+                  : undefined
+              }
+              whileTap={
+                pendingRequests.length > 0
+                  ? { scale: 0.92 }
+                  : undefined
+              }
+              disabled={pendingRequests.length === 0}
+              onClick={() => setIsPendingRequestsExpanded(true)}
+              title={
+                pendingRequests.length > 0
+                  ? 'View pending requests'
+                  : 'No pending requests'
+              }
+              aria-label={
+                pendingRequests.length > 0
+                  ? `View all ${pendingRequests.length} pending requests`
+                  : 'No pending requests'
+              }
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+                pendingRequests.length > 2
+                  ? 'cursor-pointer border-[#4a6741]/20 bg-[#4a6741]/10 text-[#4a6741] hover:bg-[#4a6741] hover:text-white'
+                  : pendingRequests.length > 0
+                    ? 'cursor-pointer border-gray-200 bg-white text-[#4a6741] hover:border-[#4a6741]/30 hover:bg-gray-50'
+                    : 'cursor-default border-gray-200 bg-gray-50 text-gray-300'
+              }`}
+            >
+              <Eye size={15} />
+            </motion.button>
+          </div>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white">
             {pendingRequests.length === 0 ? (
               <div className="p-8 text-center text-gray-400">
                 <Package size={24} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-medium">All caught up</p>
+
+                <p className="text-sm font-medium">
+                  All caught up
+                </p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-50">
-                {pendingRequests.slice(0, 5).map((req) => (
-                  <li key={req.requestId} className="p-4 hover:bg-gray-50/50 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-sm font-bold text-gray-900 font-poppins">{req.itemName}</p>
-                      <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
-                        {req.quantity}
+              <ul>
+                {pendingRequests.slice(0, 2).map(req => (
+                  <li
+                    key={req.requestId}
+                    className="p-4 transition-colors hover:bg-gray-50/50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 flex-1 break-words text-sm font-bold text-gray-900 font-poppins [overflow-wrap:anywhere]">
+                        {req.itemName}
+                      </p>
+
+                      <span className="shrink-0 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-600">
+                        Qty: {req.quantity}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      Req. by {req.requestedBy}
+
+                    <p className="mt-2 break-words text-xs text-gray-500 [overflow-wrap:anywhere]">
+                      Requested by {req.requestedBy}
                     </p>
                   </li>
                 ))}
-                {pendingRequests.length > 5 && (
-                  <li className="p-3 text-center border-t border-gray-50">
-                    <span className="text-xs font-bold text-gray-400">
-                      +{pendingRequests.length - 5} more
-                    </span>
-                  </li>
-                )}
               </ul>
             )}
           </div>
         </div>
       </div>
+      {/* ── Expanded Pending Requests ── */}
+      <AnimatePresence>
+        {isPendingRequestsExpanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setIsPendingRequestsExpanded(false)}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{
+                opacity: 0,
+                scale: 0.94,
+                y: 14
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                y: 0
+              }}
+              exit={{
+                opacity: 0,
+                scale: 0.94,
+                y: 14
+              }}
+              transition={{
+                type: 'spring',
+                stiffness: 260,
+                damping: 24
+              }}
+              onClick={event => event.stopPropagation()}
+              className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl"
+            >
+              <div className="flex shrink-0 items-start justify-between border-b border-gray-100 p-6 pb-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#4a6741]/10 text-[#4a6741]">
+                    <Package size={20} />
+                  </div>
+
+                  <div className="min-w-0">
+                    <h3 className="truncate text-lg font-bold text-gray-900 font-poppins">
+                      Pending Requests
+                    </h3>
+
+                    <p className="text-xs font-medium text-gray-500">
+                      {pendingRequests.length}{' '}
+                      {pendingRequests.length === 1
+                        ? 'request awaiting review'
+                        : 'requests awaiting review'}
+                    </p>
+                  </div>
+                </div>
+
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setIsPendingRequestsExpanded(false)}
+                  title="Close pending requests"
+                  aria-label="Close pending requests"
+                  className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                >
+                  <X size={16} />
+                </motion.button>
+              </div>
+
+              <div className="overflow-x-hidden overflow-y-auto bg-gray-50/50 p-4 sm:p-6">
+                <div className="space-y-3">
+                  {pendingRequests.map((req, index) => (
+                    <motion.div
+                      key={req.requestId}
+                      initial={{
+                        opacity: 0,
+                        y: 8
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0
+                      }}
+                      transition={{
+                        duration: 0.3,
+                        delay: Math.min(index * 0.04, 0.24),
+                        ease: [0.22, 1, 0.36, 1]
+                      }}
+                      className="rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-[#4a6741]/30"
+                    >
+                      <div className="flex items-start gap-3.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
+                          <Package size={18} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="min-w-0 flex-1 break-words text-sm font-bold text-gray-900 font-poppins [overflow-wrap:anywhere]">
+                              {req.itemName}
+                            </p>
+
+                            <span className="shrink-0 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700">
+                              Qty: {req.quantity}
+                            </span>
+                          </div>
+
+                          <p className="mt-2 break-words text-xs font-medium text-gray-500 [overflow-wrap:anywhere]">
+                            Requested by {req.requestedBy}
+                          </p>
+
+                          {req.reason?.trim() && (
+                            <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2.5">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                Reason
+                              </p>
+
+                              <p className="mt-1 whitespace-pre-line break-words text-xs leading-relaxed text-gray-600 [overflow-wrap:anywhere]">
+                                {req.reason.trim()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Recent Staff Messages ── */}
       <div className="space-y-4">

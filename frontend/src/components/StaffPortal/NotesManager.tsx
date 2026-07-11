@@ -10,27 +10,37 @@ const CATEGORIES: {
   value: MessageType;
   label: string;
   description: string;
+  example: string;
   icon: ElementType;
   activeClasses: string;
 }[] = [
   {
     value: MESSAGE_TYPES.GENERAL,
     label: 'General',
-    description: 'Just a standard note',
+    description:
+      'Use for routine updates, reminders, or information that does not require immediate attention.',
+    example:
+      'The coffee grinder was cleaned before the afternoon shift.',
     icon: Info,
     activeClasses: 'bg-blue-50 border-blue-300 text-blue-700',
   },
   {
     value: MESSAGE_TYPES.CONCERN,
     label: 'Concern',
-    description: 'Something needs addressing',
+    description:
+      'Use for an issue that should be reviewed but does not currently require immediate action.',
+    example:
+      'The espresso machine is taking longer than usual to heat up.',
     icon: MessageSquare,
     activeClasses: 'bg-amber-50 border-amber-300 text-amber-700',
   },
   {
     value: MESSAGE_TYPES.URGENT,
     label: 'Urgent',
-    description: 'Needs immediate attention',
+    description:
+      'Use when immediate attention is required because the issue may affect staff, customers, or store operations.',
+    example:
+      'The espresso machine is leaking and cannot be used safely.',
     icon: AlertTriangle,
     activeClasses: 'bg-red-50 border-red-300 text-red-700',
   },
@@ -53,6 +63,7 @@ export function NotesManager() {
   const [messageText, setMessageText] = useState('');
   const [messageType, setMessageType] = useState<MessageType>(MESSAGE_TYPES.GENERAL);
   const [expandedNoteIds, setExpandedNoteIds] = useState<number[]>([]);
+  const [isNoteGuideOpen, setIsNoteGuideOpen] = useState(false);
 
   useEffect(() => { loadNotes(); }, []);
 
@@ -135,10 +146,179 @@ export function NotesManager() {
 
       {/* ── Left: Compose ── */}
       <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-200 p-6">
-        <div className="mb-6">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">New note</p>
-          <h2 className="text-2xl font-bold font-poppins text-gray-900">Leave a note</h2>
-          <p className="text-sm text-gray-500 mt-1">The owner will see this when they check in.</p>
+        <div className="relative mb-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                New note
+              </p>
+
+              <h2 className="text-2xl font-bold text-gray-900 font-poppins">
+                Leave a note
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                The owner will see this when they check in.
+              </p>
+            </div>
+
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={() =>
+                setIsNoteGuideOpen(current => !current)
+              }
+              aria-expanded={isNoteGuideOpen}
+              aria-label={
+                isNoteGuideOpen
+                  ? 'Close note type guide'
+                  : 'View note type guide'
+              }
+              title="About note types"
+              className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border transition-colors ${
+                isNoteGuideOpen
+                  ? 'border-[#4a6741] bg-[#4a6741] text-white shadow-sm'
+                  : 'border-gray-200 bg-white text-gray-400 hover:border-[#4a6741]/30 hover:bg-[#4a6741]/5 hover:text-[#4a6741]'
+              }`}
+            >
+              <motion.span
+                animate={{
+                  rotate: isNoteGuideOpen ? 180 : 0
+                }}
+                transition={{
+                  duration: 0.3,
+                  ease: [0.22, 1, 0.36, 1]
+                }}
+                className="flex items-center justify-center"
+              >
+                <Info size={17} />
+              </motion.span>
+            </motion.button>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {isNoteGuideOpen && (
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  height: 0,
+                  y: -8
+                }}
+                animate={{
+                  opacity: 1,
+                  height: 'auto',
+                  y: 0
+                }}
+                exit={{
+                  opacity: 0,
+                  height: 0,
+                  y: -8
+                }}
+                transition={{
+                  duration: 0.32,
+                  ease: [0.22, 1, 0.36, 1]
+                }}
+                className="overflow-hidden"
+              >
+                <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+                  <div className="mb-4">
+                    <p className="text-sm font-bold text-gray-900 font-poppins">
+                      Choosing the right note type
+                    </p>
+
+                    <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                      Select the category that best represents how quickly the
+                      owner should review your message.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {CATEGORIES.map((category, index) => {
+                      const CategoryIcon = category.icon;
+
+                      const categoryStyle =
+                        category.value === MESSAGE_TYPES.URGENT
+                          ? {
+                              container:
+                                'border-red-100 bg-red-50/70',
+                              icon: 'bg-red-100 text-red-700',
+                              title: 'text-red-700'
+                            }
+                          : category.value === MESSAGE_TYPES.CONCERN
+                            ? {
+                                container:
+                                  'border-amber-100 bg-amber-50/70',
+                                icon: 'bg-amber-100 text-amber-700',
+                                title: 'text-amber-700'
+                              }
+                            : {
+                                container:
+                                  'border-blue-100 bg-blue-50/70',
+                                icon: 'bg-blue-100 text-blue-700',
+                                title: 'text-blue-700'
+                              };
+
+                      return (
+                        <motion.div
+                          key={category.value}
+                          initial={{
+                            opacity: 0,
+                            y: 8
+                          }}
+                          animate={{
+                            opacity: 1,
+                            y: 0
+                          }}
+                          transition={{
+                            duration: 0.28,
+                            delay: index * 0.06,
+                            ease: [0.22, 1, 0.36, 1]
+                          }}
+                          className={`rounded-xl border p-3 ${categoryStyle.container}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${categoryStyle.icon}`}
+                            >
+                              <CategoryIcon size={15} />
+                            </div>
+
+                            <div className="min-w-0">
+                              <p
+                                className={`text-xs font-bold ${categoryStyle.title}`}
+                              >
+                                {category.label}
+                              </p>
+
+                              <p className="mt-1 text-[11px] leading-relaxed text-gray-600">
+                                {category.description}
+                              </p>
+
+                              <div className="mt-2 rounded-lg bg-white/80 px-3 py-2">
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                                  Example
+                                </p>
+
+                                <p className="mt-1 text-[11px] italic leading-relaxed text-gray-600">
+                                  “{category.example}”
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  <p className="mt-4 text-[10px] leading-relaxed text-gray-400">
+                    Urgent notes should only be used when immediate attention is
+                    genuinely required.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Error */}

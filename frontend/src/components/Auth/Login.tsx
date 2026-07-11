@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Lock, User } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Info, Lock, User, X } from 'lucide-react';
 import { type UserRole } from 'shared/constants';
 import { authApi } from '../../api/authApi';
 
@@ -13,6 +13,7 @@ export function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isLoginInfoOpen, setIsLoginInfoOpen] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -65,8 +66,146 @@ export function Login({ onLogin }: LoginProps) {
 
       {/* ── Right Side: Login Form ── */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-24 relative">
+        <div className="absolute right-5 top-5 z-20 sm:right-8 sm:top-8">
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setIsLoginInfoOpen(current => !current)}
+            aria-expanded={isLoginInfoOpen}
+            aria-label={
+              isLoginInfoOpen
+                ? 'Close password assistance information'
+                : 'View password assistance information'
+            }
+            title="Password assistance"
+            className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border transition-colors ${isLoginInfoOpen
+                ? 'border-[#4a6741] bg-[#4a6741] text-white shadow-sm'
+                : 'border-gray-200 bg-white text-gray-500 shadow-sm hover:border-[#4a6741]/30 hover:bg-[#4a6741]/5 hover:text-[#4a6741]'
+              }`}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {isLoginInfoOpen ? (
+                <motion.span
+                  key="close-login-info"
+                  initial={{
+                    opacity: 0,
+                    rotate: -45,
+                    scale: 0.75
+                  }}
+                  animate={{
+                    opacity: 1,
+                    rotate: 0,
+                    scale: 1
+                  }}
+                  exit={{
+                    opacity: 0,
+                    rotate: 45,
+                    scale: 0.75
+                  }}
+                  transition={{
+                    duration: 0.18,
+                    ease: [0.22, 1, 0.36, 1]
+                  }}
+                >
+                  <X size={17} />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="open-login-info"
+                  initial={{
+                    opacity: 0,
+                    rotate: 45,
+                    scale: 0.75
+                  }}
+                  animate={{
+                    opacity: 1,
+                    rotate: 0,
+                    scale: 1
+                  }}
+                  exit={{
+                    opacity: 0,
+                    rotate: -45,
+                    scale: 0.75
+                  }}
+                  transition={{
+                    duration: 0.18,
+                    ease: [0.22, 1, 0.36, 1]
+                  }}
+                >
+                  <Info size={18} />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
 
-        <div className="w-full max-w-md">
+          <AnimatePresence>
+            {isLoginInfoOpen && (
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: -8,
+                  scale: 0.96,
+                  transformOrigin: 'top right'
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1
+                }}
+                exit={{
+                  opacity: 0,
+                  y: -8,
+                  scale: 0.96
+                }}
+                transition={{
+                  duration: 0.24,
+                  ease: [0.22, 1, 0.36, 1]
+                }}
+                className="absolute right-0 top-12 w-[min(19rem,calc(100vw-2.5rem))] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl"
+              >
+                <div className="flex items-start gap-3 p-4">
+                  <motion.div
+                    initial={{
+                      opacity: 0,
+                      scale: 0.75
+                    }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1
+                    }}
+                    transition={{
+                      delay: 0.08,
+                      duration: 0.2
+                    }}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#4a6741]/10 text-[#4a6741]"
+                  >
+                    <Info size={17} />
+                  </motion.div>
+
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-gray-900 font-poppins">
+                      Password assistance
+                    </p>
+
+                    <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
+                      If you have forgotten your password, please do not hesitate to
+                      contact the developers for assistance.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 bg-gray-50/70 px-4 py-2.5">
+                  <p className="text-[10px] font-medium leading-relaxed text-gray-400">
+                    For security, do not share your password with unauthorized users.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="w-full max-w-md pt-14 sm:pt-10 md:pt-0">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
